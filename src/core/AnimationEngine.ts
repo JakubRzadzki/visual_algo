@@ -1,4 +1,4 @@
-import { ExecutionTrace, AlgorithmPlugin } from '../types';
+import type { ExecutionTrace, AlgorithmPlugin } from '../types';
 import { globalEventBus } from './EventBus';
 
 export class AnimationEngine {

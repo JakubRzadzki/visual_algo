@@ -1,4 +1,4 @@
-import { VisualizationEvent } from '../types';
+import type { VisualizationEvent } from '../types';
 import { globalEventBus } from './EventBus';
 
 export class CanvasRenderer {
