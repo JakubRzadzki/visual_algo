@@ -76,7 +76,8 @@ export class QuickSortPlugin implements AlgorithmPlugin<number[]> {
         spaceComplexity: 'O(log n)',
         executionTimeMs: endTime - startTime,
         nodeCount: arr.length,
-        algorithmName: this.name
+        algorithmName: this.name,
+        initialState: [...data]
       }
     };
   }

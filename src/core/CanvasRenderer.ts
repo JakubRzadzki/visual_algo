@@ -51,13 +51,20 @@ export class CanvasRenderer {
     if (this.targetEvents.length === 0) return;
     // Process events (e.g. ARRAY_SWAP)
     for (const event of this.targetEvents) {
-      if (event.type === 'ARRAY_SWAP') {
+      if (event.type === 'TRACE_LOADED' && event.metadata.initialState) {
+        // Reset the canvas state to the beginning of the trace
+        this.array = [...event.metadata.initialState];
+      } else if (event.type === 'ARRAY_SWAP') {
         const [i, j] = event.indices;
         const temp = this.array[i];
         this.array[i] = this.array[j];
         this.array[j] = temp;
       } else if (event.type === 'ARRAY_SET') {
-        this.array[event.index] = event.value;
+        if (event.isReverse && event.previousValue !== undefined) {
+          this.array[event.index] = event.previousValue;
+        } else {
+          this.array[event.index] = event.value;
+        }
       }
     }
     this.targetEvents = [];

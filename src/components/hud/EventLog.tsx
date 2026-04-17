@@ -34,6 +34,7 @@ export default function EventLog() {
     };
 
     const unsubscribe = globalEventBus.subscribe((e) => {
+      if (e.isReverse) return;
       const msg = formatEvent(e);
       if (msg) {
         setLogs(prev => {

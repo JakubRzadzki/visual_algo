@@ -51,9 +51,10 @@ export class MergeSortPlugin implements AlgorithmPlugin<number[]> {
 
       // Update original array with the merged and sorted elements
       for (let i = start; i <= end; i++) {
+        const previousValue = arr[i];
         arr[i] = temp[i - start];
         // Record the final placement of the element
-        pushEvent({ type: 'ARRAY_SET', index: i, value: arr[i] });
+        pushEvent({ type: 'ARRAY_SET', index: i, value: arr[i], previousValue });
       }
     };
 
@@ -83,7 +84,8 @@ export class MergeSortPlugin implements AlgorithmPlugin<number[]> {
         spaceComplexity: 'O(n)',
         executionTimeMs: endTime - startTime,
         nodeCount: arr.length,
-        algorithmName: this.name
+        algorithmName: this.name,
+        initialState: [...data]
       }
     };
   }

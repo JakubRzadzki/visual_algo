@@ -55,11 +55,14 @@ export class AnimationEngine {
       level: 'INFO',
       message: `Loaded trace for ${trace.metadata.algorithmName} with ${trace.events.length} steps.`
     });
+
+    this.emitPlaybackState();
   }
 
   public play(): void {
     if (!this.currentTrace || this.isPlaying || this.currentStep >= this.currentTrace.events.length) return;
     this.isPlaying = true;
+    this.emitPlaybackState();
     this.scheduleNextTick();
   }
 
@@ -69,6 +72,7 @@ export class AnimationEngine {
       clearTimeout(this.tickInterval);
       this.tickInterval = null;
     }
+    this.emitPlaybackState();
   }
 
   public stepForward(): void {
@@ -76,20 +80,56 @@ export class AnimationEngine {
     const event = this.currentTrace.events[this.currentStep];
     globalEventBus.emit(event);
     this.currentStep++;
+    this.emitPlaybackState();
+  }
+
+  public stepBackward(): void {
+    if (!this.currentTrace || this.currentStep <= 0) return;
+    this.currentStep--;
+    const event = { ...this.currentTrace.events[this.currentStep], isReverse: true };
+    globalEventBus.emit(event);
+    this.emitPlaybackState();
   }
 
   public seekTo(stepIndex: number): void {
     if (!this.currentTrace) return;
     const target = Math.max(0, Math.min(stepIndex, this.currentTrace.events.length));
     
-    // In advanced systems, we either re-apply diffs tracking forwards from 0
-    // or use reverse payload interpolation mapped for Step 6.
-    this.currentStep = target;
     this.pause();
+
+    if (target < this.currentStep) {
+      // Step backwards
+      for (let i = this.currentStep - 1; i >= target; i--) {
+        const event = { ...this.currentTrace.events[i], isReverse: true };
+        globalEventBus.emit(event);
+      }
+    } else if (target > this.currentStep) {
+      // Step forwards
+      for (let i = this.currentStep; i < target; i++) {
+        globalEventBus.emit(this.currentTrace.events[i]);
+      }
+    }
+    
+    this.currentStep = target;
+    this.emitPlaybackState();
   }
 
   public setSpeed(multiplier: number): void {
     this.playbackSpeed = Math.max(0.25, Math.min(multiplier, 4.0));
+    this.emitPlaybackState();
+  }
+
+  private emitPlaybackState() {
+    globalEventBus.emit({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      step: this.currentStep,
+      type: 'SYSTEM_PLAYBACK_STATE',
+      isPlaying: this.isPlaying,
+      currentStep: this.currentStep,
+      totalSteps: this.currentTrace ? this.currentTrace.events.length : 0,
+      speed: this.playbackSpeed
+    });
   }
 
   private scheduleNextTick = () => {
@@ -105,3 +145,5 @@ export class AnimationEngine {
     }
   };
 }
+
+export const globalEngine = new AnimationEngine();
