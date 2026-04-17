@@ -20,12 +20,17 @@ export class MergeSortPlugin implements AlgorithmPlugin<number[]> {
       } as VisualizationEvent);
     };
 
+    // Merges two subarrays of arr[]
+    // First subarray is arr[start..mid]
+    // Second subarray is arr[mid+1..end]
     const merge = (start: number, mid: number, end: number) => {
       let leftIndex = start;
       let rightIndex = mid + 1;
       const temp: number[] = [];
 
+      // Merge the temporary arrays back into arr[start..end]
       while (leftIndex <= mid && rightIndex <= end) {
+        // Record the comparison between elements in the left and right halves
         pushEvent({ type: 'ARRAY_COMPARE', indices: [leftIndex, rightIndex] });
         if (arr[leftIndex] <= arr[rightIndex]) {
           temp.push(arr[leftIndex++]);
@@ -34,25 +39,36 @@ export class MergeSortPlugin implements AlgorithmPlugin<number[]> {
         }
       }
 
+      // Copy the remaining elements of the left half, if there are any
       while (leftIndex <= mid) {
         temp.push(arr[leftIndex++]);
       }
 
+      // Copy the remaining elements of the right half, if there are any
       while (rightIndex <= end) {
         temp.push(arr[rightIndex++]);
       }
 
+      // Update original array with the merged and sorted elements
       for (let i = start; i <= end; i++) {
         arr[i] = temp[i - start];
+        // Record the final placement of the element
         pushEvent({ type: 'ARRAY_SET', index: i, value: arr[i] });
       }
     };
 
+    // Main recursive function that implements Merge Sort
     const mergeSort = (start: number, end: number) => {
+      // Base case: arrays with 0 or 1 element are already sorted
       if (start >= end) return;
+      
       const mid = Math.floor((start + end) / 2);
+      
+      // Recursively sort first and second halves
       mergeSort(start, mid);
       mergeSort(mid + 1, end);
+      
+      // Merge the sorted halves
       merge(start, mid, end);
     };
 
