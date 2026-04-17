@@ -1,4 +1,4 @@
-import { AlgorithmPlugin, ExecutionTrace, VisualizationEvent } from '../../../types';
+import type { AlgorithmPlugin, ExecutionTrace, EventPayload, VisualizationEvent } from '../../../types';
 
 export class QuickSortPlugin implements AlgorithmPlugin<number[]> {
   id = 'quick-sort';
@@ -11,13 +11,13 @@ export class QuickSortPlugin implements AlgorithmPlugin<number[]> {
     let step = 0;
     const startTime = performance.now();
 
-    const pushEvent = (event: Omit<VisualizationEvent, 'id' | 'timestamp' | 'step'>) => {
+    const pushEvent = (event: EventPayload) => {
       events.push({
         ...event,
         id: crypto.randomUUID(),
         timestamp: performance.now(),
         step: step++
-      } as VisualizationEvent);
+      } as any);
     };
 
     // Helper function to swap two elements in the array and record the event

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useUIStore } from './store/uiStore';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
@@ -7,12 +6,14 @@ import CodeSnippet from './components/hud/CodeSnippet';
 import EventLog from './components/hud/EventLog';
 import PlaybackDeck from './components/controls/PlaybackDeck';
 import AmbientGraph from './components/background/AmbientGraph';
+import AriaLiveRegion from './components/a11y/AriaLiveRegion';
 
 export default function App() {
   const isSidebarOpen = useUIStore(state => state.isSidebarOpen);
 
   return (
     <div className="relative min-h-screen bg-glacier-bg text-slate-200 selection:bg-ice-blue/30 selection:text-ice-blue overflow-hidden cursor-default">
+      <AriaLiveRegion />
       {/* Dynamic Floating Mesh */}
       <AmbientGraph />
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#0a0e1a]/80 via-[#0f1524]/60 to-[#0a0e1a]/80 pointer-events-none" />

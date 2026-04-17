@@ -43,6 +43,14 @@ export class AnimationEngine {
       id: crypto.randomUUID(),
       timestamp: Date.now(),
       step: 0,
+      type: 'TRACE_LOADED',
+      metadata: trace.metadata
+    });
+
+    globalEventBus.emit({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      step: 0,
       type: 'SYSTEM_LOG',
       level: 'INFO',
       message: `Loaded trace for ${trace.metadata.algorithmName} with ${trace.events.length} steps.`

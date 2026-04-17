@@ -1,4 +1,4 @@
-import { AlgorithmPlugin, ExecutionTrace, VisualizationEvent } from '../../../types';
+import type { AlgorithmPlugin, ExecutionTrace, EventPayload, VisualizationEvent } from '../../../types';
 
 export class MergeSortPlugin implements AlgorithmPlugin<number[]> {
   id = 'merge-sort';
@@ -11,13 +11,13 @@ export class MergeSortPlugin implements AlgorithmPlugin<number[]> {
     let step = 0;
     const startTime = performance.now();
 
-    const pushEvent = (event: Omit<VisualizationEvent, 'id' | 'timestamp' | 'step'>) => {
+    const pushEvent = (event: EventPayload) => {
       events.push({
         ...event,
         id: crypto.randomUUID(),
         timestamp: performance.now(),
         step: step++
-      } as VisualizationEvent);
+      } as any);
     };
 
     // Merges two subarrays of arr[]
