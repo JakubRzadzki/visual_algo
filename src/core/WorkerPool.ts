@@ -24,7 +24,10 @@ export class WorkerPool {
   // Map taskId → pending promise handlers for in-flight tasks
   private pending: Map<string, PendingTask> = new Map();
 
-  constructor(private readonly maxWorkers = 3) {
+  private readonly maxWorkers: number;
+
+  constructor(maxWorkers: number = 3) {
+    this.maxWorkers = maxWorkers;
     // Pre-spawn the worker pool on construction
     this.spawnWorkers();
   }

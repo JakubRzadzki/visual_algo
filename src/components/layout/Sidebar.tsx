@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useUIStore } from '../../store/uiStore';
 import type { AlgorithmType } from '../../store/uiStore';
 import { globalWorkerPool } from '../../core/WorkerPool';

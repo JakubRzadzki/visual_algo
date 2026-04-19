@@ -1,4 +1,4 @@
-import type { AlgorithmPlugin, ExecutionTrace, GraphInput, VisualizationEvent } from '../../../types';
+import type { AlgorithmPlugin, ExecutionTrace, GraphInput, VisualizationEvent, EventPayload } from '../../../types';
 
 export class KruskalPlugin implements AlgorithmPlugin<GraphInput> {
   id = 'kruskal';
@@ -11,7 +11,7 @@ export class KruskalPlugin implements AlgorithmPlugin<GraphInput> {
     let step = 0;
     const startTime = performance.now();
 
-    const push = (evt: Omit<VisualizationEvent, 'id' | 'timestamp' | 'step'>) => {
+    const push = (evt: EventPayload) => {
       events.push({
         ...evt,
         id: crypto.randomUUID(),

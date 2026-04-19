@@ -1,4 +1,4 @@
-import type { AlgorithmPlugin, ExecutionTrace, GraphInput, VisualizationEvent } from '../../../types';
+import type { AlgorithmPlugin, ExecutionTrace, GraphInput, VisualizationEvent, EventPayload } from '../../../types';
 
 export class DijkstraPlugin implements AlgorithmPlugin<GraphInput> {
   id = 'dijkstra';
@@ -11,8 +11,7 @@ export class DijkstraPlugin implements AlgorithmPlugin<GraphInput> {
     let step = 0;
     const startTime = performance.now();
 
-    // Helper: append a timestamped event
-    const push = (evt: Omit<VisualizationEvent, 'id' | 'timestamp' | 'step'>) => {
+    const push = (evt: EventPayload) => {
       events.push({
         ...evt,
         id: crypto.randomUUID(),

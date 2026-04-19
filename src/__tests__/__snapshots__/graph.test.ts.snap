@@ -1,0 +1,61 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Graph Plugins > Dijkstra executes without errors 1`] = `
+{
+  "events": [
+    {
+      "edgeId": "e1",
+      "id": "9c9ad2ac-1a29-477d-9b14-8689bab144f8",
+      "step": 0,
+      "timestamp": 337.722,
+      "type": "GRAPH_RELAX",
+      "weight": 5,
+    },
+    {
+      "id": "2c8fa504-5d22-4764-94e0-16ff591527e2",
+      "level": "INFO",
+      "message": "Dijkstra complete from "A". Relaxed 0 edges.",
+      "step": 1,
+      "timestamp": 337.7312,
+      "type": "SYSTEM_LOG",
+    },
+  ],
+  "metadata": {
+    "algorithmName": "Dijkstra Shortest Path",
+    "executionTimeMs": 0.22989999999998645,
+    "nodeCount": 2,
+    "spaceComplexity": "O(V)",
+    "timeComplexity": "O((V+E) log V)",
+  },
+}
+`;
+
+exports[`Graph Plugins > Kruskal executes without errors 1`] = `
+{
+  "events": [
+    {
+      "accepted": true,
+      "edgeId": "e1",
+      "id": "e2efc71f-2fe7-460b-ab4f-9eebdf3e51e2",
+      "step": 0,
+      "timestamp": 339.4171,
+      "type": "GRAPH_EDGE_HIGHLIGHT",
+    },
+    {
+      "id": "f861e6ee-e110-4799-934d-138207afc0b3",
+      "level": "INFO",
+      "message": "Kruskal MST complete. Total weight: 5. Edges in tree: 1.",
+      "step": 1,
+      "timestamp": 339.4216,
+      "type": "SYSTEM_LOG",
+    },
+  ],
+  "metadata": {
+    "algorithmName": "Kruskal MST",
+    "executionTimeMs": 0.03870000000000573,
+    "nodeCount": 2,
+    "spaceComplexity": "O(V)",
+    "timeComplexity": "O(E log E)",
+  },
+}
+`;

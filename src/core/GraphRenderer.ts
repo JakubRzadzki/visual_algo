@@ -39,7 +39,7 @@ export class GraphRenderer {
     this.height   = canvas.height;
 
     // Scatter nodes randomly inside canvas if they have no position yet
-    const seeded = nodes.map((n, i) => ({
+    const seeded = nodes.map((n) => ({
       ...n,
       x: n.x || (100 + Math.random() * (this.width  - 200)),
       y: n.y || (100 + Math.random() * (this.height - 200)),

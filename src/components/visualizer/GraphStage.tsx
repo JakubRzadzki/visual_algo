@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { GraphRenderer } from '../../core/GraphRenderer';
 import type { GraphNode, GraphEdge } from '../../types';
 
