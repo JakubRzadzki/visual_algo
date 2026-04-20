@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { GraphInput } from '../types';
 
 export type AlgorithmType = 'Merge Sort' | 'Quick Sort' | "Dijkstra's Path" | "Kruskal's MST";
 type ActiveMode = 'sorting' | 'graph';
@@ -11,12 +12,14 @@ interface UIState {
   activeAlgorithm: AlgorithmType;
   activeMode: ActiveMode;   // which visualisation stage is shown
   isAnimating: boolean;     // true while engine is playing back a trace
+  currentGraph: GraphInput | null;  // currently displayed graph
   setAnimationSpeed: (speed: number) => void;
   toggleSidebar: () => void;
   toggleDebug: () => void;
   setActiveAlgorithm: (algo: AlgorithmType) => void;
   setActiveMode: (mode: ActiveMode) => void;
   setIsAnimating: (v: boolean) => void;
+  setCurrentGraph: (graph: GraphInput) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -27,6 +30,7 @@ export const useUIStore = create<UIState>((set) => ({
   activeAlgorithm: 'Merge Sort',
   activeMode: 'sorting',
   isAnimating: false,
+  currentGraph: null,
 
   setAnimationSpeed: (speed) => set({ animationSpeed: Math.max(0.25, Math.min(speed, 4.0)) }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
@@ -34,4 +38,5 @@ export const useUIStore = create<UIState>((set) => ({
   setActiveAlgorithm: (algo: AlgorithmType) => set({ activeAlgorithm: algo }),
   setActiveMode: (mode) => set({ activeMode: mode }),
   setIsAnimating: (v) => set({ isAnimating: v }),
+  setCurrentGraph: (graph) => set({ currentGraph: graph }),
 }));

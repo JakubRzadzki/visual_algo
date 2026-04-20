@@ -28,6 +28,10 @@ export default function EventLog() {
           return <span className="text-purple-400">[ACT] Set index {e.index} to {e.value}</span>;
         case 'TRACE_LOADED':
           return <span className="text-teal-400">[SYS] Data for {e.metadata.algorithmName} loaded.</span>;
+        case 'GRAPH_NODE_HIGHLIGHT':
+          return <span className="text-emerald-400">[GRAPH] Visiting node {e.nodeId}</span>;
+        case 'GRAPH_EDGE_HIGHLIGHT':
+          return <span className="text-amber-400">[GRAPH] Exploring edge {e.edgeId}</span>;
         default:
           return null;
       }
