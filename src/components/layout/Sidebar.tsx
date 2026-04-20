@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { useUIStore } from '../../store/uiStore';
 import type { AlgorithmType } from '../../store/uiStore';
 import { globalWorkerPool } from '../../core/WorkerPool';
-import { AnimationEngine } from '../../core/AnimationEngine';
+import { globalEngine } from '../../core/AnimationEngine';
 import type { GraphInput, GraphNode, GraphEdge } from '../../types';
+import { MergeSortPlugin } from '../../core/plugins/sorting/MergeSortPlugin';
+import { QuickSortPlugin } from '../../core/plugins/sorting/QuickSortPlugin';
 
 const ALGORITHM_LIST: AlgorithmType[] = ['Merge Sort', 'Quick Sort', "Dijkstra's Path", "Kruskal's MST"];
-
-// Shared engine instance for trace playback
-const engine = new AnimationEngine();
 
 // Build a small demo graph used when "Run" is clicked
 function buildDemoGraph(nodeCount: number): GraphInput {
@@ -52,10 +51,10 @@ export default function Sidebar() {
       const graphInput = buildDemoGraph(nodeCount);
       const trace      = await globalWorkerPool.run(selectedAlgo, graphInput);
 
-      engine.loadTrace(trace);
-      engine.setSpeed(1.0);
+      globalEngine.loadTrace(trace);
+      globalEngine.setSpeed(1.0);
       setIsAnimating(true);
-      engine.play();
+      globalEngine.play();
 
       setStatus(`Done — ${trace.events.length} events`);
     } catch (err) {
@@ -91,7 +90,7 @@ export default function Sidebar() {
 
       {/* ── Sorting Section ── */}
       {activeMode === 'sorting' && (
-        <section>
+        <section className="flex flex-col gap-3">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Sorting Algorithms</h2>
           <ul className="space-y-1.5">
             {sortingAlgos.map(algo => {
@@ -107,6 +106,64 @@ export default function Sidebar() {
                );
             })}
           </ul>
+
+          <div className="flex flex-col gap-1 mt-2">
+            <label className="text-xs text-slate-400">
+              Array Elements — <span className="text-ice-blue font-semibold">{nodeCount * 5}</span>
+            </label>
+            <input
+              type="range" min={1} max={10} value={nodeCount}
+              onChange={e => {
+                const newCount = Number(e.target.value);
+                setNodeCount(newCount);
+                
+                // Immediately show the new array size in the Canvas
+                const arr = Array.from({ length: newCount * 5 }, () => Math.floor(Math.random() * 80) + 10);
+                const dummyTrace = {
+                  events: [],
+                  metadata: {
+                    timeComplexity: '', spaceComplexity: '', executionTimeMs: 0, nodeCount: arr.length, algorithmName: 'Preview',
+                    initialState: arr
+                  }
+                };
+                globalEngine.loadTrace(dummyTrace as any);
+              }}
+              className="accent-sky-400 w-full"
+            />
+          </div>
+
+          <button
+            onClick={async () => {
+              setRunning(true);
+              setStatus('Sorting...');
+              try {
+                const arr = Array.from({ length: nodeCount * 5 }, () => Math.floor(Math.random() * 80) + 10);
+                const plugin = activeAlgorithm === 'Merge Sort' ? new MergeSortPlugin() : new QuickSortPlugin();
+                const trace = await globalEngine.generateTraceWithWatchdog(plugin, arr);
+                
+                globalEngine.loadTrace(trace);
+                globalEngine.setSpeed(1.0);
+                setIsAnimating(true);
+                globalEngine.play();
+                
+                setStatus(`Done — ${trace.events.length} events`);
+              } catch (err) {
+                setStatus(`Error: ${String(err)}`);
+              } finally {
+                setRunning(false);
+                setTimeout(() => setIsAnimating(false), 3000);
+              }
+            }}
+            disabled={running}
+            className={`mt-1 w-full py-2.5 rounded-lg text-sm font-semibold transition-all ${
+              running
+                ? 'bg-ice-blue/10 text-ice-blue/40 cursor-not-allowed'
+                : 'bg-ice-blue/20 border border-ice-blue/40 text-ice-blue hover:bg-ice-blue/30 hover:shadow-lg hover:shadow-ice-blue/10 active:scale-95'
+            }`}
+          >
+            {running ? 'Running…' : `▶ Run Algorithm`}
+          </button>
+          {status && <p className="text-xs text-slate-400 text-center">{status}</p>}
         </section>
       )}
 
@@ -138,7 +195,10 @@ export default function Sidebar() {
             </label>
             <input
               type="range" min={4} max={20} value={nodeCount}
-              onChange={e => setNodeCount(Number(e.target.value))}
+              onChange={e => {
+                 const newCount = Number(e.target.value);
+                 setNodeCount(newCount);
+              }}
               className="accent-sky-400 w-full"
             />
           </div>
