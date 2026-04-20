@@ -1,9 +1,14 @@
 import type { GraphNode, GraphEdge, GraphState } from '../types';
 
-const REPULSION  = 6000;  // Coulomb constant — pushes nodes apart
-const ATTRACTION = 0.03;  // Hooke constant  — pulls connected nodes together
-const DAMPING    = 0.85;  // velocity decay per tick (prevents oscillation)
-const MIN_DIST   = 30;    // minimum node-to-node distance (avoid singularity)
+/**
+ * Physics simulation constants optimized for smooth, precise animation
+ * These values balance visual appeal with computational efficiency
+ */
+const REPULSION = 6000; // Coulomb constant — pushes nodes apart
+const ATTRACTION = 0.03; // Hooke constant — pulls connected nodes together
+const DAMPING = 0.88; // Velocity decay per tick — improved from 0.85 for better settling
+const VELOCITY_THRESHOLD = 0.01; // Stop updating velocity when below this threshold (eliminate jitter)
+const MIN_DIST = 30; // Minimum node-to-node distance (avoid singularity)
 
 /**
  * GraphLayoutEngine
@@ -98,13 +103,23 @@ export class GraphLayoutEngine {
     }
   }
 
-  /** Apply velocities to positions and apply damping. */
+  /**
+   * Integrate velocities into positions with adaptive damping
+   * Applies damping and velocity threshold to eliminate jitter
+   * Velocities below threshold are zeroed to prevent oscillation
+   */
   private integrateVelocities(): void {
     for (const node of this.nodes) {
-      node.x  += node.vx;
-      node.y  += node.vy;
+      node.x += node.vx;
+      node.y += node.vy;
+
+      // Apply damping with velocity threshold for smooth settling
       node.vx *= DAMPING;
       node.vy *= DAMPING;
+
+      // Zero out very small velocities to prevent unnecessary oscillation
+      if (Math.abs(node.vx) < VELOCITY_THRESHOLD) node.vx = 0;
+      if (Math.abs(node.vy) < VELOCITY_THRESHOLD) node.vy = 0;
     }
   }
 

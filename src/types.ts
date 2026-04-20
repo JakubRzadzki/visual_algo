@@ -1,16 +1,20 @@
 export type BaseEvent = { id: string; timestamp: number; step: number; eventSource?: string; lineNumber?: number; isReverse?: boolean };
 
-export type EventPayload = 
+export type EventPayload =
   | { type: "ARRAY_COMPARE"; indices: [number, number] }
   | { type: "ARRAY_SWAP"; indices: [number, number]; values: [number, number] }
   | { type: "ARRAY_SET"; index: number; value: number; previousValue?: number }
+  | { type: "ARRAY_INSERT"; index: number; value: number }
+  | { type: "ARRAY_REMOVE"; index: number; value: number }
   | { type: "GRAPH_RELAX"; edgeId: string; weight: number }
-  | { type: "GRAPH_EDGE_HIGHLIGHT"; edgeId: string; accepted: boolean }
+  | { type: "GRAPH_NODE_HIGHLIGHT"; nodeId: string; distance?: number }
+  | { type: "GRAPH_EDGE_HIGHLIGHT"; edgeId: string; accepted?: boolean }
   | { type: "GRAPH_NODE_MOVE"; nodeId: string; x: number; y: number }
   | { type: "TREE_ROTATE"; pivotId: string; direction: "LEFT" | "RIGHT" }
   | { type: "SYSTEM_LOG"; message: string; level: "INFO" | "WARN" | "ERROR" }
-  | { type: "SYSTEM_PLAYBACK_STATE"; isPlaying: boolean; currentStep: number; totalSteps: number; speed: number }
-  | { type: "TRACE_LOADED"; metadata: TraceMetadata };
+  | { type: "SYSTEM_PLAYBACK_STATE"; isPlaying: boolean; currentStep: number; totalSteps: number; speed: number; deltaTime?: number }
+  | { type: "TRACE_LOADED"; metadata: TraceMetadata }
+  | { type: "ANIMATION_FRAME"; deltaTime: number; speed: number };
 
 export type VisualizationEvent = BaseEvent & EventPayload;
 
