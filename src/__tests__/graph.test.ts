@@ -2,6 +2,24 @@ import { describe, it, expect } from 'vitest';
 import { DijkstraPlugin } from '../core/plugins/graph/DijkstraPlugin';
 import { KruskalPlugin } from '../core/plugins/graph/KruskalPlugin';
 
+// We mock crypto and performance for deterministic snapshots
+const mockId = '00000000-0000-0000-0000-000000000000';
+if (typeof crypto === 'undefined') {
+  global.crypto = {
+    randomUUID: () => mockId,
+  } as any;
+} else {
+  crypto.randomUUID = () => mockId;
+}
+
+if (typeof performance === 'undefined') {
+  global.performance = {
+    now: () => 0,
+  } as any;
+} else {
+  performance.now = () => 0;
+}
+
 const mockGraph = {
   nodes: [
     { id: 'A', label: 'A', x: 0, y: 0, vx: 0, vy: 0 },
