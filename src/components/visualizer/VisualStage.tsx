@@ -7,7 +7,7 @@ import { MergeSortPlugin } from '../../core/plugins/sorting/MergeSortPlugin';
 import { QuickSortPlugin } from '../../core/plugins/sorting/QuickSortPlugin';
 
 export default function VisualStage() {
-  const { activeAlgorithm, setIsAnimating } = useUIStore();
+  const { activeSortingAlgorithm, setIsAnimating } = useUIStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<CanvasRenderer | null>(null);
@@ -118,7 +118,7 @@ export default function VisualStage() {
       setStatus('Running...');
 
       // Get the appropriate plugin based on active algorithm
-      const plugin = activeAlgorithm === 'Merge Sort' ? new MergeSortPlugin() : new QuickSortPlugin();
+      const plugin = activeSortingAlgorithm === 'Merge Sort' ? new MergeSortPlugin() : new QuickSortPlugin();
       const trace = await globalEngine.generateTraceWithWatchdog(plugin, values);
 
       globalEngine.loadTrace(trace);
@@ -178,7 +178,7 @@ export default function VisualStage() {
               : 'bg-emerald-600/30 hover:bg-emerald-600/40 text-emerald-300 shadow-lg shadow-emerald-600/20 active:scale-95'
           }`}
         >
-          {running ? '⏳ Running...' : `▶ Run ${activeAlgorithm}`}
+          {running ? '⏳ Running...' : `▶ Run ${activeSortingAlgorithm}`}
         </button>
 
         <div className={`text-sm px-3 py-2 rounded font-medium ${status.includes('✓') ? 'bg-green-500/10 text-green-300' : 'bg-red-500/10 text-red-300'}`}>

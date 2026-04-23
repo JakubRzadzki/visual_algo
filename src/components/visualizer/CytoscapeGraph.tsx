@@ -12,9 +12,12 @@ export default function CytoscapeGraph({
   const [elements, setElements] = useState<any[]>([]);
   const highlightedRef = useRef<Set<string>>(new Set());
   const highlightTimeoutRef = useRef<any>(null);
+  const layoutRanRef = useRef(false);
 
   // Convert graph input to Cytoscape elements
   useEffect(() => {
+    layoutRanRef.current = false;
+    
     const nodeElements = graph.nodes.map((node: any) => ({
       data: {
         id: node.id,
@@ -109,27 +112,29 @@ export default function CytoscapeGraph({
     return () => unsubscribe();
   }, []);
 
-  // Re-run layout when elements change
+  // Re-run layout when elements change (only once per graph)
   useEffect(() => {
-    if (!cyRef.current || elements.length === 0) return;
+    if (!cyRef.current || elements.length === 0 || layoutRanRef.current) return;
+
+    layoutRanRef.current = true;
 
     const layout = cyRef.current.layout({
       name: 'cose',
       directed: true,
       animate: true,
-      animationDuration: 500,
+      animationDuration: 600,
       nodeDimensionsIncludeLabels: true,
-      randomize: false,
+      randomize: true,
       componentSpacing: 100,
-      nodeSpacing: 50,
-      gravity: 0.5,
-      cooling: 0.99,
+      nodeSpacing: 60,
+      gravity: 1.0,
+      cooling: 0.96,
       coolingFactor: 0.999,
-      edgeElasticity: 0.45,
-      nodeRepulsion: 4500,
-      numIter: 1000,
-      initialTemp: 200,
-      minTemp: 1.0,
+      edgeElasticity: 0.5,
+      nodeRepulsion: 3000,
+      numIter: 3000,
+      initialTemp: 300,
+      minTemp: 0.5,
     } as any);
 
     layout.run();

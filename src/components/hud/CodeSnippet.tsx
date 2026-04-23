@@ -288,7 +288,7 @@ function tokenizeLine(line: string, lang: 'cpp' | 'python'): React.ReactNode[] {
 }
 
 export default function CodeSnippet() {
-  const globalAlgo = useUIStore(state => state.activeAlgorithm);
+  const globalAlgo = useUIStore(state => state.activeMode === 'sorting' ? state.activeSortingAlgorithm : state.activeGraphAlgorithm);
   const [algoName, setAlgoName] = useState<string>(globalAlgo);
   const [language, setLanguage] = useState<'cpp' | 'python'>('cpp');
 

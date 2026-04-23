@@ -9,14 +9,16 @@ interface UIState {
   animationSpeed: number;   // 0.25 to 4.0
   isSidebarOpen: boolean;
   isDebugVisible: boolean;
-  activeAlgorithm: AlgorithmType;
+  activeSortingAlgorithm: 'Merge Sort' | 'Quick Sort';
+  activeGraphAlgorithm: "Dijkstra's Path" | "Kruskal's MST";
   activeMode: ActiveMode;   // which visualisation stage is shown
   isAnimating: boolean;     // true while engine is playing back a trace
   currentGraph: GraphInput | null;  // currently displayed graph
   setAnimationSpeed: (speed: number) => void;
   toggleSidebar: () => void;
   toggleDebug: () => void;
-  setActiveAlgorithm: (algo: AlgorithmType) => void;
+  setActiveSortingAlgorithm: (algo: 'Merge Sort' | 'Quick Sort') => void;
+  setActiveGraphAlgorithm: (algo: "Dijkstra's Path" | "Kruskal's MST") => void;
   setActiveMode: (mode: ActiveMode) => void;
   setIsAnimating: (v: boolean) => void;
   setCurrentGraph: (graph: GraphInput) => void;
@@ -27,7 +29,8 @@ export const useUIStore = create<UIState>((set) => ({
   animationSpeed: 1.0,
   isSidebarOpen: true,
   isDebugVisible: false,
-  activeAlgorithm: 'Merge Sort',
+  activeSortingAlgorithm: 'Merge Sort',
+  activeGraphAlgorithm: "Dijkstra's Path",
   activeMode: 'sorting',
   isAnimating: false,
   currentGraph: null,
@@ -35,7 +38,8 @@ export const useUIStore = create<UIState>((set) => ({
   setAnimationSpeed: (speed) => set({ animationSpeed: Math.max(0.25, Math.min(speed, 4.0)) }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   toggleDebug: () => set((state) => ({ isDebugVisible: !state.isDebugVisible })),
-  setActiveAlgorithm: (algo: AlgorithmType) => set({ activeAlgorithm: algo }),
+  setActiveSortingAlgorithm: (algo) => set({ activeSortingAlgorithm: algo }),
+  setActiveGraphAlgorithm: (algo) => set({ activeGraphAlgorithm: algo }),
   setActiveMode: (mode) => set({ activeMode: mode }),
   setIsAnimating: (v) => set({ isAnimating: v }),
   setCurrentGraph: (graph) => set({ currentGraph: graph }),
