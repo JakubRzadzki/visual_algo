@@ -54,7 +54,7 @@ export class DijkstraPlugin implements AlgorithmPlugin<GraphInput> {
         if (alt < dist[v]) {
           dist[v] = alt;
           pq.push({ id: v, priority: alt });
-          // Emit a relax event so the renderer can highlight this edge
+          // Emit relax event so the renderer can react to the updated distance
           push({ type: 'GRAPH_RELAX', edgeId: edge.id, weight: alt });
         }
       }

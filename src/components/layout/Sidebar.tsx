@@ -9,16 +9,18 @@ import { GraphGenerator } from '../../core/GraphVisualization';
 const ALGORITHM_LIST: AlgorithmType[] = ['Merge Sort', 'Quick Sort', "Dijkstra's Path", "Kruskal's MST"];
 
 export default function Sidebar() {
-  const { activeMode, setActiveMode, setIsAnimating, activeAlgorithm, setActiveAlgorithm, setCurrentGraph } = useUIStore();
+  const { activeMode, setActiveMode, setIsAnimating, setActiveGraphAlgorithm, setActiveSortingAlgorithm, activeSortingAlgorithm, setCurrentGraph } = useUIStore();
   const [selectedAlgo, setSelectedAlgo] = useState<'dijkstra' | 'kruskal'>('dijkstra');
   const [nodeCount, setNodeCount]       = useState(8);
   const [running, setRunning]           = useState(false);
+  const [generating, setGenerating]     = useState(false);
   const [status, setStatus]             = useState('');
   const [graphType, setGraphType]       = useState<'random' | 'complete' | 'sparse' | 'tree' | 'grid' | 'scalefree'>('random');
+  const [generatedGraph, setGeneratedGraph] = useState<GraphInput | null>(null);
 
-  // Generate graph based on selected type and run algorithm
-  const handleGenerateAndRun = async () => {
-    setRunning(true);
+  // Generate graph based on selected type
+  const handleGenerate = async () => {
+    setGenerating(true);
     setStatus('Generating graph…');
 
     try {
@@ -46,9 +48,27 @@ export default function Sidebar() {
 
       // Update the graph display in the UI
       setCurrentGraph(graphInput);
+      setGeneratedGraph(graphInput);
+      setStatus(`✓ Graph generated — ${graphInput.nodes.length} nodes`);
+    } catch (err) {
+      setStatus(`❌ ${String(err)}`);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
-      setStatus(`Running ${selectedAlgo}…`);
-      const trace = await globalWorkerPool.run(selectedAlgo, graphInput);
+  // Run algorithm on generated graph
+  const handleRun = async () => {
+    if (!generatedGraph) {
+      setStatus('❌ Generate a graph first');
+      return;
+    }
+
+    setRunning(true);
+    setStatus(`Running ${selectedAlgo}…`);
+
+    try {
+      const trace = await globalWorkerPool.run(selectedAlgo, generatedGraph);
 
       globalEngine.loadTrace(trace);
       globalEngine.setSpeed(1.0);
@@ -92,11 +112,11 @@ export default function Sidebar() {
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Sorting Algorithms</h2>
           <ul className="space-y-1.5">
             {sortingAlgos.map(algo => {
-               const isActive = activeAlgorithm === algo;
+               const isActive = activeSortingAlgorithm === algo;
                return (
                  <li
                    key={algo}
-                   onClick={() => setActiveAlgorithm(algo)}
+                   onClick={() => setActiveSortingAlgorithm(algo)}
                    className={`px-3 py-2 rounded-lg cursor-pointer transition border ${isActive ? 'bg-ice-blue/10 border-ice-blue/30 text-ice-blue' : 'hover:bg-white/5 border-transparent text-slate-300'} text-sm`}
                  >
                    {algo}
@@ -123,7 +143,7 @@ export default function Sidebar() {
               value={selectedAlgo}
               onChange={e => {
                 setSelectedAlgo(e.target.value as 'dijkstra' | 'kruskal');
-                setActiveAlgorithm(e.target.value === 'dijkstra' ? "Dijkstra's Path" : "Kruskal's MST");
+                setActiveGraphAlgorithm(e.target.value === 'dijkstra' ? "Dijkstra's Path" : "Kruskal's MST");
               }}
               className="bg-white/5 border border-ice-blue/20 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-ice-blue/60"
             >
@@ -164,18 +184,31 @@ export default function Sidebar() {
             />
           </div>
 
-          {/* Generate and Run button */}
-          <button
-            onClick={handleGenerateAndRun}
-            disabled={running}
-            className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              running
-                ? 'bg-emerald-600/20 text-emerald-400/50 cursor-not-allowed'
-                : 'bg-emerald-600/30 border border-emerald-600/40 text-emerald-300 hover:bg-emerald-600/40 shadow-lg shadow-emerald-600/10 active:scale-95'
-            }`}
-          >
-            {running ? '⏳ Running…' : `▶ Generate & Run`}
-          </button>
+          {/* Generate and Run buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                generating
+                  ? 'bg-sky-600/20 text-sky-400/50 cursor-not-allowed'
+                  : 'bg-sky-600/30 border border-sky-600/40 text-sky-300 hover:bg-sky-600/40 shadow-lg shadow-sky-600/10 active:scale-95'
+              }`}
+            >
+              {generating ? '⏳ Gen…' : `📊 Generate`}
+            </button>
+            <button
+              onClick={handleRun}
+              disabled={running || !generatedGraph}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                running || !generatedGraph
+                  ? 'bg-emerald-600/20 text-emerald-400/50 cursor-not-allowed'
+                  : 'bg-emerald-600/30 border border-emerald-600/40 text-emerald-300 hover:bg-emerald-600/40 shadow-lg shadow-emerald-600/10 active:scale-95'
+              }`}
+            >
+              {running ? '⏳ Running…' : `▶ Run`}
+            </button>
+          </div>
 
           {/* Status message */}
           {status && (
