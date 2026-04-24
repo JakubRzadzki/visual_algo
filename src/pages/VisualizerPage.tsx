@@ -76,14 +76,7 @@ export default function VisualizerPage() {
             <span>Catalog</span>
           </Link>
 
-          {/* Current algorithm badge */}
-          {found && (
-            <div className="glass-panel px-4 py-3 rounded-xl text-center">
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Now Viewing</p>
-              <p className="text-sm font-bold text-ice-blue">{found.algorithm.name}</p>
-              <p className="text-[11px] text-slate-500 mt-1">{found.category.label}</p>
-            </div>
-          )}
+
 
           {isSidebarOpen && <Sidebar />}
         </div>
