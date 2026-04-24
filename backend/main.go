@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gin-contrib/cors"
@@ -173,16 +173,16 @@ func executeCode(c *gin.Context) {
 	}
 
 	// Pull image if not exists
-	_, err = cli.ImageInspectWithRaw(ctx, imageName)
+	_, _, err = cli.ImageInspectWithRaw(ctx, imageName)
 	if err != nil {
 		log.Printf("Pulling image %s...\n", imageName)
-		reader, pullErr := cli.ImagePull(ctx, imageName, image.PullOptions{})
+		reader, pullErr := cli.ImagePull(ctx, imageName, types.ImagePullOptions{})
 		if pullErr == nil {
 			io.Copy(os.Stdout, reader)
 		}
 	}
 
-	// Create ephemeral container (Step 5 requirement: network disabled, 2 sec timeout handled via wait)
+	// Create ephemeral container
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image:           imageName,
 		Cmd:             cmd,
@@ -201,14 +201,14 @@ func executeCode(c *gin.Context) {
 	}
 
 	// Ensure container is wiped after execution
-	defer cli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{Force: true})
 
-	if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start sandbox container"})
 		return
 	}
 
-	// Wait with timeout (2 seconds max as per plan)
+	// Wait with timeout
 	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
@@ -224,7 +224,7 @@ func executeCode(c *gin.Context) {
 		return
 	}
 
-	logs, err := cli.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true})
+	logs, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read container logs"})
 		return

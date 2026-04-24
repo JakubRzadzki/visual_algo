@@ -1,0 +1,26 @@
+module visual_algo_backend
+
+go 1.22
+
+require (
+	github.com/docker/docker v24.0.9+incompatible
+	github.com/gin-contrib/cors v1.7.1
+	github.com/gin-gonic/gin v1.9.1
+	github.com/google/uuid v1.6.0
+	gorm.io/datatypes v1.2.0
+	gorm.io/driver/postgres v1.5.7
+	gorm.io/gorm v1.25.7
+)
+
+require (
+	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/docker/distribution v2.8.2+incompatible // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-units v0.5.0 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.0.2 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
+)
