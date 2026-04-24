@@ -12,7 +12,7 @@
 
 @layer base {
   body {
-    @apply bg-glacier-bg text-slate-200 antialiased selection:bg-ice-blue/30 selection:text-ice-blue overflow-hidden;
+    @apply bg-glacier-bg text-slate-200 antialiased selection:bg-ice-blue/30 selection:text-ice-blue;
   }
 }
 
