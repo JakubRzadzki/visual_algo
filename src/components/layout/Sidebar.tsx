@@ -97,7 +97,11 @@ export default function Sidebar() {
         {(['sorting', 'graph'] as const).map(mode => (
           <button
             key={mode}
-            onClick={() => setActiveMode(mode)}
+            onClick={() => {
+              setActiveMode(mode);
+              if (mode === 'sorting') navigate('/algo/sorting/merge-sort');
+              if (mode === 'graph') navigate('/algo/graphs/dijkstra');
+            }}
             className={`flex-1 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
               activeMode === mode
                 ? 'bg-ice-blue/20 text-ice-blue'
