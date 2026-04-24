@@ -1,4 +1,4 @@
-
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
 import { useLocation, Link } from 'react-router-dom';
 import { Menu, Zap } from 'lucide-react';
@@ -20,6 +20,16 @@ export default function Navbar() {
           <Zap className="w-5 h-5" /> Algorithm Visualizer EDVR
         </Link>
       </div>
+
+      {isViewerPage && (
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all"
+        >
+          <Home className="w-4 h-4" />
+          Catalog
+        </button>
+      )}
     </nav>
   );
 }
