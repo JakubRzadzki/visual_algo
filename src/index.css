@@ -8,11 +8,12 @@
   --color-glacier-surface-elevated: rgba(15, 21, 36, 0.75);
   --color-glacier-border: rgba(125, 211, 252, 0.1);
   --color-glacier-border-bright: rgba(125, 211, 252, 0.2);
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 @layer base {
   body {
-    @apply bg-glacier-bg text-slate-200 antialiased selection:bg-ice-blue/30 selection:text-ice-blue overflow-hidden;
+    @apply bg-glacier-bg text-slate-200 antialiased selection:bg-ice-blue/30 selection:text-ice-blue;
   }
 }
 
