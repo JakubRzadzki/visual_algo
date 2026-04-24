@@ -54,6 +54,24 @@ export interface GraphState {
   highlightedEdges: Set<string>;  // edge ids currently lit up
 }
 
+export interface ArrayInput {
+  values: number[];
+}
+
+export interface GridInput {
+  width: number;
+  height: number;
+  walls: {x: number, y: number}[];
+}
+
+export interface MatrixInput {
+  rows: number;
+  cols: number;
+  values: number[][];
+}
+
+export type VisualizationData = GraphInput | ArrayInput | GridInput | MatrixInput;
+
 export interface ExecutionTrace { events: VisualizationEvent[]; metadata: TraceMetadata; }
 
 /** Plugin Abstraction for deterministic algorithm generation */
