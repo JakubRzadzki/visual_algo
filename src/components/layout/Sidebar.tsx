@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
 import type { AlgorithmType } from '../../store/uiStore';
 import { globalWorkerPool } from '../../core/WorkerPool';
@@ -9,6 +10,8 @@ import { GraphGenerator } from '../../core/GraphVisualization';
 const ALGORITHM_LIST: AlgorithmType[] = ['Merge Sort', 'Quick Sort', "Dijkstra's Path", "Kruskal's MST"];
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+  const { category, algoId } = useParams();
   const { activeMode, setActiveMode, setIsAnimating, setActiveGraphAlgorithm, setActiveSortingAlgorithm, activeSortingAlgorithm, setCurrentGraph } = useUIStore();
   const [selectedAlgo, setSelectedAlgo] = useState<'dijkstra' | 'kruskal'>('dijkstra');
   const [nodeCount, setNodeCount]       = useState(8);
@@ -113,10 +116,11 @@ export default function Sidebar() {
           <ul className="space-y-1.5">
             {sortingAlgos.map(algo => {
                const isActive = activeSortingAlgorithm === algo;
+               const pathId = algo === 'Quick Sort' ? 'quick-sort' : 'merge-sort';
                return (
                  <li
                    key={algo}
-                   onClick={() => setActiveSortingAlgorithm(algo)}
+                   onClick={() => navigate(`/algo/sorting/${pathId}`)}
                    className={`px-3 py-2 rounded-lg cursor-pointer transition border ${isActive ? 'bg-ice-blue/10 border-ice-blue/30 text-ice-blue' : 'hover:bg-white/5 border-transparent text-slate-300'} text-sm`}
                  >
                    {algo}
@@ -140,10 +144,9 @@ export default function Sidebar() {
           <div className="flex flex-col gap-1">
             <label className="text-xs text-slate-400">Algorithm</label>
             <select
-              value={selectedAlgo}
+              value={algoId === 'kruskal' ? 'kruskal' : 'dijkstra'}
               onChange={e => {
-                setSelectedAlgo(e.target.value as 'dijkstra' | 'kruskal');
-                setActiveGraphAlgorithm(e.target.value === 'dijkstra' ? "Dijkstra's Path" : "Kruskal's MST");
+                navigate(`/algo/graphs/${e.target.value}`);
               }}
               className="bg-white/5 border border-ice-blue/20 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-ice-blue/60"
             >
