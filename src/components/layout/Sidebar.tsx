@@ -11,9 +11,9 @@ const ALGORITHM_LIST: AlgorithmType[] = ['Merge Sort', 'Quick Sort', "Dijkstra's
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const { category, algoId } = useParams();
-  const { activeMode, setActiveMode, setIsAnimating, setActiveGraphAlgorithm, setActiveSortingAlgorithm, activeSortingAlgorithm, setCurrentGraph } = useUIStore();
-  const [selectedAlgo, setSelectedAlgo] = useState<'dijkstra' | 'kruskal'>('dijkstra');
+  const { algoId } = useParams();
+  const { activeMode, setActiveMode, setIsAnimating, activeSortingAlgorithm, setCurrentGraph } = useUIStore();
+  const [selectedAlgo]                  = useState<'dijkstra' | 'kruskal'>('dijkstra');
   const [nodeCount, setNodeCount]       = useState(8);
   const [running, setRunning]           = useState(false);
   const [generating, setGenerating]     = useState(false);
