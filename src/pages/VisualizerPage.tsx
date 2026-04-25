@@ -6,7 +6,7 @@ import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
 import VisualStage from '../components/visualizer/VisualStage';
 import GraphStage from '../components/visualizer/GraphStage';
-import SourceCodeViewer from '../components/hud/SourceCodeViewer';
+import MonacoCodeEditor from '../components/hud/MonacoCodeEditor';
 import EventLog from '../components/hud/EventLog';
 import PlaybackDeck from '../components/controls/PlaybackDeck';
 import AmbientGraph from '../components/background/AmbientGraph';
@@ -89,7 +89,7 @@ export default function VisualizerPage() {
         </div>
 
         <aside className="w-[900px] hidden lg:flex flex-col gap-4 h-full">
-           <SourceCodeViewer />
+           <MonacoCodeEditor />
            <EventLog />
         </aside>
       </div>

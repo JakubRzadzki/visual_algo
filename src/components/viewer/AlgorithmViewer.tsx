@@ -5,8 +5,7 @@ import { findAlgorithm } from '../../data/algorithmCatalog';
 import Sidebar from '../layout/Sidebar';
 import VisualStage from '../visualizer/VisualStage';
 import GraphStage from '../visualizer/GraphStage';
-import CodeSnippet from '../hud/CodeSnippet';
-import SourceCodeViewer from '../hud/SourceCodeViewer';
+import MonacoCodeEditor from '../hud/MonacoCodeEditor';
 import EventLog from '../hud/EventLog';
 import PlaybackDeck from '../controls/PlaybackDeck';
 import type { GraphInput } from '../../types';
@@ -67,10 +66,8 @@ export default function AlgorithmViewer() {
         </div>
 
         <aside className="w-[900px] hidden lg:flex flex-col gap-4 h-full">
-          {/* Source Code Viewer (Step 2) — shows actual .ts implementation */}
-          {id && <SourceCodeViewer />}
-          {/* Original Code Snippet — C++/Python reference */}
-          <CodeSnippet />
+          {/* Monaco Code Editor — Professional IDE with TS/Python/C++ support */}
+          <MonacoCodeEditor />
           <EventLog />
         </aside>
       </div>
