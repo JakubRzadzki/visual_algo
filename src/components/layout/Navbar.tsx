@@ -1,11 +1,11 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
-import { useLocation, Link } from 'react-router-dom';
-import { Menu, Zap } from 'lucide-react';
+import { Menu, Zap, Home } from 'lucide-react';
 
 export default function Navbar() {
   const toggleSidebar = useUIStore(state => state.toggleSidebar);
   const location = useLocation();
+  const navigate = useNavigate();
   const isVisualizer = location.pathname.startsWith('/algo');
 
   return (
@@ -21,7 +21,7 @@ export default function Navbar() {
         </Link>
       </div>
 
-      {isViewerPage && (
+      {isVisualizer && (
         <button
           onClick={() => navigate('/')}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all"

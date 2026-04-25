@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
-import { findAlgorithmById } from '../../data/algorithmCatalog';
+import { findAlgorithm } from '../../data/algorithmCatalog';
 import Sidebar from '../layout/Sidebar';
 import VisualStage from '../visualizer/VisualStage';
 import GraphStage from '../visualizer/GraphStage';
@@ -35,8 +35,8 @@ export default function AlgorithmViewer() {
   useEffect(() => {
     if (!category || !id) return;
 
-    const match = findAlgorithmById(id);
-    if (!match || !match.algo.available) {
+    const match = findAlgorithm(category, id);
+    if (!match || !match.algorithm.available) {
       navigate('/', { replace: true });
       return;
     }
@@ -68,7 +68,7 @@ export default function AlgorithmViewer() {
 
         <aside className="w-[900px] hidden lg:flex flex-col gap-4 h-full">
           {/* Source Code Viewer (Step 2) — shows actual .ts implementation */}
-          {id && <SourceCodeViewer algorithmId={id} />}
+          {id && <SourceCodeViewer />}
           {/* Original Code Snippet — C++/Python reference */}
           <CodeSnippet />
           <EventLog />

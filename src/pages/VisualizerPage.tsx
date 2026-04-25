@@ -54,7 +54,6 @@ export default function VisualizerPage() {
     }
   }, [category, algoId, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveGraphAlgorithm]);
 
-  const found = category && algoId ? findAlgorithm(category, algoId) : null;
 
   return (
     <div className="relative min-h-screen bg-glacier-bg text-slate-200 selection:bg-ice-blue/30 selection:text-ice-blue overflow-hidden cursor-default">
