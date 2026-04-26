@@ -2,8 +2,11 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import Editor, { type Monaco, useMonaco } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { globalEventBus } from '../../core/EventBus';
+import { globalEngine } from '../../core/AnimationEngine';
 import { useUIStore } from '../../store/uiStore';
-import { Copy, Download, Check, Save, ChevronDown } from 'lucide-react';
+import { executeInSandbox, buildExecutionTrace } from '../../services/sandboxApi';
+import { useToast } from './Toast';
+import { Copy, Download, Check, Save, ChevronDown, Play, Loader2 } from 'lucide-react';
 
 // ─── Vite raw imports for real algorithm source files ─────────────────────────
 const modules = import.meta.glob('../../algorithms/source/*.ts', { query: '?raw', import: 'default', eager: true });
@@ -202,6 +205,13 @@ const LANGUAGE_MONACO_IDS: Record<Language, string> = {
   cpp: 'cpp',
 };
 
+/** Map language selector values to the backend's expected language identifiers */
+const LANGUAGE_TO_BACKEND: Record<Language, string> = {
+  typescript: 'typescript',
+  python: 'python',
+  cpp: 'cpp',
+};
+
 // ─── GlacierDark Theme ───────────────────────────────────────────────────────
 function defineGlacierDark(monaco: Monaco) {
   monaco.editor.defineTheme('GlacierDark', {
@@ -288,9 +298,11 @@ export default function MonacoCodeEditor() {
   const [saved, setSaved] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [editorContent, setEditorContent] = useState('');
+  const [isRunning, setIsRunning] = useState(false);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monaco = useMonaco();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { showToast } = useToast();
 
   // Sync algorithm name from global state and event bus
   useEffect(() => {
@@ -361,6 +373,13 @@ export default function MonacoCodeEditor() {
       monaco!.KeyMod.CtrlCmd | monaco!.KeyCode.KeyS,
       () => handleSave()
     );
+
+    // Register Ctrl+Enter / Cmd+Enter run shortcut
+    editor.addCommand(
+      // eslint-disable-next-line no-bitwise
+      monaco!.KeyMod.CtrlCmd | monaco!.KeyCode.Enter,
+      () => handleRunCode()
+    );
   };
 
   const handleCopy = async () => {
@@ -403,10 +422,68 @@ export default function MonacoCodeEditor() {
     editorRef.current?.getAction('editor.action.formatDocument')?.run();
   };
 
+  // ─── Run Code in Sandbox ──────────────────────────────────────────────────
+  const handleRunCode = useCallback(async () => {
+    if (isRunning) return;
+
+    const code = editorRef.current?.getValue() || editorContent;
+    if (!code.trim()) {
+      showToast('Editor is empty', 'error', 'Write some code before running.');
+      return;
+    }
+
+    const backendLang = LANGUAGE_TO_BACKEND[language];
+    setIsRunning(true);
+    const startTime = performance.now();
+
+    try {
+      const response = await executeInSandbox(code, backendLang);
+      const elapsedMs = Math.round(performance.now() - startTime);
+
+      // Check for stderr errors from the sandbox
+      if (response.error && response.error.trim().length > 0) {
+        showToast(
+          'Execution completed with errors',
+          'error',
+          response.error.trim().slice(0, 300),
+        );
+      }
+
+      // Build and load trace if events were produced
+      if (response.trace && response.trace.length > 0) {
+        const trace = buildExecutionTrace(response, algoName, elapsedMs);
+        globalEngine.loadTrace(trace);
+        showToast(
+          `Trace loaded — ${trace.events.length} steps`,
+          'success',
+          `Executed in ${elapsedMs}ms via Docker sandbox`,
+        );
+      } else if (!response.error || response.error.trim().length === 0) {
+        // No trace events and no error — the script ran but produced no events
+        showToast(
+          'No trace events produced',
+          'info',
+          response.output
+            ? `Output: ${response.output.trim().slice(0, 200)}`
+            : 'Your code ran successfully but did not emit any trace JSON events.',
+        );
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      showToast('Sandbox execution failed', 'error', message);
+    } finally {
+      setIsRunning(false);
+    }
+  }, [isRunning, editorContent, language, algoName, showToast]);
+
   return (
     <div
       id="monaco-code-editor"
-      className="flex-1 flex flex-col font-mono text-sm text-slate-300 overflow-hidden rounded-lg border border-ice-blue/10 glass-panel"
+      className={`flex-1 flex flex-col font-mono text-sm text-slate-300 overflow-hidden rounded-lg border glass-panel transition-all duration-300 ${
+        isRunning
+          ? 'border-cyan-400/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]'
+          : 'border-ice-blue/10'
+      }`}
     >
       {/* ── Toolbar ──────────────────────────────────────────────── */}
       <div className="flex justify-between items-center px-4 py-3 border-b border-ice-blue/10 bg-slate-950/60 backdrop-blur-sm">
@@ -423,6 +500,34 @@ export default function MonacoCodeEditor() {
         </div>
 
         <div className="flex items-center gap-1.5">
+          {/* ▶ Run Code Button */}
+          <button
+            id="run-code-btn"
+            onClick={handleRunCode}
+            disabled={isRunning}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
+              isRunning
+                ? 'bg-cyan-500/10 text-cyan-300/60 border border-cyan-500/20 cursor-wait'
+                : 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 text-cyan-300 border border-cyan-500/30 hover:from-cyan-500/30 hover:to-emerald-500/30 hover:text-cyan-200 hover:border-cyan-400/40 hover:shadow-[0_0_12px_rgba(6,182,212,0.2)] active:scale-[0.97]'
+            }`}
+            title="Run code in sandbox (Ctrl+Enter)"
+          >
+            {isRunning ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Running…
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5" style={{ fill: 'currentColor' }} />
+                Run
+              </>
+            )}
+          </button>
+
+          {/* Divider */}
+          <div className="w-px h-5 bg-slate-700/50 mx-1" />
+
           {/* Language Selector Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
@@ -505,7 +610,17 @@ export default function MonacoCodeEditor() {
       </div>
 
       {/* ── Monaco Editor ────────────────────────────────────────── */}
-      <div className="flex-1 overflow-hidden bg-[#0a0e1a]">
+      <div className="flex-1 overflow-hidden bg-[#0a0e1a] relative">
+        {/* Running overlay pulse */}
+        {isRunning && (
+          <div className="absolute inset-0 z-10 pointer-events-none">
+            <div className="absolute inset-0 bg-cyan-400/[0.03] animate-pulse" />
+            <div className="absolute top-3 right-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-cyan-500/20 text-xs text-cyan-300 z-20">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Executing in sandbox…
+            </div>
+          </div>
+        )}
         <Editor
           height="100%"
           language={LANGUAGE_MONACO_IDS[language]}
