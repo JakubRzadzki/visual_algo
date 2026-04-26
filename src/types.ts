@@ -45,6 +45,7 @@ export interface GraphInput {
   nodes: GraphNode[];
   edges: GraphEdge[];
   startNodeId?: string; // for Dijkstra source
+  isDirected?: boolean; // false for Kruskal, true by default
 }
 
 /** Snapshot of all node positions (emitted by GraphLayoutEngine per tick) */

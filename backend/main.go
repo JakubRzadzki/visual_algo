@@ -155,7 +155,7 @@ func executeCode(c *gin.Context) {
 		return
 	}
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.44"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to connect to Docker daemon: " + err.Error()})
 		return
@@ -218,9 +218,9 @@ func executeCode(c *gin.Context) {
 		}
 	case <-statusCh:
 		// Completed successfully
-	case <-time.After(2 * time.Second):
+	case <-time.After(10 * time.Second):
 		// Timeout
-		c.JSON(http.StatusRequestTimeout, gin.H{"error": "Execution timed out (limit: 2s)"})
+		c.JSON(http.StatusRequestTimeout, gin.H{"error": "Execution timed out (limit: 10s)"})
 		return
 	}
 

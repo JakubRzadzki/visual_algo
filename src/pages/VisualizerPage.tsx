@@ -8,7 +8,6 @@ import VisualStage from '../components/visualizer/VisualStage';
 import GraphStage from '../components/visualizer/GraphStage';
 import MonacoCodeEditor from '../components/hud/MonacoCodeEditor';
 import EventLog from '../components/hud/EventLog';
-import PlaybackDeck from '../components/controls/PlaybackDeck';
 import AmbientGraph from '../components/background/AmbientGraph';
 import AriaLiveRegion from '../components/a11y/AriaLiveRegion';
 import { ArrowLeft } from 'lucide-react';
@@ -30,7 +29,7 @@ const DEMO_GRAPH = { nodes: DEMO_NODES, edges: DEMO_EDGES, startNodeId: 'n0' };
 export default function VisualizerPage() {
   const { category, algoId } = useParams<{ category: string; algoId: string }>();
   const navigate = useNavigate();
-  const { isSidebarOpen, activeMode, currentGraph, setActiveMode, setActiveSortingAlgorithm, setActiveGraphAlgorithm } = useUIStore();
+  const { isSidebarOpen, activeMode, currentGraph, activeGraphAlgorithm, setActiveMode, setActiveSortingAlgorithm, setActiveGraphAlgorithm } = useUIStore();
   const graphToDisplay = currentGraph || DEMO_GRAPH;
 
   // Sync the UI store with the route params
@@ -54,6 +53,21 @@ export default function VisualizerPage() {
     }
   }, [category, algoId, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveGraphAlgorithm]);
 
+  // Listen for graph updates from the sandbox
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
+    import('../core/EventBus').then(({ globalEventBus }) => {
+      unsub = globalEventBus.subscribe((e) => {
+        if (e.type === 'TRACE_LOADED' && e.metadata && (e.metadata as any).initialGraph) {
+          useUIStore.getState().setCurrentGraph((e.metadata as any).initialGraph);
+        }
+      });
+    });
+    return () => {
+      if (unsub) unsub();
+    };
+  }, []);
+
 
   return (
     <div className="relative min-h-screen bg-glacier-bg text-slate-200 selection:bg-ice-blue/30 selection:text-ice-blue overflow-hidden cursor-default">
@@ -64,7 +78,7 @@ export default function VisualizerPage() {
 
       <Navbar />
 
-      <div className="pt-20 pb-28 px-6 h-screen w-full flex gap-4 relative z-10 transition-all duration-300">
+      <div className="pt-20 pb-8 px-6 h-screen w-full flex gap-4 relative z-10 transition-all duration-300">
         {/* Back Button + Sidebar */}
         <div className="flex flex-col gap-3">
           <Link
@@ -83,7 +97,7 @@ export default function VisualizerPage() {
         <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated shadow-2xl shadow-ice-blue/5 border border-ice-blue/10">
           {/* Switch between sorting bars and force-directed graph */}
           {activeMode === 'graph'
-            ? <GraphStage nodes={graphToDisplay.nodes} edges={graphToDisplay.edges} />
+            ? <GraphStage nodes={graphToDisplay.nodes} edges={graphToDisplay.edges} isDirected={activeGraphAlgorithm !== "Kruskal's MST"} />
             : <VisualStage />
           }
         </div>
@@ -93,8 +107,6 @@ export default function VisualizerPage() {
            <EventLog />
         </aside>
       </div>
-
-      <PlaybackDeck />
     </div>
   );
 }

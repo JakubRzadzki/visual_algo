@@ -127,21 +127,14 @@ export class CanvasRenderer {
         this.comparisonTimeout = null;
       }
     } else if (event.type === 'ARRAY_COMPARE') {
-      // Highlight compared indices with delay to clear after 150ms
+      // Highlight compared indices
+      this.comparisonIndices.clear();
       const [i, j] = event.indices;
       this.comparisonIndices.add(i);
       this.comparisonIndices.add(j);
-
-      // Clear comparison highlight after a short delay for visual feedback
-      if (this.comparisonTimeout !== null) {
-        clearTimeout(this.comparisonTimeout);
-      }
-      this.comparisonTimeout = window.setTimeout(() => {
-        this.comparisonIndices.clear();
-        this.comparisonTimeout = null;
-      }, 150);
     } else if (event.type === 'ARRAY_SWAP') {
       // Swap array values and animate smoothly
+      this.comparisonIndices.clear();
       const [i, j] = event.indices;
       const temp = this.array[i];
       this.array[i] = this.array[j];
@@ -151,13 +144,11 @@ export class CanvasRenderer {
       this.animateBarValue(i, this.array[i]);
       this.animateBarValue(j, this.array[j]);
 
-      this.comparisonIndices.clear();
-      if (this.comparisonTimeout !== null) {
-        clearTimeout(this.comparisonTimeout);
-        this.comparisonTimeout = null;
-      }
+      this.comparisonIndices.add(i);
+      this.comparisonIndices.add(j);
     } else if (event.type === 'ARRAY_SET') {
       // Set array value and animate smoothly
+      this.comparisonIndices.clear();
       if (event.isReverse && event.previousValue !== undefined) {
         this.array[event.index] = event.previousValue;
       } else {
@@ -165,12 +156,9 @@ export class CanvasRenderer {
       }
 
       this.animateBarValue(event.index, this.array[event.index]);
-      this.comparisonIndices.clear();
-      if (this.comparisonTimeout !== null) {
-        clearTimeout(this.comparisonTimeout);
-        this.comparisonTimeout = null;
-      }
+      this.comparisonIndices.add(event.index);
     } else if (event.type === 'ARRAY_INSERT') {
+      this.comparisonIndices.clear();
       // Insert a new value at specified index, shifting all subsequent indices
       this.array.splice(event.index, 0, event.value);
 
@@ -233,6 +221,14 @@ export class CanvasRenderer {
         if (this.activeAnimationCount > 0) break;
       }
     }
+
+    // If the queue is now empty and no animations are running, clear highlights
+    if (this.eventQueue.length === 0 && this.activeAnimationCount === 0) {
+      if (this.comparisonTimeout !== null) clearTimeout(this.comparisonTimeout);
+      this.comparisonTimeout = window.setTimeout(() => {
+        this.comparisonIndices.clear();
+      }, 500);
+    }
   }
 
   /**
@@ -256,8 +252,11 @@ export class CanvasRenderer {
     // Store start value for interpolation
     const startValue = state.currentValue;
     state.targetValue = targetValue;
-    state.isAnimating = true;
-    this.activeAnimationCount++;
+    
+    if (!state.isAnimating) {
+      state.isAnimating = true;
+      this.activeAnimationCount++;
+    }
 
     // Adaptive duration based on value difference for more natural feel
     const valueDiff = Math.abs(targetValue - startValue);
@@ -308,6 +307,7 @@ export class CanvasRenderer {
     const spacing = (this.width / barCount) * 0.15;
     const maxHeight = this.height * 0.85;
     const baselineY = this.height - 15;
+    const maxVal = Math.max(1, ...this.array, ...Array.from(this.barStates.values()).map(s => s.currentValue));
 
     for (let i = 0; i < barCount; i++) {
       // Get animated value or actual value
@@ -315,7 +315,7 @@ export class CanvasRenderer {
       const displayValue = state?.currentValue ?? this.array[i];
 
       // Calculate bar dimensions
-      const h = Math.max(2, (displayValue / 100) * maxHeight);
+      const h = Math.max(2, (displayValue / maxVal) * maxHeight);
       const x = i * (barWidth + spacing) + spacing / 2;
       const y = baselineY - h;
 
@@ -347,6 +347,21 @@ export class CanvasRenderer {
       this.ctx.strokeStyle = this.lighten(baseColor, 50);
       this.ctx.lineWidth = 1;
       this.ctx.strokeRect(x, y, barWidth, h);
+
+      // Draw pointer arrow if this index is active
+      if (this.comparisonIndices.has(i)) {
+        const arrowSize = Math.min(8, barWidth / 2);
+        this.ctx.fillStyle = '#ef4444'; // Red arrow
+        this.ctx.beginPath();
+        // Point of the arrow
+        this.ctx.moveTo(x + barWidth / 2, baselineY + 2);
+        // Bottom left
+        this.ctx.lineTo(x + barWidth / 2 - arrowSize, baselineY + 2 + arrowSize * 1.5);
+        // Bottom right
+        this.ctx.lineTo(x + barWidth / 2 + arrowSize, baselineY + 2 + arrowSize * 1.5);
+        this.ctx.closePath();
+        this.ctx.fill();
+      }
     }
   }
 

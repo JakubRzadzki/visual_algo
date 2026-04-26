@@ -73,7 +73,20 @@ export function buildExecutionTrace(
   algorithmName: string,
   executionMs: number = 0,
 ): ExecutionTrace {
-  const events: VisualizationEvent[] = (response.trace ?? []).map(
+  const rawTrace = response.trace ?? [];
+  let initialState: number[] | undefined;
+  let initialGraph: any | undefined;
+
+  const filtered = rawTrace.filter((raw) => {
+    if (raw.type === 'INIT') {
+      if (Array.isArray(raw.array)) initialState = raw.array as number[];
+      if (raw.graph) initialGraph = raw.graph;
+      return false; // Don't include INIT in playback events
+    }
+    return true;
+  });
+
+  const events: VisualizationEvent[] = filtered.map(
     (raw, index) => {
       return {
         id: crypto.randomUUID(),
@@ -90,8 +103,10 @@ export function buildExecutionTrace(
     spaceComplexity: 'N/A (sandbox)',
     executionTimeMs: executionMs,
     nodeCount: events.length,
-    initialState: undefined,
-  };
+    initialState,
+    initialGraph,
+  } as any;
 
   return { events, metadata };
 }
+

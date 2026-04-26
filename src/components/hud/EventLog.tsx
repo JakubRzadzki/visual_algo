@@ -42,7 +42,11 @@ export default function EventLog() {
       const msg = formatEvent(e);
       if (msg) {
         setLogs(prev => {
-          const newLogs = [...prev, { id: e.id || crypto.randomUUID(), message: msg }];
+          const generateId = () => (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(7);
+          if (e.type === 'TRACE_LOADED') {
+            return [{ id: e.id || generateId(), message: msg }];
+          }
+          const newLogs = [...prev, { id: e.id || generateId(), message: msg }];
           return newLogs.length > 30 ? newLogs.slice(newLogs.length - 30) : newLogs;
         });
       }

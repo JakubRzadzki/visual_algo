@@ -10,8 +10,6 @@ export default function CytoscapeGraph({
 }) {
   const cyRef = useRef<any>(null);
   const [elements, setElements] = useState<any[]>([]);
-  const highlightedRef = useRef<Set<string>>(new Set());
-  const highlightTimeoutRef = useRef<any>(null);
   const layoutRanRef = useRef(false);
 
   // Convert graph input to Cytoscape elements
@@ -34,6 +32,7 @@ export default function CytoscapeGraph({
         weight: edge.weight,
         label: `${edge.weight}`,
       },
+      classes: (graph.isDirected ?? true) ? 'directed' : 'undirected',
     }));
 
     setElements([...nodeElements, ...edgeElements]);
@@ -48,63 +47,47 @@ export default function CytoscapeGraph({
         const nodeId = event.nodeId;
         if (nodeId && cyRef.current.getElementById(nodeId).length > 0) {
           const node = cyRef.current.getElementById(nodeId);
-          highlightedRef.current.add(nodeId);
-
-          // Animate highlight
+          
           node.animate({
             style: {
-              'background-color': '#10b981', // Emerald for visited
+              'background-color': '#10b981',
               'border-width': 3,
               'border-color': '#34d399',
-            },
-          }, {
-            duration: 200,
-          });
+            }
+          }, { duration: 200 });
 
-          // Clear highlight after delay
-          if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
-          highlightTimeoutRef.current = setTimeout(() => {
-            node.animate({
-              style: {
-                'background-color': '#06b6d4',
-                'border-width': 2,
-                'border-color': '#0891b2',
-              },
-            }, {
-              duration: 300,
-            });
-            highlightedRef.current.delete(nodeId);
-          }, 500);
+          // Nodes in Dijkstra/Kruskal stay highlighted to show they are visited/processed
+          // So no timeout to revert them.
         }
-      } else if (event.type === 'GRAPH_EDGE_HIGHLIGHT') {
+      } else if (event.type === 'GRAPH_EDGE_HIGHLIGHT' || event.type === 'GRAPH_RELAX') {
         const edgeId = event.edgeId;
         if (edgeId && cyRef.current.getElementById(edgeId).length > 0) {
           const edge = cyRef.current.getElementById(edgeId);
-          highlightedRef.current.add(edgeId);
+          
+          const highlightColor = event.type === 'GRAPH_RELAX' ? '#0ea5e9' : (event.accepted ? '#10b981' : '#f59e0b');
 
-          // Animate edge highlight
           edge.animate({
             style: {
-              'line-color': '#f59e0b', // Amber for explored
+              'line-color': highlightColor,
+              'target-arrow-color': highlightColor,
               'width': 3,
-            },
-          }, {
-            duration: 200,
-          });
+            }
+          }, { duration: 200 });
 
-          // Clear highlight after delay
-          if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
-          highlightTimeoutRef.current = setTimeout(() => {
-            edge.animate({
-              style: {
-                'line-color': '#64748b',
-                'width': 2,
-              },
-            }, {
-              duration: 300,
-            });
-            highlightedRef.current.delete(edgeId);
-          }, 500);
+          // Only revert if it's an exploration that was rejected or just a transient visit
+          const isPermanent = event.type === 'GRAPH_RELAX' || (event.type === 'GRAPH_EDGE_HIGHLIGHT' && event.accepted === true);
+          if (!isPermanent) {
+            setTimeout(() => {
+              if (!cyRef.current || cyRef.current.destroyed()) return;
+              edge.animate({
+                style: {
+                  'line-color': '#64748b',
+                  'target-arrow-color': '#64748b',
+                  'width': 2,
+                }
+              }, { duration: 300 });
+            }, 500);
+          }
         }
       }
     });
@@ -120,7 +103,7 @@ export default function CytoscapeGraph({
 
     const layout = cyRef.current.layout({
       name: 'cose',
-      directed: true,
+      directed: graph.isDirected ?? true,
       animate: true,
       animationDuration: 600,
       nodeDimensionsIncludeLabels: true,
@@ -138,7 +121,9 @@ export default function CytoscapeGraph({
     } as any);
 
     layout.run();
-  }, [elements]);
+  }, [elements, graph.isDirected]);
+
+
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -165,8 +150,6 @@ export default function CytoscapeGraph({
               'font-weight': 'bold',
               'border-width': 2,
               'border-color': '#0891b2',
-              'transition-property': 'background-color, border-color, width, height',
-              'transition-duration': '0.3s',
             } as any,
           },
           {
@@ -180,7 +163,6 @@ export default function CytoscapeGraph({
           {
             selector: 'edge',
             style: {
-              'target-arrow-shape': 'triangle',
               'target-arrow-color': '#64748b',
               'line-color': '#64748b',
               'width': 2,
@@ -191,8 +173,52 @@ export default function CytoscapeGraph({
               'text-background-color': '#1e293b',
               'text-background-opacity': 0.8,
               'text-background-padding': '2px',
-              'transition-property': 'line-color, width, target-arrow-color',
-              'transition-duration': '0.3s',
+              'arrow-scale': 1.5,
+            } as any,
+          },
+          {
+            selector: 'edge.directed',
+            style: {
+              'target-arrow-shape': 'triangle',
+            } as any,
+          },
+          {
+            selector: 'edge.undirected',
+            style: {
+              'target-arrow-shape': 'none',
+            } as any,
+          },
+          // Highlight classes
+          {
+            selector: 'node.highlight-visited',
+            style: {
+              'background-color': '#10b981',
+              'border-width': 3,
+              'border-color': '#34d399',
+            } as any,
+          },
+          {
+            selector: 'edge.highlight-relax',
+            style: {
+              'line-color': '#0ea5e9',
+              'target-arrow-color': '#0ea5e9',
+              'width': 3,
+            } as any,
+          },
+          {
+            selector: 'edge.highlight-accept',
+            style: {
+              'line-color': '#10b981',
+              'target-arrow-color': '#10b981',
+              'width': 3,
+            } as any,
+          },
+          {
+            selector: 'edge.highlight-reject',
+            style: {
+              'line-color': '#f59e0b',
+              'target-arrow-color': '#f59e0b',
+              'width': 3,
             } as any,
           },
         ]}

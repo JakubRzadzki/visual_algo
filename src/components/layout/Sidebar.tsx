@@ -142,7 +142,7 @@ export default function Sidebar() {
       {/* ── Graph Section ── */}
       {activeMode === 'graph' && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">📊 Graph Algorithms</h2>
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Graph Algorithms</h2>
 
           {/* Algorithm picker */}
           <div className="flex flex-col gap-1">
@@ -154,8 +154,12 @@ export default function Sidebar() {
               }}
               className="bg-white/5 border border-ice-blue/20 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-ice-blue/60"
             >
-              <option value="dijkstra">Dijkstra — Shortest Path</option>
-              <option value="kruskal">Kruskal — Minimum Spanning Tree</option>
+              <optgroup label="Directed Graphs">
+                <option value="dijkstra">Dijkstra — Shortest Path</option>
+              </optgroup>
+              <optgroup label="Undirected Graphs">
+                <option value="kruskal">Kruskal — Minimum Spanning Tree</option>
+              </optgroup>
             </select>
           </div>
 
@@ -202,7 +206,7 @@ export default function Sidebar() {
                   : 'bg-sky-600/30 border border-sky-600/40 text-sky-300 hover:bg-sky-600/40 shadow-lg shadow-sky-600/10 active:scale-95'
               }`}
             >
-              {generating ? '⏳ Gen…' : `📊 Generate`}
+              {generating ? 'Generating...' : `Generate`}
             </button>
             <button
               onClick={handleRun}
@@ -213,7 +217,7 @@ export default function Sidebar() {
                   : 'bg-emerald-600/30 border border-emerald-600/40 text-emerald-300 hover:bg-emerald-600/40 shadow-lg shadow-emerald-600/10 active:scale-95'
               }`}
             >
-              {running ? '⏳ Running…' : `▶ Run`}
+              {running ? 'Running...' : `Run`}
             </button>
           </div>
 
@@ -224,8 +228,8 @@ export default function Sidebar() {
 
           {/* Graph info */}
           <div className="mt-1 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300 space-y-1">
-            <div>🎨 Cytoscape.js Visualization</div>
-            <div>✨ Force-Directed Layout</div>
+            <div>Cytoscape.js Visualization</div>
+            <div>Force-Directed Layout</div>
           </div>
         </section>
       )}

@@ -7,7 +7,6 @@ import VisualStage from '../visualizer/VisualStage';
 import GraphStage from '../visualizer/GraphStage';
 import MonacoCodeEditor from '../hud/MonacoCodeEditor';
 import EventLog from '../hud/EventLog';
-import PlaybackDeck from '../controls/PlaybackDeck';
 import type { GraphInput } from '../../types';
 
 // Demo graph nodes / edges — will be replaced when user generates a new graph
@@ -21,16 +20,14 @@ const DEMO_EDGES = DEMO_NODES.map((_, i) => ({
 const DEMO_GRAPH: GraphInput = { nodes: DEMO_NODES, edges: DEMO_EDGES, startNodeId: 'n0' };
 
 /**
- * AlgorithmViewer — the main visualisation page, routed at /algo/:category/:id
- * This was extracted from the original App.tsx layout so routing could be added.
+ * AlgorithmViewer
  */
 export default function AlgorithmViewer() {
   const { category, id } = useParams<{ category: string; id: string }>();
   const navigate = useNavigate();
-  const { isSidebarOpen, activeMode, currentGraph, setActiveMode, setActiveSortingAlgorithm, setActiveGraphAlgorithm } = useUIStore();
+  const { isSidebarOpen, activeMode, currentGraph, activeGraphAlgorithm, setActiveMode, setActiveSortingAlgorithm, setActiveGraphAlgorithm } = useUIStore();
   const graphToDisplay = currentGraph || DEMO_GRAPH;
 
-  // Sync route params with store
   useEffect(() => {
     if (!category || !id) return;
 
@@ -40,7 +37,6 @@ export default function AlgorithmViewer() {
       return;
     }
 
-    // Set the correct mode and algorithm based on route
     if (category === 'sorting') {
       setActiveMode('sorting');
       if (id === 'merge-sort') setActiveSortingAlgorithm('Merge Sort');
@@ -53,26 +49,20 @@ export default function AlgorithmViewer() {
   }, [category, id, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveGraphAlgorithm]);
 
   return (
-    <>
-      <div className="pt-20 pb-28 px-6 h-screen w-full flex gap-4 relative z-10 transition-all duration-300">
-        {isSidebarOpen && <Sidebar />}
+    <div className="pt-20 pb-8 px-6 h-screen w-full flex gap-4 relative z-10 transition-all duration-300">
+      {isSidebarOpen && <Sidebar />}
 
-        <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated shadow-2xl shadow-ice-blue/5 border border-ice-blue/10">
-          {/* Switch between sorting bars and force-directed graph */}
-          {activeMode === 'graph'
-            ? <GraphStage nodes={graphToDisplay.nodes} edges={graphToDisplay.edges} />
-            : <VisualStage />
-          }
-        </div>
-
-        <aside className="w-[900px] hidden lg:flex flex-col gap-4 h-full">
-          {/* Monaco Code Editor — Professional IDE with TS/Python/C++ support */}
-          <MonacoCodeEditor />
-          <EventLog />
-        </aside>
+      <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated shadow-2xl shadow-ice-blue/5 border border-ice-blue/10">
+        {activeMode === 'graph'
+          ? <GraphStage nodes={graphToDisplay.nodes} edges={graphToDisplay.edges} isDirected={activeGraphAlgorithm !== "Kruskal's MST"} />
+          : <VisualStage />
+        }
       </div>
 
-      <PlaybackDeck />
-    </>
+      <aside className="w-[900px] hidden lg:flex flex-col gap-4 h-full">
+        <MonacoCodeEditor />
+        <EventLog />
+      </aside>
+    </div>
   );
 }

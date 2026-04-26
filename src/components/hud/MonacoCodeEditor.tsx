@@ -9,205 +9,24 @@ import { useToast } from './Toast';
 import { Copy, Download, Check, Save, ChevronDown, Play, Loader2 } from 'lucide-react';
 
 // ─── Vite raw imports for real algorithm source files ─────────────────────────
-const modules = import.meta.glob('../../algorithms/source/*.ts', { query: '?raw', import: 'default', eager: true });
-
-// ─── Reference implementations in C++ and Python ─────────────────────────────
-const REFERENCE_CODE: Record<string, { cpp: string; python: string }> = {
-  'Merge Sort': {
-    cpp: `#include <vector>
-using namespace std;
-
-void merge(vector<int>& arr, int l, int m, int r) {
-  int n1 = m - l + 1, n2 = r - m;
-  vector<int> left(arr.begin() + l, arr.begin() + m + 1);
-  vector<int> right(arr.begin() + m + 1, arr.begin() + r + 1);
-  int i = 0, j = 0, k = l;
-  while (i < n1 && j < n2) {
-    arr[k++] = (left[i] <= right[j]) ? left[i++] : right[j++];
-  }
-  while (i < n1) arr[k++] = left[i++];
-  while (j < n2) arr[k++] = right[j++];
-}
-
-void mergeSort(vector<int>& arr, int left, int right) {
-  if (left < right) {
-    int mid = left + (right - left) / 2;
-    mergeSort(arr, left, mid);
-    mergeSort(arr, mid + 1, right);
-    merge(arr, left, mid, right);
-  }
-}`,
-    python: `def merge(arr, l, m, r):
-    left = arr[l:m+1]
-    right = arr[m+1:r+1]
-    i = j = 0
-    k = l
-    while i < len(left) and j < len(right):
-        if left[i] <= right[j]:
-            arr[k] = left[i]
-            i += 1
-        else:
-            arr[k] = right[j]
-            j += 1
-        k += 1
-    arr[k:] = left[i:] + right[j:]
-
-def merge_sort(arr, left, right):
-    if left < right:
-        mid = (left + right) // 2
-        merge_sort(arr, left, mid)
-        merge_sort(arr, mid + 1, right)
-        merge(arr, left, mid, right)`,
-  },
-  'Quick Sort': {
-    cpp: `#include <algorithm>
-#include <vector>
-using namespace std;
-
-int partition(vector<int>& arr, int low, int high) {
-  int pivot = arr[high];
-  int i = low - 1;
-  for (int j = low; j < high; j++) {
-    if (arr[j] < pivot) {
-      i++;
-      swap(arr[i], arr[j]);
-    }
-  }
-  swap(arr[i + 1], arr[high]);
-  return i + 1;
-}
-
-void quickSort(vector<int>& arr, int low, int high) {
-  if (low < high) {
-    int pi = partition(arr, low, high);
-    quickSort(arr, low, pi - 1);
-    quickSort(arr, pi + 1, high);
-  }
-}`,
-    python: `def partition(arr, low, high):
-    pivot = arr[high]
-    i = low - 1
-    for j in range(low, high):
-        if arr[j] < pivot:
-            i += 1
-            arr[i], arr[j] = arr[j], arr[i]
-    arr[i + 1], arr[high] = arr[high], arr[i + 1]
-    return i + 1
-
-def quick_sort(arr, low, high):
-    if low < high:
-        pi = partition(arr, low, high)
-        quick_sort(arr, low, pi - 1)
-        quick_sort(arr, pi + 1, high)`,
-  },
-  "Dijkstra's Path": {
-    cpp: `#include <queue>
-#include <climits>
-#include <vector>
-using namespace std;
-
-void dijkstra(int src, vector<vector<pair<int,int>>>& graph) {
-  int n = graph.size();
-  vector<int> dist(n, INT_MAX);
-  priority_queue<pair<int,int>,
-    vector<pair<int,int>>,
-    greater<pair<int,int>>> pq;
-  dist[src] = 0;
-  pq.push({0, src});
-  while (!pq.empty()) {
-    auto [d, u] = pq.top();
-    pq.pop();
-    if (d > dist[u]) continue;
-    for (auto [v, w] : graph[u]) {
-      if (dist[u] + w < dist[v]) {
-        dist[v] = dist[u] + w;
-        pq.push({dist[v], v});
-      }
-    }
-  }
-}`,
-    python: `import heapq
-
-def dijkstra(src, graph):
-    n = len(graph)
-    dist = [float("inf")] * n
-    dist[src] = 0
-    pq = [(0, src)]
-    while pq:
-        d, u = heapq.heappop(pq)
-        if d > dist[u]:
-            continue
-        for v, w in graph[u]:
-            if dist[u] + w < dist[v]:
-                dist[v] = dist[u] + w
-                heapq.heappush(pq, (dist[v], v))
-    return dist`,
-  },
-  "Kruskal's MST": {
-    cpp: `#include <algorithm>
-#include <numeric>
-#include <vector>
-using namespace std;
-
-struct Edge { int u, v, w; };
-bool cmp(Edge a, Edge b) { return a.w < b.w; }
-
-int find(vector<int>& parent, int x) {
-  if (parent[x] != x)
-    parent[x] = find(parent, parent[x]);
-  return parent[x];
-}
-
-void kruskal(vector<Edge>& edges, int n) {
-  sort(edges.begin(), edges.end(), cmp);
-  vector<int> parent(n);
-  iota(parent.begin(), parent.end(), 0);
-  int mst_weight = 0;
-  for (auto& e : edges) {
-    int pu = find(parent, e.u);
-    int pv = find(parent, e.v);
-    if (pu != pv) {
-      parent[pu] = pv;
-      mst_weight += e.w;
-    }
-  }
-}`,
-    python: `def find(parent, x):
-    if parent[x] != x:
-        parent[x] = find(parent, parent[x])
-    return parent[x]
-
-def kruskal(edges, n):
-    edges.sort(key=lambda x: x[2])
-    parent = list(range(n))
-    mst_weight = 0
-    for u, v, w in edges:
-        pu, pv = find(parent, u), find(parent, v)
-        if pu != pv:
-            parent[pu] = pv
-            mst_weight += w
-    return mst_weight`,
-  },
-};
+const pyModules = import.meta.glob('../../algorithms/python/*.py', { query: '?raw', import: 'default', eager: true });
+const cppModules = import.meta.glob('../../algorithms/cpp/*.cpp', { query: '?raw', import: 'default', eager: true });
 
 // ─── Language config ──────────────────────────────────────────────────────────
-type Language = 'typescript' | 'python' | 'cpp';
+type Language = 'python' | 'cpp';
 
 const LANGUAGE_LABELS: Record<Language, string> = {
-  typescript: 'TypeScript',
   python: 'Python',
   cpp: 'C++',
 };
 
 const LANGUAGE_MONACO_IDS: Record<Language, string> = {
-  typescript: 'typescript',
   python: 'python',
   cpp: 'cpp',
 };
 
 /** Map language selector values to the backend's expected language identifiers */
 const LANGUAGE_TO_BACKEND: Record<Language, string> = {
-  typescript: 'typescript',
   python: 'python',
   cpp: 'cpp',
 };
@@ -291,9 +110,10 @@ export default function MonacoCodeEditor() {
   const globalAlgo = useUIStore(state =>
     state.activeMode === 'sorting' ? state.activeSortingAlgorithm : state.activeGraphAlgorithm
   );
+  const setIsAnimating = useUIStore(state => state.setIsAnimating);
 
   const [algoName, setAlgoName] = useState<string>(globalAlgo);
-  const [language, setLanguage] = useState<Language>('typescript');
+  const [language, setLanguage] = useState<Language>('python');
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
@@ -331,21 +151,20 @@ export default function MonacoCodeEditor() {
 
   // Resolve source code based on language and algorithm
   const getSourceCode = useCallback((): string => {
-    if (language === 'typescript') {
-      // Map algorithm name to filename
-      const algoIdToFilename: Record<string, string> = {
-        'Merge Sort': 'merge-sort.ts',
-        'Quick Sort': 'quick-sort.ts',
-        "Dijkstra's Path": 'dijkstra.ts',
-        "Kruskal's MST": 'kruskal.ts',
-      };
-      const filename = algoIdToFilename[algoName] || 'merge-sort.ts';
-      return (modules[`../../algorithms/source/${filename}`] as string) || '// Source file not found';
-    }
+    const algoIdToFilename: Record<string, string> = {
+      'Merge Sort': 'merge-sort',
+      'Quick Sort': 'quick-sort',
+      "Dijkstra's Path": 'dijkstra',
+      "Kruskal's MST": 'kruskal',
+    };
+    const filename = algoIdToFilename[algoName] || 'merge-sort';
 
-    // C++ / Python reference code
-    const langKey = language === 'cpp' ? 'cpp' : 'python';
-    return REFERENCE_CODE[algoName]?.[langKey] || '// No reference code available';
+    if (language === 'python') {
+      return (pyModules[`../../algorithms/python/${filename}.py`] as string) || '# Source file not found';
+    } else if (language === 'cpp') {
+      return (cppModules[`../../algorithms/cpp/${filename}.cpp`] as string) || '// Source file not found';
+    }
+    return '';
   }, [language, algoName]);
 
   // Update editor content whenever language or algorithm changes
@@ -357,6 +176,45 @@ export default function MonacoCodeEditor() {
     setEditorContent(code);
   }, [language, algoName, getSourceCode]);
 
+  // Sync the array in the editor to the visualization canvas directly
+  useEffect(() => {
+    if (globalAlgo !== 'Merge Sort' && globalAlgo !== 'Quick Sort') return;
+    
+    const timeout = setTimeout(() => {
+      let match = null;
+      if (language === 'python') {
+        const regex = /arr\s*=\s*\[([\d\s,]+)\]/;
+        match = editorContent.match(regex);
+      } else if (language === 'cpp') {
+        const regex = /std::vector<int>\s+arr\s*=\s*\{([\d\s,]+)\};/;
+        match = editorContent.match(regex);
+      }
+      
+      if (match && match[1]) {
+        const arr = match[1].split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
+        if (arr.length > 0) {
+          const generateId = () => (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(7);
+          globalEventBus.emit({
+            id: generateId(),
+            timestamp: Date.now(),
+            step: 0,
+            type: 'TRACE_LOADED',
+            metadata: {
+              algorithmName: globalAlgo,
+              initialState: arr,
+              timeComplexity: 'N/A',
+              spaceComplexity: 'N/A',
+              executionTimeMs: 0,
+              nodeCount: 0
+            }
+          } as any);
+        }
+      }
+    }, 500);
+    
+    return () => clearTimeout(timeout);
+  }, [editorContent, language, globalAlgo]);
+
   // Define theme once Monaco is ready
   useEffect(() => {
     if (monaco) {
@@ -364,20 +222,20 @@ export default function MonacoCodeEditor() {
     }
   }, [monaco]);
 
-  const handleEditorMount = (editor: editor.IStandaloneCodeEditor) => {
+  const handleEditorMount = (editor: editor.IStandaloneCodeEditor, monacoInstance: Monaco) => {
     editorRef.current = editor;
 
     // Register Ctrl+S / Cmd+S save shortcut
     editor.addCommand(
       // eslint-disable-next-line no-bitwise
-      monaco!.KeyMod.CtrlCmd | monaco!.KeyCode.KeyS,
+      monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS,
       () => handleSave()
     );
 
     // Register Ctrl+Enter / Cmd+Enter run shortcut
     editor.addCommand(
       // eslint-disable-next-line no-bitwise
-      monaco!.KeyMod.CtrlCmd | monaco!.KeyCode.Enter,
+      monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
       () => handleRunCode()
     );
   };
@@ -395,7 +253,7 @@ export default function MonacoCodeEditor() {
 
   const handleDownload = () => {
     const code = editorRef.current?.getValue() || editorContent;
-    const ext = language === 'typescript' ? '.ts' : language === 'python' ? '.py' : '.cpp';
+    const ext = language === 'python' ? '.py' : '.cpp';
     const safeAlgoName = algoName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
     const filename = `${safeAlgoName}${ext}`;
 
@@ -453,6 +311,10 @@ export default function MonacoCodeEditor() {
       if (response.trace && response.trace.length > 0) {
         const trace = buildExecutionTrace(response, algoName, elapsedMs);
         globalEngine.loadTrace(trace);
+        globalEngine.setSpeed(1.0);
+        setIsAnimating(true);
+        globalEngine.play();
+        
         showToast(
           `Trace loaded — ${trace.events.length} steps`,
           'success',
@@ -479,14 +341,14 @@ export default function MonacoCodeEditor() {
   return (
     <div
       id="monaco-code-editor"
-      className={`flex-1 flex flex-col font-mono text-sm text-slate-300 overflow-hidden rounded-lg border glass-panel transition-all duration-300 ${
+      className={`flex-1 flex flex-col font-mono text-sm text-slate-300 rounded-lg border glass-panel transition-all duration-300 ${
         isRunning
           ? 'border-cyan-400/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]'
           : 'border-ice-blue/10'
       }`}
     >
       {/* ── Toolbar ──────────────────────────────────────────────── */}
-      <div className="flex justify-between items-center px-4 py-3 border-b border-ice-blue/10 bg-slate-950/60 backdrop-blur-sm">
+      <div className="relative z-[100] flex justify-between items-center px-4 py-3 border-b border-ice-blue/10 bg-slate-950/60 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           {/* IDE icon + title */}
           <div className="flex items-center gap-2">
@@ -586,6 +448,23 @@ export default function MonacoCodeEditor() {
             {saved ? 'Saved' : 'Save'}
           </button>
 
+          {/* Reset button */}
+          <button
+            id="reset-code-btn"
+            onClick={() => {
+              if (confirm('Are you sure you want to reset the code to the default template? This will erase your changes.')) {
+                const storageKey = `monaco-editor-${algoName}-${language}`;
+                localStorage.removeItem(storageKey);
+                setEditorContent(getSourceCode());
+                showToast('Code reset', 'info', 'Restored default algorithm template.');
+              }
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-red-400 hover:bg-red-400/5 transition-all duration-200"
+            title="Reset to default template"
+          >
+            Reset
+          </button>
+
           {/* Copy button */}
           <button
             id="copy-code-btn"
@@ -610,7 +489,7 @@ export default function MonacoCodeEditor() {
       </div>
 
       {/* ── Monaco Editor ────────────────────────────────────────── */}
-      <div className="flex-1 overflow-hidden bg-[#0a0e1a] relative">
+      <div className="flex-1 overflow-hidden rounded-b-lg bg-[#0a0e1a] relative z-0">
         {/* Running overlay pulse */}
         {isRunning && (
           <div className="absolute inset-0 z-10 pointer-events-none">
