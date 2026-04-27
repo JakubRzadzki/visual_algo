@@ -125,6 +125,14 @@ export function getAllAlgorithms() {
  */
 export function findAlgorithmByName(name: string) {
   const all = getAllAlgorithms();
-  const match = all.find(a => a.algorithm.name === name);
+  // Try exact match first
+  let match = all.find(a => a.algorithm.name === name);
+  
+  // Fallback for legacy snapshot names (e.g., "Dijkstra's Path" -> "Dijkstra's Shortest Path")
+  if (!match) {
+    if (name.includes('Dijkstra')) match = all.find(a => a.algorithm.id === 'dijkstra');
+    else if (name.includes('Kruskal')) match = all.find(a => a.algorithm.id === 'kruskal');
+    else match = all.find(a => a.algorithm.name.includes(name) || name.includes(a.algorithm.name));
+  }
   return match || null;
 }
