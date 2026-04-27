@@ -119,3 +119,12 @@ export function getAllAlgorithms() {
     cat.algorithms.map(algo => ({ category: cat, algorithm: algo }))
   );
 }
+
+/**
+ * Looks up an algorithm by its full name (e.g., "Dijkstra's Path" or "Merge Sort")
+ */
+export function findAlgorithmByName(name: string) {
+  const all = getAllAlgorithms();
+  const match = all.find(a => a.algorithm.name === name);
+  return match || null;
+}
