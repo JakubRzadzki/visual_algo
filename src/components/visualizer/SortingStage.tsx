@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { VisualizationEvent } from '../../types';
+import type { VisualizationEvent } from '../../types';
 import { motion } from 'motion/react';
 
 interface SortingStageProps {
