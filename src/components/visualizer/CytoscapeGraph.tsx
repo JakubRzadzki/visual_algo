@@ -32,7 +32,6 @@ export default function CytoscapeGraph({
         weight: edge.weight,
         label: `${edge.weight}`,
       },
-      classes: (graph.isDirected ?? true) ? 'directed' : 'undirected',
     }));
 
     setElements([...nodeElements, ...edgeElements]);
@@ -174,18 +173,7 @@ export default function CytoscapeGraph({
               'text-background-opacity': 0.8,
               'text-background-padding': '2px',
               'arrow-scale': 1.5,
-            } as any,
-          },
-          {
-            selector: 'edge.directed',
-            style: {
-              'target-arrow-shape': 'triangle',
-            } as any,
-          },
-          {
-            selector: 'edge.undirected',
-            style: {
-              'target-arrow-shape': 'none',
+              'target-arrow-shape': (graph.isDirected ?? true) ? 'triangle' : 'none',
             } as any,
           },
           // Highlight classes
