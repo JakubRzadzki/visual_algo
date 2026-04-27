@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { VisualizationEvent } from '../../types';
+import { motion } from 'motion/react';
 
 interface SortingStageProps {
   array: number[];
@@ -32,25 +33,29 @@ export const SortingStage: React.FC<SortingStageProps> = ({ array, activeEvent }
           return (
             <div key={index} className="flex flex-col items-center justify-end h-full">
               {/* The visual bar */}
-              <div
-                className={`w-12 rounded-t-md transition-all duration-300 flex items-end justify-center pb-2 text-white font-semibold text-sm ${
+              <motion.div
+                layout
+                className={`w-12 rounded-t-md transition-colors duration-300 flex items-end justify-center pb-2 text-white font-semibold text-sm ${
                   hasPointer ? 'bg-orange-500' : 'bg-blue-500'
                 }`}
                 style={{ height: `${heightPercent}%` }}
               >
                 {value}
-              </div>
+              </motion.div>
               
               {/* Pointer area below the bar */}
               <div className="h-10 w-full flex flex-col items-center justify-start mt-2">
-                {hasPointer && (
-                  <div className="flex flex-col items-center">
-                    {/* Upwards pointing triangle */}
+                {isPointerI && (
+                  <motion.div layoutId="pointer-i" className="flex flex-col items-center">
                     <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-orange-500 mb-1"></div>
-                    <span className="text-orange-500 font-bold text-xs uppercase">
-                      {isPointerI ? 'i' : 'j'}
-                    </span>
-                  </div>
+                    <span className="text-orange-500 font-bold text-xs uppercase">i</span>
+                  </motion.div>
+                )}
+                {isPointerJ && !isPointerI && (
+                  <motion.div layoutId="pointer-j" className="flex flex-col items-center">
+                    <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-orange-500 mb-1"></div>
+                    <span className="text-orange-500 font-bold text-xs uppercase">j</span>
+                  </motion.div>
                 )}
               </div>
             </div>
