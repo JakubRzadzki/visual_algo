@@ -13,7 +13,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { algoId } = useParams();
   const { activeMode, setActiveMode, setIsAnimating, activeSortingAlgorithm, setCurrentGraph } = useUIStore();
-  const [selectedAlgo]                  = useState<'dijkstra' | 'kruskal'>('dijkstra');
+  const selectedAlgo = (algoId === 'kruskal' ? 'kruskal' : 'dijkstra') as 'dijkstra' | 'kruskal';
   const [nodeCount, setNodeCount]       = useState(8);
   const [running, setRunning]           = useState(false);
   const [generating, setGenerating]     = useState(false);
