@@ -5,6 +5,7 @@ import './index.css'
 import Dashboard from './components/dashboard/Dashboard'
 import VisualizerPage from './pages/VisualizerPage'
 import { ToastProvider } from './components/hud/Toast'
+import ShareLoader from './pages/ShareLoader'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/algo/:category/:algoId" element={<VisualizerPage />} />
+          <Route path="/share/:snapshotId" element={<ShareLoader />} />
         </Routes>
       </ToastProvider>
     </BrowserRouter>
