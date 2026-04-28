@@ -6,6 +6,7 @@ import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
 import VisualStage from '../components/visualizer/VisualStage';
 import GraphStage from '../components/visualizer/GraphStage';
+import GridStage from '../components/visualizer/GridStage';
 import MonacoCodeEditor from '../components/hud/MonacoCodeEditor';
 import EventLog from '../components/hud/EventLog';
 import AmbientGraph from '../components/background/AmbientGraph';
@@ -95,9 +96,11 @@ export default function VisualizerPage() {
         </div>
 
         <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated shadow-2xl shadow-ice-blue/5 border border-ice-blue/10">
-          {/* Switch between sorting bars and force-directed graph */}
+          {/* Switch between sorting bars, force-directed graph, and css grid */}
           {activeMode === 'graph'
             ? <GraphStage nodes={graphToDisplay.nodes} edges={graphToDisplay.edges} isDirected={activeGraphAlgorithm !== "Kruskal's MST"} />
+            : activeMode === 'grid'
+            ? <GridStage />
             : <VisualStage />
           }
         </div>

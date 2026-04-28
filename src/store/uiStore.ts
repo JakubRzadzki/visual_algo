@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import type { VisualizationData, GraphInput } from '../types';
 
-export type AlgorithmType = 'Merge Sort' | 'Quick Sort' | "Dijkstra's Path" | "Kruskal's MST";
-type ActiveMode = 'sorting' | 'graph';
+export type AlgorithmType = 'Merge Sort' | 'Quick Sort' | "Dijkstra's Path" | "Kruskal's MST" | "A* Pathfinding" | "BFS Pathfinding";
+type ActiveMode = 'sorting' | 'graph' | 'grid';
 
 interface UIState {
   theme: 'glacier';
@@ -13,6 +13,7 @@ interface UIState {
   activeCategory: string; // 'A' through 'F' or catalog id
   activeSortingAlgorithm: 'Merge Sort' | 'Quick Sort';
   activeGraphAlgorithm: "Dijkstra's Path" | "Kruskal's MST";
+  activeGridAlgorithm: "A* Pathfinding" | "BFS Pathfinding";
   activeMode: ActiveMode;   // which visualisation stage is shown
   isAnimating: boolean;     // true while engine is playing back a trace
   
@@ -29,6 +30,7 @@ interface UIState {
   setActiveCategory: (cat: string) => void;
   setActiveSortingAlgorithm: (algo: 'Merge Sort' | 'Quick Sort') => void;
   setActiveGraphAlgorithm: (algo: "Dijkstra's Path" | "Kruskal's MST") => void;
+  setActiveGridAlgorithm: (algo: "A* Pathfinding" | "BFS Pathfinding") => void;
   setActiveMode: (mode: ActiveMode) => void;
   setIsAnimating: (v: boolean) => void;
   
@@ -48,6 +50,7 @@ export const useUIStore = create<UIState>((set) => ({
   activeCategory: 'sorting',
   activeSortingAlgorithm: 'Merge Sort',
   activeGraphAlgorithm: "Dijkstra's Path",
+  activeGridAlgorithm: "A* Pathfinding",
   activeMode: 'sorting',
   isAnimating: false,
   
@@ -64,6 +67,7 @@ export const useUIStore = create<UIState>((set) => ({
   setActiveCategory: (cat) => set({ activeCategory: cat }),
   setActiveSortingAlgorithm: (algo) => set({ activeSortingAlgorithm: algo }),
   setActiveGraphAlgorithm: (algo) => set({ activeGraphAlgorithm: algo }),
+  setActiveGridAlgorithm: (algo) => set({ activeGridAlgorithm: algo }),
   setActiveMode: (mode) => set({ activeMode: mode }),
   setIsAnimating: (v) => set({ isAnimating: v }),
   
