@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useUIStore } from '../store/uiStore';
 import { findAlgorithm } from '../data/algorithmCatalog';
+import { globalEventBus } from '../core/EventBus';
 import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
 import VisualStage from '../components/visualizer/VisualStage';
@@ -12,7 +13,7 @@ import EventLog from '../components/hud/EventLog';
 import AmbientGraph from '../components/background/AmbientGraph';
 import AriaLiveRegion from '../components/a11y/AriaLiveRegion';
 import { ArrowLeft } from 'lucide-react';
-import type { GraphNode } from '../types';
+import type { GraphNode, GraphInput } from '../types';
 
 // Demo graph nodes / edges — will be replaced when user generates a new graph
 const DEMO_NODES: GraphNode[] = Array.from({ length: 8 }, (_, i) => ({
@@ -56,17 +57,12 @@ export default function VisualizerPage() {
 
   // Listen for graph updates from the sandbox
   useEffect(() => {
-    let unsub: (() => void) | undefined;
-    import('../core/EventBus').then(({ globalEventBus }) => {
-      unsub = globalEventBus.subscribe((e) => {
-        if (e.type === 'TRACE_LOADED' && e.metadata && (e.metadata as any).initialGraph) {
-          useUIStore.getState().setCurrentGraph((e.metadata as any).initialGraph);
-        }
-      });
+    const unsub = globalEventBus.subscribe((e) => {
+      if (e.type === 'TRACE_LOADED' && e.metadata && e.metadata.initialGraph) {
+        useUIStore.getState().setCurrentGraph(e.metadata.initialGraph as GraphInput);
+      }
     });
-    return () => {
-      if (unsub) unsub();
-    };
+    return () => unsub();
   }, []);
 
 

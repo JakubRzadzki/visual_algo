@@ -33,7 +33,7 @@ export async function executeInSandbox(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, language }),
     });
-  } catch (networkErr) {
+  } catch {
     throw new Error(
       'Network error — is the backend running? Check Docker Compose is up.',
     );
@@ -75,12 +75,12 @@ export function buildExecutionTrace(
 ): ExecutionTrace {
   const rawTrace = response.trace ?? [];
   let initialState: number[] | undefined;
-  let initialGraph: any | undefined;
+  let initialGraph: Record<string, unknown> | undefined;
 
   const filtered = rawTrace.filter((raw) => {
     if (raw.type === 'INIT') {
       if (Array.isArray(raw.array)) initialState = raw.array as number[];
-      if (raw.graph) initialGraph = raw.graph;
+      if (raw.graph) initialGraph = raw.graph as Record<string, unknown>;
       return false; // Don't include INIT in playback events
     }
     return true;
@@ -105,7 +105,7 @@ export function buildExecutionTrace(
     nodeCount: events.length,
     initialState,
     initialGraph,
-  } as any;
+  } as TraceMetadata;
 
   return { events, metadata };
 }

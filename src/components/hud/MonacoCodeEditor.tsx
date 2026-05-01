@@ -227,14 +227,14 @@ export default function MonacoCodeEditor() {
 
     // Register Ctrl+S / Cmd+S save shortcut
     editor.addCommand(
-      // eslint-disable-next-line no-bitwise
+       
       monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS,
       () => handleSave()
     );
 
     // Register Ctrl+Enter / Cmd+Enter run shortcut
     editor.addCommand(
-      // eslint-disable-next-line no-bitwise
+       
       monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
       () => handleRunCode()
     );

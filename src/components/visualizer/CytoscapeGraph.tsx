@@ -1,22 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import CytoscapeComponent from 'react-cytoscapejs';
+import cytoscape from 'cytoscape';
 import { globalEventBus } from '../../core/EventBus';
-import type { GraphInput } from '../../types';
+import type { GraphInput, GraphNode, GraphEdge, VisualizationEvent } from '../../types';
 
 export default function CytoscapeGraph({ 
   graph
 }: { 
   graph: GraphInput;
 }) {
-  const cyRef = useRef<any>(null);
-  const [elements, setElements] = useState<any[]>([]);
+  const cyRef = useRef<cytoscape.Core | null>(null);
+  const [elements, setElements] = useState<cytoscape.ElementDefinition[]>([]);
   const layoutRanRef = useRef(false);
 
   // Convert graph input to Cytoscape elements
   useEffect(() => {
     layoutRanRef.current = false;
     
-    const nodeElements = graph.nodes.map((node: any) => ({
+    const nodeElements = graph.nodes.map((node: GraphNode) => ({
       data: {
         id: node.id,
         label: node.label,
@@ -24,7 +25,7 @@ export default function CytoscapeGraph({
       position: { x: node.x, y: node.y },
     }));
 
-    const edgeElements = graph.edges.map((edge: any) => ({
+    const edgeElements = graph.edges.map((edge: GraphEdge) => ({
       data: {
         id: edge.id,
         source: edge.from,
@@ -39,7 +40,7 @@ export default function CytoscapeGraph({
 
   // Handle visualization events (highlighting during algorithm execution)
   useEffect(() => {
-    const unsubscribe = globalEventBus.subscribe((event: any) => {
+    const unsubscribe = globalEventBus.subscribe((event: VisualizationEvent) => {
       if (!cyRef.current) return;
 
       if (event.type === 'GRAPH_NODE_HIGHLIGHT') {
@@ -118,7 +119,7 @@ export default function CytoscapeGraph({
       numIter: 3000,
       initialTemp: 300,
       minTemp: 0.5,
-    } as any);
+    } as cytoscape.LayoutOptions);
 
     layout.run();
   }, [elements, graph.isDirected]);
@@ -150,7 +151,7 @@ export default function CytoscapeGraph({
               'font-weight': 'bold',
               'border-width': 2,
               'border-color': '#0891b2',
-            } as any,
+            } as cytoscape.Css.Node,
           },
           {
             selector: 'node:selected',
@@ -158,7 +159,7 @@ export default function CytoscapeGraph({
               'background-color': '#0891b2',
               'border-width': 3,
               'border-color': '#06b6d4',
-            } as any,
+            } as cytoscape.Css.Node,
           },
           {
             selector: 'edge',
@@ -175,7 +176,7 @@ export default function CytoscapeGraph({
               'text-background-padding': '2px',
               'arrow-scale': 1.5,
               'target-arrow-shape': (graph.isDirected ?? true) ? 'triangle' : 'none',
-            } as any,
+            } as cytoscape.Css.Edge,
           },
           // Highlight classes
           {
@@ -184,7 +185,7 @@ export default function CytoscapeGraph({
               'background-color': '#10b981',
               'border-width': 3,
               'border-color': '#34d399',
-            } as any,
+            } as cytoscape.Css.Node,
           },
           {
             selector: 'edge.highlight-relax',
@@ -192,7 +193,7 @@ export default function CytoscapeGraph({
               'line-color': '#0ea5e9',
               'target-arrow-color': '#0ea5e9',
               'width': 3,
-            } as any,
+            } as cytoscape.Css.Edge,
           },
           {
             selector: 'edge.highlight-accept',
@@ -200,7 +201,7 @@ export default function CytoscapeGraph({
               'line-color': '#10b981',
               'target-arrow-color': '#10b981',
               'width': 3,
-            } as any,
+            } as cytoscape.Css.Edge,
           },
           {
             selector: 'edge.highlight-reject',
@@ -208,10 +209,10 @@ export default function CytoscapeGraph({
               'line-color': '#f59e0b',
               'target-arrow-color': '#f59e0b',
               'width': 3,
-            } as any,
+            } as cytoscape.Css.Edge,
           },
         ]}
-        cy={(cy: any) => {
+        cy={(cy: cytoscape.Core) => {
           cyRef.current = cy;
         }}
       />

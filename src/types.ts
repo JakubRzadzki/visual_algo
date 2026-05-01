@@ -18,7 +18,7 @@ export type EventPayload =
 
 export type VisualizationEvent = BaseEvent & EventPayload;
 
-export type TraceMetadata = { timeComplexity: string; spaceComplexity: string; executionTimeMs: number; nodeCount: number; algorithmName: string; initialState?: any };
+export type TraceMetadata = { timeComplexity: string; spaceComplexity: string; executionTimeMs: number; nodeCount: number; algorithmName: string; initialState?: number[]; initialGraph?: GraphInput };
 
 // ─── Graph Domain Types ───────────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ export type VisualizationData = GraphInput | ArrayInput | GridInput | MatrixInpu
 export interface ExecutionTrace { events: VisualizationEvent[]; metadata: TraceMetadata; }
 
 /** Plugin Abstraction for deterministic algorithm generation */
-export interface AlgorithmPlugin<InputShape = any> {
+export interface AlgorithmPlugin<InputShape = unknown> {
   id: string; // e.g., 'merge-sort'
   name: string; // e.g., 'Merge Sort'
   category: 'sorting' | 'graph' | 'tree' | 'dp';

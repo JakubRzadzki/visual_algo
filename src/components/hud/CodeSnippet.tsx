@@ -202,7 +202,7 @@ const COLORS = {
 // Tokenize and render code with proper React elements instead of dangerouslySetInnerHTML
 function tokenizeLine(line: string, lang: 'cpp' | 'python'): React.ReactNode[] {
   const colors = syntaxColors[lang];
-  let result: React.ReactNode[] = [];
+  const result: React.ReactNode[] = [];
   let remaining = line;
   let tokenId = 0;
 
