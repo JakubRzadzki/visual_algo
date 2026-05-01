@@ -5,6 +5,7 @@ import AriaLiveRegion from './components/a11y/AriaLiveRegion';
 import Dashboard from './components/dashboard/Dashboard';
 import AlgorithmViewer from './components/viewer/AlgorithmViewer';
 import { ToastProvider } from './components/hud/Toast';
+import ShareLoader from './pages/ShareLoader';
 
 export default function App() {
   return (
@@ -22,6 +23,8 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           {/* Algorithm Viewer — full visualisation workspace */}
           <Route path="/algo/:category/:id" element={<AlgorithmViewer />} />
+          {/* Shared Snapshot Loader */}
+          <Route path="/share/:snapshotId" element={<ShareLoader />} />
         </Routes>
       </div>
     </ToastProvider>

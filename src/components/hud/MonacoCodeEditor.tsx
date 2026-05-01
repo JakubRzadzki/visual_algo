@@ -4,9 +4,9 @@ import type { editor } from 'monaco-editor';
 import { globalEventBus } from '../../core/EventBus';
 import { globalEngine } from '../../core/AnimationEngine';
 import { useUIStore } from '../../store/uiStore';
-import { executeInSandbox, buildExecutionTrace } from '../../services/sandboxApi';
+import { executeInSandbox, buildExecutionTrace, saveSnapshot } from '../../services/sandboxApi';
 import { useToast } from './Toast';
-import { Copy, Download, Check, Save, ChevronDown, Play, Loader2 } from 'lucide-react';
+import { Copy, Download, Check, Save, ChevronDown, Play, Loader2, Share2 } from 'lucide-react';
 
 // ─── Vite raw imports for real algorithm source files ─────────────────────────
 const pyModules = import.meta.glob('../../algorithms/python/*.py', { query: '?raw', import: 'default', eager: true });
@@ -111,6 +111,7 @@ export default function MonacoCodeEditor() {
     state.activeMode === 'sorting' ? state.activeSortingAlgorithm : state.activeGraphAlgorithm
   );
   const setIsAnimating = useUIStore(state => state.setIsAnimating);
+  const currentGraph = useUIStore(state => state.currentGraph);
 
   const [algoName, setAlgoName] = useState<string>(globalAlgo);
   const [language, setLanguage] = useState<Language>('python');
@@ -119,6 +120,7 @@ export default function MonacoCodeEditor() {
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [editorContent, setEditorContent] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monaco = useMonaco();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -274,6 +276,29 @@ export default function MonacoCodeEditor() {
 
   const handleFormat = () => {
     editorRef.current?.getAction('editor.action.formatDocument')?.run();
+  };
+
+  const handleShare = async () => {
+    if (isSharing) return;
+    const code = editorRef.current?.getValue() || editorContent;
+    
+    setIsSharing(true);
+    try {
+      const payload = {
+        globalAlgo,
+        language,
+        code,
+        currentGraph
+      };
+      const id = await saveSnapshot(payload);
+      const url = `${window.location.origin}/share/${id}`;
+      await navigator.clipboard.writeText(url);
+      showToast('Link copied to clipboard!', 'success', 'You can now share this visualization.');
+    } catch (err) {
+      showToast('Failed to share', 'error', err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   // ─── Run Code in Sandbox ──────────────────────────────────────────────────
@@ -480,6 +505,18 @@ export default function MonacoCodeEditor() {
             title="Download file"
           >
             <Download className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Share button */}
+          <button
+            id="share-code-btn"
+            onClick={handleShare}
+            disabled={isSharing}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-purple-400 hover:bg-purple-400/5 transition-all duration-200"
+            title="Share visualization"
+          >
+            {isSharing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
+            Share
           </button>
         </div>
       </div>

@@ -110,3 +110,41 @@ export function buildExecutionTrace(
   return { events, metadata };
 }
 
+// ─── Persistence Subsystem (Step 4) ───────────────────────────────────────────
+
+const API_SNAPSHOTS_URL = '/api/snapshots';
+
+/**
+ * Saves a visualization snapshot to the backend.
+ * @param payload - The snapshot data (graph, code, language, algorithm)
+ * @returns The generated UUID link for sharing
+ */
+export async function saveSnapshot(payload: Record<string, unknown>): Promise<string> {
+  const res = await fetch(API_SNAPSHOTS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to save snapshot: HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.id;
+}
+
+/**
+ * Retrieves a visualization snapshot from the backend.
+ * @param id - The UUID of the snapshot
+ * @returns The parsed snapshot data
+ */
+export async function getSnapshot(id: string): Promise<Record<string, unknown>> {
+  const res = await fetch(`${API_SNAPSHOTS_URL}/${id}`);
+
+  if (!res.ok) {
+    throw new Error(`Failed to load snapshot: HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
