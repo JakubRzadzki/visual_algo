@@ -22,6 +22,7 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error('useToast must be used within a <ToastProvider>');
@@ -60,8 +61,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   // Cleanup timers on unmount
   useEffect(() => {
+    const timers = timersRef.current;
     return () => {
-      timersRef.current.forEach((timer) => clearTimeout(timer));
+      timers.forEach((timer) => clearTimeout(timer));
     };
   }, []);
 

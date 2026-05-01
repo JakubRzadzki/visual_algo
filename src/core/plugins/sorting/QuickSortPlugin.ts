@@ -17,7 +17,7 @@ export class QuickSortPlugin implements AlgorithmPlugin<number[]> {
         id: crypto.randomUUID(),
         timestamp: performance.now(),
         step: step++
-      } as any);
+      } as VisualizationEvent);
     };
 
     // Helper function to swap two elements in the array and record the event

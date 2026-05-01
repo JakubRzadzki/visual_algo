@@ -12,7 +12,7 @@ import { DijkstraPlugin } from '../plugins/graph/DijkstraPlugin';
 import { KruskalPlugin } from '../plugins/graph/KruskalPlugin';
 
 // Registry: algorithm id → plugin instance
-const PLUGINS: Record<string, { execute: (d: any) => any }> = {
+const PLUGINS: Record<string, { execute: (d: unknown) => unknown }> = {
   dijkstra: new DijkstraPlugin(),
   kruskal:  new KruskalPlugin(),
 };

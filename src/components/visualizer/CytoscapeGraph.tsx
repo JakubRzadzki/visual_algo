@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import CytoscapeComponent from 'react-cytoscapejs';
 import cytoscape from 'cytoscape';
 import { globalEventBus } from '../../core/EventBus';
@@ -10,18 +10,10 @@ export default function CytoscapeGraph({
   graph: GraphInput;
 }) {
   const cyRef = useRef<cytoscape.Core | null>(null);
-  const [elements, setElements] = useState<cytoscape.ElementDefinition[]>([]);
   const layoutRanRef = useRef(false);
-
-  // Convert graph input to Cytoscape elements
-  useEffect(() => {
-    layoutRanRef.current = false;
-    
+  const elements = useMemo(() => {
     const nodeElements = graph.nodes.map((node: GraphNode) => ({
-      data: {
-        id: node.id,
-        label: node.label,
-      },
+      data: { id: node.id, label: node.label },
       position: { x: node.x, y: node.y },
     }));
 
@@ -35,7 +27,11 @@ export default function CytoscapeGraph({
       },
     }));
 
-    setElements([...nodeElements, ...edgeElements]);
+    return [...nodeElements, ...edgeElements];
+  }, [graph]);
+
+  useEffect(() => {
+    layoutRanRef.current = false;
   }, [graph]);
 
   // Handle visualization events (highlighting during algorithm execution)

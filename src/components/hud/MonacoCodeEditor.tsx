@@ -357,7 +357,7 @@ export default function MonacoCodeEditor() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, editorContent, language, algoName, showToast]);
+  }, [isRunning, editorContent, language, algoName, showToast, setIsAnimating]);
 
   return (
     <div

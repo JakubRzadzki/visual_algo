@@ -15,9 +15,8 @@ export class MergeSortPlugin implements AlgorithmPlugin<number[]> {
       events.push({
         ...event,
         id: crypto.randomUUID(),
-        timestamp: performance.now(),
         step: step++
-      } as any);
+      } as VisualizationEvent);
     };
 
     // Merges two subarrays of arr[]

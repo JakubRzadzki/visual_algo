@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import type { GraphInput } from '../types';
 import { getSnapshot } from '../services/sandboxApi';
 import { useUIStore } from '../store/uiStore';
 import { findAlgorithmByName } from '../data/algorithmCatalog';
@@ -33,7 +34,7 @@ export default function ShareLoader() {
 
         // Restore graph if present
         if (data.currentGraph) {
-          setCurrentGraph(data.currentGraph as any);
+          setCurrentGraph(data.currentGraph as GraphInput);
         }
 
         // Restore code to localStorage for MonacoCodeEditor

@@ -168,7 +168,7 @@ export default function Sidebar() {
             <label className="text-xs text-slate-400">Graph Type</label>
             <select
               value={graphType}
-              onChange={e => setGraphType(e.target.value as any)}
+              onChange={e => setGraphType(e.target.value as 'random' | 'complete' | 'sparse' | 'tree' | 'grid' | 'scalefree')}
               className="bg-white/5 border border-ice-blue/20 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-ice-blue/60"
             >
               <option value="random">Random (Erdős–Rényi)</option>

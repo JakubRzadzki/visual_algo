@@ -7,7 +7,7 @@ const mockId = '00000000-0000-0000-0000-000000000000';
 if (typeof crypto === 'undefined') {
   global.crypto = {
     randomUUID: () => mockId,
-  } as any;
+  } as unknown as Crypto;
 } else {
   crypto.randomUUID = () => mockId;
 }
@@ -15,7 +15,7 @@ if (typeof crypto === 'undefined') {
 if (typeof performance === 'undefined') {
   global.performance = {
     now: () => 0,
-  } as any;
+  } as unknown as Performance;
 } else {
   performance.now = () => 0;
 }

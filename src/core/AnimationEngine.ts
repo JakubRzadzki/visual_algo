@@ -1,4 +1,4 @@
-import type { ExecutionTrace, AlgorithmPlugin } from '../types';
+import type { ExecutionTrace, AlgorithmPlugin, VisualizationEvent } from '../types';
 import { globalEventBus } from './EventBus';
 
 /**
@@ -310,7 +310,7 @@ export class AnimationEngine {
       totalSteps: this.currentTrace ? this.currentTrace.events.length : 0,
       speed: this.playbackSpeed,
       deltaTime: 16, // Approximate ms per frame at 60fps
-    } as any);
+    } as VisualizationEvent);
   }
 
   /**
@@ -347,7 +347,7 @@ export class AnimationEngine {
       type: 'ANIMATION_FRAME',
       deltaTime,
       speed: this.playbackSpeed,
-    } as any);
+    } as VisualizationEvent);
 
     // Continue loop if still playing
     if (this.isPlaying) {

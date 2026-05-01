@@ -27,7 +27,7 @@ export default function GridStage() {
   const [drawMode, setDrawMode] = useState<'wall' | 'empty'>('wall'); // Are we placing walls or erasing them?
 
   // Prevent modifying start and end nodes
-  const isModifiable = (index: number) => index !== START_INDEX && index !== END_INDEX;
+  const isModifiable = useCallback((index: number) => index !== START_INDEX && index !== END_INDEX, [START_INDEX, END_INDEX]);
 
   const handleMouseDown = useCallback((index: number) => {
     if (!isModifiable(index)) return;
@@ -42,7 +42,7 @@ export default function GridStage() {
       newCells[index] = newDrawMode;
       return newCells;
     });
-  }, [cells]);
+  }, [cells, isModifiable]);
 
   const handleMouseEnter = useCallback((index: number) => {
     if (!isMouseDown || !isModifiable(index)) return;
@@ -53,7 +53,7 @@ export default function GridStage() {
       newCells[index] = drawMode;
       return newCells;
     });
-  }, [isMouseDown, drawMode]);
+  }, [isMouseDown, drawMode, isModifiable]);
 
   const handleMouseUp = useCallback(() => {
     setIsMouseDown(false);

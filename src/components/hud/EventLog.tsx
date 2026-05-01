@@ -17,9 +17,10 @@ export default function EventLog() {
   useEffect(() => {
     const formatEvent = (e: VisualizationEvent): React.ReactNode | null => {
       switch (e.type) {
-        case 'SYSTEM_LOG':
+        case 'SYSTEM_LOG': {
           const color = e.level === 'ERROR' ? 'text-red-400' : e.level === 'WARN' ? 'text-yellow-400' : 'text-green-400';
           return <span className={color}>[SYS] {e.message}</span>;
+        }
         case 'ARRAY_COMPARE':
           return <span className="text-slate-400">[ACT] Compared elements at index {e.indices[0]} and {e.indices[1]}</span>;
         case 'ARRAY_SWAP':
