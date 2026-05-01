@@ -11,6 +11,12 @@ export type EventPayload =
   | { type: "GRAPH_EDGE_HIGHLIGHT"; edgeId: string; accepted?: boolean }
   | { type: "GRAPH_NODE_MOVE"; nodeId: string; x: number; y: number }
   | { type: "TREE_ROTATE"; pivotId: string; direction: "LEFT" | "RIGHT" }
+  | { type: "MATRIX_CELL_UPDATE"; row: number; col: number; value: number; dependencies?: [number, number][] }
+  | { type: "MATRIX_CELL_HIGHLIGHT"; row: number; col: number; color?: string }
+  | { type: "SEARCH_CHECK"; index: number; value: number; target: number }
+  | { type: "SEARCH_FOUND"; index: number; value: number }
+  | { type: "SEARCH_NOT_FOUND"; target: number }
+  | { type: "SEARCH_NARROW"; left: number; right: number; mid: number }
   | { type: "SYSTEM_LOG"; message: string; level: "INFO" | "WARN" | "ERROR" }
   | { type: "SYSTEM_PLAYBACK_STATE"; isPlaying: boolean; currentStep: number; totalSteps: number; speed: number; deltaTime?: number }
   | { type: "TRACE_LOADED"; metadata: TraceMetadata }
@@ -79,7 +85,7 @@ export interface ExecutionTrace { events: VisualizationEvent[]; metadata: TraceM
 export interface AlgorithmPlugin<InputShape = unknown> {
   id: string; // e.g., 'merge-sort'
   name: string; // e.g., 'Merge Sort'
-  category: 'sorting' | 'graph' | 'tree' | 'dp';
+  category: 'sorting' | 'searching' | 'graph' | 'tree' | 'dp';
   execute(data: InputShape): ExecutionTrace;
 }
 

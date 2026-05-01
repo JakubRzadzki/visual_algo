@@ -7,14 +7,23 @@
  * the worker boundary already isolates memory from the main thread.
  */
 
-import type { WorkerMessage, WorkerResponse } from '../../types';
+import type { WorkerMessage, WorkerResponse, AlgorithmPlugin } from '../../types';
 import { DijkstraPlugin } from '../plugins/graph/DijkstraPlugin';
 import { KruskalPlugin } from '../plugins/graph/KruskalPlugin';
+import { BFSPlugin } from '../plugins/graph/BFSPlugin';
+import { DFSPlugin } from '../plugins/graph/DFSPlugin';
+import { PrimPlugin } from '../plugins/graph/PrimPlugin';
+import { TopoSortPlugin } from '../plugins/graph/TopoSortPlugin';
 
 // Registry: algorithm id → plugin instance
-const PLUGINS: Record<string, { execute: (d: unknown) => unknown }> = {
-  dijkstra: new DijkstraPlugin(),
-  kruskal:  new KruskalPlugin(),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
+  dijkstra:    new DijkstraPlugin(),
+  kruskal:     new KruskalPlugin(),
+  bfs:         new BFSPlugin(),
+  dfs:         new DFSPlugin(),
+  prim:        new PrimPlugin(),
+  'topo-sort': new TopoSortPlugin(),
 };
 
 // Listen for tasks from the WorkerPool

@@ -34,8 +34,8 @@ export const ALGORITHM_CATALOG: CategoryEntry[] = [
     algorithms: [
       { id: 'merge-sort',  name: 'Merge Sort',  shortName: 'Merge',  description: 'Divide-and-conquer comparison sort',         timeComplexity: 'O(n log n)', spaceComplexity: 'O(n)',     available: true },
       { id: 'quick-sort',  name: 'Quick Sort',  shortName: 'Quick',  description: 'In-place partitioning sort',                 timeComplexity: 'O(n log n)', spaceComplexity: 'O(log n)', available: true },
-      { id: 'bubble-sort', name: 'Bubble Sort', shortName: 'Bubble', description: 'Simple comparison-based sort',                timeComplexity: 'O(n²)',      spaceComplexity: 'O(1)',     available: false },
-      { id: 'heap-sort',   name: 'Heap Sort',   shortName: 'Heap',   description: 'Binary heap based comparison sort',           timeComplexity: 'O(n log n)', spaceComplexity: 'O(1)',     available: false },
+      { id: 'bubble-sort', name: 'Bubble Sort', shortName: 'Bubble', description: 'Simple comparison-based sort',                timeComplexity: 'O(n²)',      spaceComplexity: 'O(1)',     available: true },
+      { id: 'heap-sort',   name: 'Heap Sort',   shortName: 'Heap',   description: 'Binary heap based comparison sort',           timeComplexity: 'O(n log n)', spaceComplexity: 'O(1)',     available: true },
     ],
   },
   {
@@ -46,8 +46,8 @@ export const ALGORITHM_CATALOG: CategoryEntry[] = [
     borderColor: 'border-violet-500/30',
     glowColor: 'shadow-violet-500/10',
     algorithms: [
-      { id: 'binary-search', name: 'Binary Search', shortName: 'Binary', description: 'Efficient sorted-array search',          timeComplexity: 'O(log n)', spaceComplexity: 'O(1)', available: false },
-      { id: 'linear-search', name: 'Linear Search', shortName: 'Linear', description: 'Sequential element-by-element scan',    timeComplexity: 'O(n)',     spaceComplexity: 'O(1)', available: false },
+      { id: 'binary-search', name: 'Binary Search', shortName: 'Binary', description: 'Efficient sorted-array search',          timeComplexity: 'O(log n)', spaceComplexity: 'O(1)', available: true },
+      { id: 'linear-search', name: 'Linear Search', shortName: 'Linear', description: 'Sequential element-by-element scan',    timeComplexity: 'O(n)',     spaceComplexity: 'O(1)', available: true },
     ],
   },
   {
@@ -60,10 +60,10 @@ export const ALGORITHM_CATALOG: CategoryEntry[] = [
     algorithms: [
       { id: 'dijkstra',  name: "Dijkstra's Shortest Path", shortName: 'Dijkstra', description: 'Single-source shortest path with priority queue', timeComplexity: 'O((V+E) log V)', spaceComplexity: 'O(V)', available: true },
       { id: 'kruskal',   name: "Kruskal's MST",            shortName: 'Kruskal',  description: 'Minimum spanning tree via edge sorting',          timeComplexity: 'O(E log E)',      spaceComplexity: 'O(V)', available: true },
-      { id: 'bfs',       name: 'Breadth-First Search',     shortName: 'BFS',      description: 'Level-order graph traversal',                     timeComplexity: 'O(V + E)',        spaceComplexity: 'O(V)', available: false },
-      { id: 'dfs',       name: 'Depth-First Search',       shortName: 'DFS',      description: 'Stack-based deep graph traversal',                timeComplexity: 'O(V + E)',        spaceComplexity: 'O(V)', available: false },
-      { id: 'prim',      name: "Prim's MST",               shortName: 'Prim',     description: 'Minimum spanning tree via vertex growth',         timeComplexity: 'O((V+E) log V)', spaceComplexity: 'O(V)', available: false },
-      { id: 'topo-sort', name: 'Topological Sort',         shortName: 'TopoSort', description: 'DAG linear ordering',                             timeComplexity: 'O(V + E)',        spaceComplexity: 'O(V)', available: false },
+      { id: 'bfs',       name: 'Breadth-First Search',     shortName: 'BFS',      description: 'Level-order graph traversal',                     timeComplexity: 'O(V + E)',        spaceComplexity: 'O(V)', available: true },
+      { id: 'dfs',       name: 'Depth-First Search',       shortName: 'DFS',      description: 'Stack-based deep graph traversal',                timeComplexity: 'O(V + E)',        spaceComplexity: 'O(V)', available: true },
+      { id: 'prim',      name: "Prim's MST",               shortName: 'Prim',     description: 'Minimum spanning tree via vertex growth',         timeComplexity: 'O((V+E) log V)', spaceComplexity: 'O(V)', available: true },
+      { id: 'topo-sort', name: 'Topological Sort',         shortName: 'TopoSort', description: 'DAG linear ordering',                             timeComplexity: 'O(V + E)',        spaceComplexity: 'O(V)', available: true },
     ],
   },
   {
