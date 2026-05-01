@@ -186,28 +186,24 @@ export default function MonacoCodeEditor() {
         const regex = /arr\s*=\s*\[([\d\s,]+)\]/;
         match = editorContent.match(regex);
       } else if (language === 'cpp') {
-        const regex = /std::vector<int>\s+arr\s*=\s*\{([\d\s,]+)\};/;
+        const regex = /(?:std::)?vector<int>\s+arr\s*=\s*\{([\d\s,]+)\};/;
         match = editorContent.match(regex);
       }
       
       if (match && match[1]) {
         const arr = match[1].split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
         if (arr.length > 0) {
-          const generateId = () => (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(7);
-          globalEventBus.emit({
-            id: generateId(),
-            timestamp: Date.now(),
-            step: 0,
-            type: 'TRACE_LOADED',
+          globalEngine.loadTrace({
+            events: [],
             metadata: {
               algorithmName: globalAlgo,
               initialState: arr,
               timeComplexity: 'N/A',
               spaceComplexity: 'N/A',
               executionTimeMs: 0,
-              nodeCount: 0
+              nodeCount: arr.length
             }
-          } as any);
+          });
         }
       }
     }, 500);

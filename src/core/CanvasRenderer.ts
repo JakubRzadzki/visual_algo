@@ -101,6 +101,19 @@ export class CanvasRenderer {
    * Queues events that occur during animations to prevent interruptions
    */
   private handleEvent = (event: VisualizationEvent) => {
+    // TRACE_LOADED should always be applied immediately to prevent getting stuck
+    if (event.type === 'TRACE_LOADED') {
+      this.eventQueue = [];
+      for (const state of this.barStates.values()) {
+        if (state.animationId) {
+          globalEngine.cancelAnimation(state.animationId);
+        }
+      }
+      this.activeAnimationCount = 0;
+      this.processEvent(event);
+      return;
+    }
+
     // If animations are active, queue the event instead of applying it immediately
     if (this.activeAnimationCount > 0) {
       this.eventQueue.push({ event, timestamp: performance.now() });
