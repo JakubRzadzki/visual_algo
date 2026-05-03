@@ -1,12 +1,29 @@
-import type { AlgorithmPlugin, ExecutionTrace, EventPayload, VisualizationEvent } from '../../../types';
+/**
+ * @file BubbleSortPlugin.ts
+ * @description Plugin for the Bubble Sort algorithm.
+ * 
+ * Implements the classic sink-sort algorithm with O(n²) time complexity.
+ * Emits comparison and swap events for visualization.
+ */
 
-export class BubbleSortPlugin implements AlgorithmPlugin<number[]> {
+import type { AlgorithmPlugin, ExecutionTrace, EventPayload, VisualizationEvent, ArrayInput } from '../../../types';
+
+/**
+ * BubbleSortPlugin — Implements the Bubble Sort algorithm.
+ */
+export class BubbleSortPlugin implements AlgorithmPlugin<ArrayInput> {
   id = 'bubble-sort';
   name = 'Bubble Sort';
   category = 'sorting' as const;
 
-  execute(data: number[]): ExecutionTrace {
-    const arr = [...data];
+  /**
+   * Executes the Bubble Sort algorithm on the input array.
+   * 
+   * @param input - The input data containing the array values.
+   * @returns An ExecutionTrace with comparison and swap events.
+   */
+  execute(input: ArrayInput): ExecutionTrace {
+    const arr = [...input.values];
     const events: VisualizationEvent[] = [];
     let step = 0;
     const startTime = performance.now();
@@ -22,25 +39,32 @@ export class BubbleSortPlugin implements AlgorithmPlugin<number[]> {
 
     const n = arr.length;
 
-    // Classic Bubble Sort with early-exit optimization
+    // Phase: Outer pass loop
     for (let i = 0; i < n - 1; i++) {
       let swapped = false;
 
+      // Phase: Inner comparison loop
       for (let j = 0; j < n - i - 1; j++) {
-        // Compare adjacent elements
+        // Record comparison event
         pushEvent({ type: 'ARRAY_COMPARE', indices: [j, j + 1] });
 
         if (arr[j] > arr[j + 1]) {
-          // Swap if they are in the wrong order
+          // Perform swap logic
           const temp = arr[j];
           arr[j] = arr[j + 1];
           arr[j + 1] = temp;
-          pushEvent({ type: 'ARRAY_SWAP', indices: [j, j + 1], values: [arr[j], arr[j + 1]] });
+          
+          // Record swap event
+          pushEvent({ 
+            type: 'ARRAY_SWAP', 
+            indices: [j, j + 1], 
+            values: [arr[j], arr[j + 1]] 
+          });
           swapped = true;
         }
       }
 
-      // If no swaps occurred in this pass, the array is already sorted
+      // Early exit if no swaps occurred (array already sorted)
       if (!swapped) break;
     }
 
@@ -54,7 +78,7 @@ export class BubbleSortPlugin implements AlgorithmPlugin<number[]> {
         executionTimeMs: endTime - startTime,
         nodeCount: arr.length,
         algorithmName: this.name,
-        initialState: [...data]
+        initialState: [...input.values]
       }
     };
   }

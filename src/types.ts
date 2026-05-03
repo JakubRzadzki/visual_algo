@@ -7,8 +7,8 @@ export type EventPayload =
   | { type: "ARRAY_INSERT"; index: number; value: number }
   | { type: "ARRAY_REMOVE"; index: number; value: number }
   | { type: "GRAPH_RELAX"; edgeId: string; weight: number }
-  | { type: "GRAPH_NODE_HIGHLIGHT"; nodeId: string; distance?: number }
-  | { type: "GRAPH_EDGE_HIGHLIGHT"; edgeId: string; accepted?: boolean }
+  | { type: "GRAPH_NODE_HIGHLIGHT"; nodeId: string; distance?: number; status?: string }
+  | { type: "GRAPH_EDGE_HIGHLIGHT"; edgeId: string; accepted?: boolean; status?: string }
   | { type: "GRAPH_NODE_MOVE"; nodeId: string; x: number; y: number }
   | { type: "TREE_ROTATE"; pivotId: string; direction: "LEFT" | "RIGHT" }
   | { type: "MATRIX_CELL_UPDATE"; row: number; col: number; value: number; dependencies?: [number, number][] }
@@ -95,7 +95,7 @@ export interface AlgorithmPlugin<InputShape = unknown> {
 export interface WorkerMessage {
   taskId: string;           // unique id to match request → response
   algorithmId: string;      // e.g. 'dijkstra' | 'kruskal'
-  payload: GraphInput;      // serialised graph input
+  payload: any;             // serialized input data (GraphInput, ArrayInput, etc.)
 }
 
 /** Response sent FROM a worker BACK to the main thread */

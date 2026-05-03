@@ -1,10 +1,28 @@
+/**
+ * @file PrimPlugin.ts
+ * @description Plugin for Prim's Minimum Spanning Tree (MST) algorithm.
+ * 
+ * Grows the MST from a starting node by greedily adding the cheapest edge.
+ * Time Complexity: O((V + E) log V)
+ * Space Complexity: O(V)
+ */
+
 import type { AlgorithmPlugin, ExecutionTrace, GraphInput, VisualizationEvent, EventPayload } from '../../../types';
 
+/**
+ * PrimPlugin — Implements Prim's MST algorithm.
+ */
 export class PrimPlugin implements AlgorithmPlugin<GraphInput> {
   id = 'prim';
   name = "Prim's MST";
   category = 'graph' as const;
 
+  /**
+   * Executes Prim's algorithm to find the MST.
+   * 
+   * @param data - The graph input data including nodes, edges, and optional startNodeId.
+   * @returns An ExecutionTrace with greedy edge selection events.
+   */
   execute(data: GraphInput): ExecutionTrace {
     const { nodes, edges, startNodeId } = data;
     const events: VisualizationEvent[] = [];
@@ -22,10 +40,19 @@ export class PrimPlugin implements AlgorithmPlugin<GraphInput> {
 
     if (nodes.length === 0) {
       push({ type: 'SYSTEM_LOG', level: 'ERROR', message: 'No nodes provided to Prim.' });
-      return { events, metadata: { timeComplexity: 'O((V+E) log V)', spaceComplexity: 'O(V)', executionTimeMs: 0, nodeCount: 0, algorithmName: this.name } };
+      return { 
+        events, 
+        metadata: { 
+          timeComplexity: 'O((V + E) log V)', 
+          spaceComplexity: 'O(V)', 
+          executionTimeMs: 0, 
+          nodeCount: 0, 
+          algorithmName: this.name 
+        } 
+      };
     }
 
-    // Build adjacency list (undirected)
+    // Phase: Building adjacency list (undirected)
     const adj: Record<string, { to: string; weight: number; edgeId: string }[]> = {};
     for (const n of nodes) adj[n.id] = [];
     for (const e of edges) {
@@ -38,38 +65,38 @@ export class PrimPlugin implements AlgorithmPlugin<GraphInput> {
     let mstWeight = 0;
     let edgesAdded = 0;
 
-    // Priority queue of candidate edges: [weight, nodeId, edgeId]
+    // Phase: Initializing greedy exploration from source
     type PQEntry = { weight: number; nodeId: string; edgeId: string };
-    const pq: PQEntry[] = [];
+    const pq: PQEntry[] = []; // In production, use a Binary Heap
 
-    // Start from source
     inMST.add(source);
     push({ type: 'GRAPH_NODE_HIGHLIGHT', nodeId: source });
 
-    // Add all edges from source to the PQ
+    // Add all edges from source to candidate set
     for (const neighbor of adj[source] ?? []) {
       pq.push({ weight: neighbor.weight, nodeId: neighbor.to, edgeId: neighbor.edgeId });
     }
 
+    // Phase: Greedily expanding the tree
     while (pq.length > 0 && edgesAdded < nodes.length - 1) {
-      // Extract minimum weight edge
+      // Greedy Choice: find edge with minimum weight
       pq.sort((a, b) => a.weight - b.weight);
       const { weight, nodeId, edgeId } = pq.shift()!;
 
       if (inMST.has(nodeId)) {
-        // Edge leads to an already-included node — reject
+        // Edge leads back to MST, reject to avoid cycles
         push({ type: 'GRAPH_EDGE_HIGHLIGHT', edgeId, accepted: false });
         continue;
       }
 
-      // Accept this edge into the MST
+      // Accept edge and add new node to MST
       inMST.add(nodeId);
       mstWeight += weight;
       edgesAdded++;
       push({ type: 'GRAPH_EDGE_HIGHLIGHT', edgeId, accepted: true });
       push({ type: 'GRAPH_NODE_HIGHLIGHT', nodeId });
 
-      // Add all edges from the newly added node
+      // Update candidate edges from newly added node
       for (const neighbor of adj[nodeId] ?? []) {
         if (!inMST.has(neighbor.to)) {
           pq.push({ weight: neighbor.weight, nodeId: neighbor.to, edgeId: neighbor.edgeId });
@@ -88,7 +115,7 @@ export class PrimPlugin implements AlgorithmPlugin<GraphInput> {
     return {
       events,
       metadata: {
-        timeComplexity: 'O((V+E) log V)',
+        timeComplexity: 'O((V + E) log V)',
         spaceComplexity: 'O(V)',
         executionTimeMs: endTime - startTime,
         nodeCount: nodes.length,

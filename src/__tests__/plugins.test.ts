@@ -21,7 +21,7 @@ if (typeof performance === 'undefined') {
 }
 
 describe('Sorting Plugins', () => {
-  const testInput = [5, 3, 8, 1, 2];
+  const testInput = { values: [5, 3, 8, 1, 2] };
 
   it('MergeSort should produce deterministic execution trace', () => {
     const plugin = new MergeSortPlugin();

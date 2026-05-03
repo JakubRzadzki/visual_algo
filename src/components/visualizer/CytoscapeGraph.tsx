@@ -1,16 +1,120 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import CytoscapeComponent from 'react-cytoscapejs';
 import cytoscape from 'cytoscape';
+import { useParams } from 'react-router-dom';
 import { globalEventBus } from '../../core/EventBus';
+import { globalEngine } from '../../core/AnimationEngine';
+import { useUIStore } from '../../store/uiStore';
 import type { GraphInput, GraphNode, GraphEdge, VisualizationEvent } from '../../types';
 
+/**
+ * CytoscapeGraph
+ * 
+ * Interactive force-directed graph canvas built using Cytoscape.js.
+ * Fully customized colors, interactive state info panel, backwards playback scrubbing
+ * and clear style resets upon different algorithm selections.
+ * 
+ * @param props - Graph properties containing nodes and edges.
+ * @returns React component.
+ */
 export default function CytoscapeGraph({ 
   graph
 }: { 
   graph: GraphInput;
 }) {
+  const { algoId } = useParams<{ algoId: string }>();
   const cyRef = useRef<cytoscape.Core | null>(null);
   const layoutRanRef = useRef(false);
+  const activeGraphAlgorithm = useUIStore((state) => state.activeGraphAlgorithm);
+
+  // Layout selector (cose is force-directed auto layout)
+  const [layoutName, setLayoutName] = useState<'preset' | 'cose'>('cose');
+
+  // Dynamic Info Sidebar states
+  const [distances, setDistances] = useState<Record<string, number>>({});
+  const [indegree, setIndegree] = useState<Record<string, number>>({});
+  const [visited, setVisited] = useState<string[]>([]);
+  const [queue, setQueue] = useState<string[]>([]);
+  const [mstEdges, setMstEdges] = useState<string[]>([]);
+  const [msg, setMsg] = useState<string>('');
+
+  // Derived algorithm state from trace playback events
+  const syncStateWithEvents = (eventsSoFar: VisualizationEvent[]) => {
+    const activeAlgo = algoId || activeGraphAlgorithm || 'dijkstra';
+    
+    // Initializing state
+    const d: Record<string, number> = {};
+    const ind: Record<string, number> = {};
+    const vis: string[] = [];
+    let q: string[] = [];
+    const mst: string[] = [];
+    let currentMsg = '';
+
+    for (const n of graph.nodes) {
+      d[n.id] = Infinity;
+      ind[n.id] = 0;
+    }
+    for (const e of graph.edges) {
+      ind[e.to] = (ind[e.to] || 0) + 1;
+    }
+
+    for (const ev of eventsSoFar) {
+      if (ev.type === 'SYSTEM_LOG') {
+        currentMsg = ev.message;
+      } else if (ev.type === 'GRAPH_NODE_HIGHLIGHT' && ev.nodeId) {
+        if (!vis.includes(ev.nodeId)) vis.push(ev.nodeId);
+        if (activeAlgo === 'bfs' || activeAlgo === 'dfs') {
+          if (!q.includes(ev.nodeId)) q.push(ev.nodeId);
+        }
+        if (ev.distance !== undefined) {
+          d[ev.nodeId] = ev.distance;
+        }
+      } else if (ev.type === 'GRAPH_EDGE_HIGHLIGHT' && ev.edgeId) {
+        if (ev.accepted) {
+          if (!mst.includes(ev.edgeId)) mst.push(ev.edgeId);
+          const edge = graph.edges.find(e => e.id === ev.edgeId);
+          if (edge) {
+            ind[edge.to] = Math.max(0, (ind[edge.to] || 1) - 1);
+            if (activeAlgo === 'bfs' || activeAlgo === 'dfs') {
+              q = q.filter(el => el !== edge.from);
+            }
+          }
+        }
+      } else if (ev.type === 'GRAPH_RELAX' && ev.edgeId) {
+        if (!mst.includes(ev.edgeId)) mst.push(ev.edgeId);
+        const edge = graph.edges.find(e => e.id === ev.edgeId);
+        if (edge) {
+          d[edge.to] = ev.weight;
+        }
+      }
+    }
+
+    setDistances(d);
+    setIndegree(ind);
+    setVisited(vis);
+    setQueue(q);
+    setMstEdges(mst);
+    setMsg(currentMsg);
+
+    // Dynamic labels in Cytoscape based on algorithm type
+    if (cyRef.current) {
+      for (const n of graph.nodes) {
+        const el = cyRef.current.getElementById(n.id);
+        if (el.length > 0) {
+          let lbl = n.label || n.id;
+          if (activeAlgo === 'dijkstra') {
+            const dist = d[n.id] === Infinity ? '∞' : d[n.id];
+            lbl = `${lbl}\nd: ${dist}`;
+          } else if (activeAlgo === 'topo-sort') {
+            const val = ind[n.id] ?? 0;
+            lbl = `${lbl}\nin: ${val}`;
+          }
+          el.data('label', lbl);
+        }
+      }
+    }
+  };
+
   const elements = useMemo(() => {
     const nodeElements = graph.nodes.map((node: GraphNode) => ({
       data: { id: node.id, label: node.label },
@@ -28,39 +132,97 @@ export default function CytoscapeGraph({
     }));
 
     return [...nodeElements, ...edgeElements];
-  }, [graph]);
+  }, [graph.nodes, graph.edges]);
 
+  // Completely reset visual styles and state when algorithm or elements change
   useEffect(() => {
+    if (!cyRef.current) return;
+    cyRef.current.elements().removeStyle();
+    cyRef.current.elements().removeClass('highlight-visited highlight-relax highlight-accept highlight-reject');
     layoutRanRef.current = false;
-  }, [graph]);
+    syncStateWithEvents([]);
+  }, [algoId, activeGraphAlgorithm, elements]);
 
-  // Handle visualization events (highlighting during algorithm execution)
+  // Handle visualization events during traces
   useEffect(() => {
     const unsubscribe = globalEventBus.subscribe((event: VisualizationEvent) => {
       if (!cyRef.current) return;
+
+      const trace = globalEngine.getTrace();
+      if (trace) {
+        const eventsSoFar = trace.events.slice(0, event.step + 1);
+        syncStateWithEvents(eventsSoFar);
+      }
+
+      // Explicit event cleanup on TRACE_LOADED
+      if (event.type === 'TRACE_LOADED') {
+        cyRef.current.elements().removeStyle();
+        cyRef.current.elements().removeClass('highlight-visited highlight-relax highlight-accept highlight-reject');
+        layoutRanRef.current = false;
+        syncStateWithEvents([]);
+        return;
+      }
+
+      // Handle backwards scrubbing
+      if (event.isReverse) {
+        if (event.type === 'GRAPH_NODE_HIGHLIGHT' && event.nodeId) {
+          const node = cyRef.current.getElementById(event.nodeId);
+          if (node.length > 0) node.removeStyle();
+        } else if ((event.type === 'GRAPH_EDGE_HIGHLIGHT' || event.type === 'GRAPH_RELAX') && event.edgeId) {
+          const edge = cyRef.current.getElementById(event.edgeId);
+          if (edge.length > 0) edge.removeStyle();
+        }
+        return;
+      }
 
       if (event.type === 'GRAPH_NODE_HIGHLIGHT') {
         const nodeId = event.nodeId;
         if (nodeId && cyRef.current.getElementById(nodeId).length > 0) {
           const node = cyRef.current.getElementById(nodeId);
           
+          let bgColor = '#1f2937'; // Default Node color
+          let borderColor = '#4b5563';
+
+          if (event.status === 'start') {
+            bgColor = '#22c55e'; // Start Node
+            borderColor = '#34d399';
+          } else if (event.status === 'queued') {
+            bgColor = '#a855f7'; // Queued Node
+            borderColor = '#c084fc';
+          } else if (event.status === 'current') {
+            bgColor = '#facc15'; // Active Node
+            borderColor = '#fde047';
+          } else if (event.status === 'path') {
+            bgColor = '#ec4899'; // Final Path Node
+            borderColor = '#f472b6';
+          } else if (event.status === 'visited') {
+            bgColor = '#3b82f6'; // Visited Node
+            borderColor = '#60a5fa';
+          }
+
           node.animate({
             style: {
-              'background-color': '#10b981',
+              'background-color': bgColor,
               'border-width': 3,
-              'border-color': '#34d399',
+              'border-color': borderColor,
             }
           }, { duration: 200 });
-
-          // Nodes in Dijkstra/Kruskal stay highlighted to show they are visited/processed
-          // So no timeout to revert them.
         }
       } else if (event.type === 'GRAPH_EDGE_HIGHLIGHT' || event.type === 'GRAPH_RELAX') {
         const edgeId = event.edgeId;
         if (edgeId && cyRef.current.getElementById(edgeId).length > 0) {
           const edge = cyRef.current.getElementById(edgeId);
           
-          const highlightColor = event.type === 'GRAPH_RELAX' ? '#0ea5e9' : (event.accepted ? '#10b981' : '#f59e0b');
+          let highlightColor = '#22c55e'; // selectedEdge
+          if (event.type === 'GRAPH_RELAX') {
+            highlightColor = '#f97316'; // activeEdge
+          } else if (event.status === 'path') {
+            highlightColor = '#ec4899'; // finalPath
+          } else if (event.status === 'backtrack') {
+            highlightColor = '#ef4444'; // rejectedEdge
+          } else {
+            highlightColor = event.accepted ? '#22c55e' : '#ef4444';
+          }
 
           edge.animate({
             style: {
@@ -70,15 +232,14 @@ export default function CytoscapeGraph({
             }
           }, { duration: 200 });
 
-          // Only revert if it's an exploration that was rejected or just a transient visit
-          const isPermanent = event.type === 'GRAPH_RELAX' || (event.type === 'GRAPH_EDGE_HIGHLIGHT' && event.accepted === true);
+          const isPermanent = event.type === 'GRAPH_RELAX' || event.status === 'path' || (event.type === 'GRAPH_EDGE_HIGHLIGHT' && event.accepted === true);
           if (!isPermanent) {
             setTimeout(() => {
               if (!cyRef.current || cyRef.current.destroyed()) return;
               edge.animate({
                 style: {
-                  'line-color': '#64748b',
-                  'target-arrow-color': '#64748b',
+                  'line-color': event.status === 'backtrack' ? '#334155' : '#4b5563',
+                  'target-arrow-color': event.status === 'backtrack' ? '#334155' : '#4b5563',
                   'width': 2,
                 }
               }, { duration: 300 });
@@ -89,144 +250,223 @@ export default function CytoscapeGraph({
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [graph, algoId, activeGraphAlgorithm]);
 
-  // Re-run layout when elements change (only once per graph)
+  // Fit bounds and layout nicely on graph elements or layout change
   useEffect(() => {
-    if (!cyRef.current || elements.length === 0 || layoutRanRef.current) return;
-
-    layoutRanRef.current = true;
+    if (!cyRef.current || elements.length === 0) return;
 
     const layout = cyRef.current.layout({
-      name: 'cose',
-      directed: graph.isDirected ?? true,
+      name: layoutName,
       animate: true,
       animationDuration: 600,
-      nodeDimensionsIncludeLabels: true,
-      randomize: true,
-      componentSpacing: 100,
-      nodeSpacing: 100,
-      idealEdgeLength: 80,
-      gravity: 1.0,
-      cooling: 0.96,
-      coolingFactor: 0.999,
-      edgeElasticity: 0.5,
-      nodeRepulsion: 8000,
-      numIter: 3000,
-      initialTemp: 300,
-      minTemp: 0.5,
-    } as cytoscape.LayoutOptions);
+      fit: true,
+      padding: 50,
+    } as any);
 
     layout.run();
-  }, [elements, graph.isDirected]);
+    cyRef.current.fit();
+    cyRef.current.center();
+  }, [elements, graph.isDirected, layoutName]);
 
-
+  const activeAlgo = algoId || activeGraphAlgorithm || 'dijkstra';
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <CytoscapeComponent
-        elements={elements}
-        style={{
-          width: '100%',
-          height: '100%',
-          background: '#0a0e1a',
-        }}
-        stylesheet={[
-          {
-            selector: 'node',
-            style: {
-              'background-color': '#06b6d4',
-              'label': 'data(label)',
-              'text-valign': 'center',
-              'text-halign': 'center',
-              'width': 45,
-              'height': 45,
-              'font-size': 12,
-              'color': '#f1f5f9',
-              'font-family': 'monospace',
-              'font-weight': 'bold',
-              'border-width': 2,
-              'border-color': '#0891b2',
-            } as cytoscape.Css.Node,
-          },
-          {
-            selector: 'node:selected',
-            style: {
-              'background-color': '#0891b2',
-              'border-width': 3,
-              'border-color': '#06b6d4',
-            } as cytoscape.Css.Node,
-          },
-          {
-            selector: 'edge',
-            style: {
-              'target-arrow-color': '#64748b',
-              'line-color': '#64748b',
-              'width': 2,
-              'curve-style': 'bezier',
-              'label': 'data(label)',
-              'font-size': 10,
-              'color': '#94a3b8',
-              'text-background-color': '#1e293b',
-              'text-background-opacity': 0.8,
-              'text-background-padding': '2px',
-              'arrow-scale': 1.5,
-              'target-arrow-shape': (graph.isDirected ?? true) ? 'triangle' : 'none',
-            } as cytoscape.Css.Edge,
-          },
-          // Highlight classes
-          {
-            selector: 'node.highlight-visited',
-            style: {
-              'background-color': '#10b981',
-              'border-width': 3,
-              'border-color': '#34d399',
-            } as cytoscape.Css.Node,
-          },
-          {
-            selector: 'edge.highlight-relax',
-            style: {
-              'line-color': '#0ea5e9',
-              'target-arrow-color': '#0ea5e9',
-              'width': 3,
-            } as cytoscape.Css.Edge,
-          },
-          {
-            selector: 'edge.highlight-accept',
-            style: {
-              'line-color': '#10b981',
-              'target-arrow-color': '#10b981',
-              'width': 3,
-            } as cytoscape.Css.Edge,
-          },
-          {
-            selector: 'edge.highlight-reject',
-            style: {
-              'line-color': '#f59e0b',
-              'target-arrow-color': '#f59e0b',
-              'width': 3,
-            } as cytoscape.Css.Edge,
-          },
-        ]}
-        cy={(cy: cytoscape.Core) => {
-          cyRef.current = cy;
-        }}
-      />
+    <div className="w-full h-full flex relative select-none">
+      <div className="flex-1 h-full min-w-0 relative">
+        {/* Layout selector toggle */}
+        <div className="absolute top-4 right-4 bg-slate-900/60 backdrop-blur-md border border-white/10 p-1 rounded-xl z-20 flex gap-1">
+          <button
+            onClick={() => setLayoutName('cose')}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-200 ${
+              layoutName === 'cose'
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+            }`}
+          >
+            Auto (COSE)
+          </button>
+          <button
+            onClick={() => setLayoutName('preset')}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-200 ${
+              layoutName === 'preset'
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+            }`}
+          >
+            Preset
+          </button>
+        </div>
 
-      {/* Legend */}
-      <div className="absolute bottom-4 left-4 glass-panel px-4 py-3 rounded-lg text-xs space-y-1 text-slate-400">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-cyan-500" />
-          <span>Node</span>
+        <CytoscapeComponent
+          elements={elements}
+          style={{
+            width: '100%',
+            height: '100%',
+            background: '#030712',
+          }}
+          stylesheet={[
+            {
+              selector: 'node',
+              style: {
+                'background-color': '#1f2937',
+                'label': 'data(label)',
+                'text-valign': 'center',
+                'text-halign': 'center',
+                'text-wrap': 'wrap',
+                'width': 45,
+                'height': 45,
+                'shape': 'ellipse',
+                'font-size': 11,
+                'color': '#f3f4f6',
+                'font-family': 'monospace',
+                'font-weight': 'bold',
+                'border-width': 2,
+                'border-color': '#4b5563',
+              } as cytoscape.Css.Node,
+            },
+            {
+              selector: 'node:selected',
+              style: {
+                'background-color': '#374151',
+                'border-width': 3,
+                'border-color': '#22c55e',
+              } as cytoscape.Css.Node,
+            },
+            {
+              selector: 'edge',
+              style: {
+                'target-arrow-color': '#4b5563',
+                'line-color': '#4b5563',
+                'width': 2,
+                'curve-style': 'bezier',
+                'source-distance': -3,
+                'target-distance': -3,
+                'label': 'data(label)',
+                'font-size': 10,
+                'color': '#9ca3af',
+                'text-background-color': '#111827',
+                'text-background-opacity': 0.8,
+                'text-background-padding': '2px',
+                'arrow-scale': 1.5,
+                'target-arrow-shape': (graph.isDirected ?? true) ? 'triangle' : 'none',
+              } as cytoscape.Css.Edge,
+            }
+          ]}
+          cy={(cy: cytoscape.Core) => {
+            cyRef.current = cy;
+          }}
+        />
+
+        {/* Legend */}
+        <div className="absolute bottom-4 left-4 glass-panel px-4 py-3 rounded-xl text-[10px] sm:text-xs space-y-1 bg-slate-900/40 backdrop-blur-md border border-white/10 text-slate-400 z-20">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#1f2937] border border-[#4b5563]" />
+            <span>Node</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-500" />
+            <span>Start</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500" />
+            <span>Visited</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-3 bg-slate-600" />
+            <span>Edge Weight</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-emerald-500" />
-          <span>Visited</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-3 bg-slate-500" />
-          <span>Edge Weight</span>
-        </div>
+      </div>
+
+      {/* Modern Algorithm Sidebar Panel */}
+      <div className="w-80 h-full border-l border-white/10 p-4 flex flex-col gap-4 bg-[#0a0f1d]/70 backdrop-blur overflow-y-auto select-none z-10 text-slate-200">
+        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Algorithm State</h4>
+        
+        {msg && (
+          <div className="bg-ice-blue/10 border border-ice-blue/25 rounded-xl p-3 text-xs text-slate-300 font-medium leading-relaxed">
+            {msg}
+          </div>
+        )}
+
+        {/* Dijkstra Node Distances */}
+        {activeAlgo === 'dijkstra' && (
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-slate-400">Tentative Distances</label>
+            <div className="flex flex-col gap-1.5">
+              {graph.nodes.map(n => {
+                const dist = distances[n.id] === Infinity ? '∞' : distances[n.id];
+                return (
+                  <div key={n.id} className="flex justify-between items-center text-xs bg-white/5 border border-white/5 px-3 py-1.5 rounded-lg">
+                    <span className="font-mono text-slate-400">Node {n.label || n.id}</span>
+                    <span className="font-bold text-ice-blue">{dist}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* BFS & DFS Queue/Stack contents */}
+        {(activeAlgo === 'bfs' || activeAlgo === 'dfs') && (
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-slate-400">{activeAlgo === 'bfs' ? 'Queue' : 'Stack'} Buffer</label>
+            <div className="flex flex-wrap gap-1.5">
+              {queue.length > 0 ? (
+                queue.map(id => {
+                  const label = graph.nodes.find(n => n.id === id)?.label || id;
+                  return (
+                    <span key={id} className="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 font-mono text-xs border border-purple-500/30">
+                      {label}
+                    </span>
+                  );
+                })
+              ) : (
+                <span className="text-xs text-slate-500 italic">Empty</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Kruskal's & Prim's edges in MST */}
+        {(activeAlgo === 'kruskal' || activeAlgo === 'prim') && (
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-slate-400">MST Selected Edges</label>
+            <div className="flex flex-col gap-1.5">
+              {mstEdges.length > 0 ? (
+                mstEdges.map(id => {
+                  const edge = graph.edges.find(e => e.id === id);
+                  if (!edge) return null;
+                  const uLabel = graph.nodes.find(n => n.id === edge.from)?.label || edge.from;
+                  const vLabel = graph.nodes.find(n => n.id === edge.to)?.label || edge.to;
+                  return (
+                    <div key={id} className="flex justify-between items-center text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+                      <span className="text-slate-300">{uLabel} ↔ {vLabel}</span>
+                      <span className="font-bold text-emerald-400">wt: {edge.weight}</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <span className="text-xs text-slate-500 italic font-mono">No MST edges</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Kahn's Topological Sort - Node inDegree dependencies */}
+        {activeAlgo === 'topo-sort' && (
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-slate-400">In-Degrees</label>
+            <div className="flex flex-col gap-1.5">
+              {graph.nodes.map(n => (
+                <div key={n.id} className="flex justify-between items-center text-xs bg-white/5 border border-white/5 px-3 py-1.5 rounded-lg">
+                  <span className="font-mono text-slate-400">Node {n.label || n.id}</span>
+                  <span className="font-bold text-amber-400">{indegree[n.id] ?? 0}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,14 +1,27 @@
+/**
+ * @file TopoSortPlugin.ts
+ * @description Plugin for the Topological Sort algorithm.
+ * 
+ * Implements Kahn's algorithm for linear ordering of vertices in a DAG.
+ * Time Complexity: O(V + E)
+ * Space Complexity: O(V)
+ */
+
 import type { AlgorithmPlugin, ExecutionTrace, GraphInput, VisualizationEvent, EventPayload } from '../../../types';
 
+/**
+ * TopoSortPlugin — Implements the Topological Sort algorithm.
+ */
 export class TopoSortPlugin implements AlgorithmPlugin<GraphInput> {
   id = 'topo-sort';
   name = 'Topological Sort';
   category = 'graph' as const;
 
   /**
-   * Kahn's algorithm for topological ordering of a Directed Acyclic Graph (DAG).
-   * Emits GRAPH_NODE_HIGHLIGHT when a node is added to the result,
-   * and GRAPH_EDGE_HIGHLIGHT when an edge is processed (in-degree reduced).
+   * Executes Kahn's algorithm to compute topological order.
+   * 
+   * @param data - The graph input data including nodes and edges.
+   * @returns An ExecutionTrace with in-degree reduction and node selection events.
    */
   execute(data: GraphInput): ExecutionTrace {
     const { nodes, edges } = data;
@@ -27,10 +40,19 @@ export class TopoSortPlugin implements AlgorithmPlugin<GraphInput> {
 
     if (nodes.length === 0) {
       push({ type: 'SYSTEM_LOG', level: 'ERROR', message: 'No nodes provided to Topological Sort.' });
-      return { events, metadata: { timeComplexity: 'O(V + E)', spaceComplexity: 'O(V)', executionTimeMs: 0, nodeCount: 0, algorithmName: this.name } };
+      return { 
+        events, 
+        metadata: { 
+          timeComplexity: 'O(V + E)', 
+          spaceComplexity: 'O(V)', 
+          executionTimeMs: 0, 
+          nodeCount: 0, 
+          algorithmName: this.name 
+        } 
+      };
     }
 
-    // Build adjacency list (directed) and compute in-degrees
+    // Phase: Initializing in-degrees and adjacency list
     const adj: Record<string, { to: string; edgeId: string }[]> = {};
     const inDegree: Record<string, number> = {};
 
@@ -44,7 +66,7 @@ export class TopoSortPlugin implements AlgorithmPlugin<GraphInput> {
       inDegree[e.to] = (inDegree[e.to] ?? 0) + 1;
     }
 
-    // Initialize the queue with all nodes that have in-degree 0
+    // Phase: Finding nodes with zero in-degree
     const queue: string[] = [];
     for (const n of nodes) {
       if (inDegree[n.id] === 0) {
@@ -54,6 +76,7 @@ export class TopoSortPlugin implements AlgorithmPlugin<GraphInput> {
 
     const result: string[] = [];
 
+    // Phase: Iteratively removing nodes with zero in-degree
     while (queue.length > 0) {
       const u = queue.shift()!;
       result.push(u);
@@ -64,7 +87,7 @@ export class TopoSortPlugin implements AlgorithmPlugin<GraphInput> {
       for (const { to: v, edgeId } of adj[u] ?? []) {
         inDegree[v]--;
 
-        // Highlight the edge (accepted = true means we successfully reduced in-degree)
+        // Highlight the edge as processed
         push({ type: 'GRAPH_EDGE_HIGHLIGHT', edgeId, accepted: true });
 
         if (inDegree[v] === 0) {

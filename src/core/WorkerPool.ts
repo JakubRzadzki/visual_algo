@@ -1,4 +1,4 @@
-import type { GraphInput, ExecutionTrace, WorkerMessage, WorkerResponse } from '../types';
+import type { ExecutionTrace, WorkerMessage, WorkerResponse } from '../types';
 
 type WorkerState = 'idle' | 'busy';
 
@@ -38,7 +38,7 @@ export class WorkerPool {
    * Schedule an algorithm run on the next available worker.
    * Returns a Promise that resolves with the completed ExecutionTrace.
    */
-  public run(algorithmId: string, payload: GraphInput): Promise<ExecutionTrace> {
+  public run(algorithmId: string, payload: any): Promise<ExecutionTrace> {
     return new Promise((resolve, reject) => {
       const taskId = crypto.randomUUID();
       const message: WorkerMessage = { taskId, algorithmId, payload };

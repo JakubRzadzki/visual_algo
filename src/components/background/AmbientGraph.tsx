@@ -16,7 +16,8 @@ export default function AmbientGraph() {
     canvas.width = width;
     canvas.height = height;
 
-    const points: Point[] = Array.from({ length: 65 }).map(() => ({
+    // Optimized: reduced point count slightly to ensure rock-solid 60FPS on lower-end devices
+    const points: Point[] = Array.from({ length: 50 }).map(() => ({
       x: Math.random() * width,
       y: Math.random() * height,
       vx: (Math.random() - 0.5) * 0.7,
@@ -48,9 +49,13 @@ export default function AmbientGraph() {
 
         for (let j = i + 1; j < points.length; j++) {
           const p2 = points[j];
-          const dist = Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+          // Optimization: Use squared distance to avoid expensive Math.sqrt calls inside the O(N^2) loop
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const distSq = dx * dx + dy * dy;
           
-          if (dist < 140) {
+          if (distSq < 19600) { // 140 squared
+            const dist = Math.sqrt(distSq); // Only calc sqrt if within range
             // Fading opacity based on distance from intersection limit
             const opacity = (1 - dist / 140) * 0.4;
             ctx.strokeStyle = `rgba(125, 211, 252, ${opacity})`;
@@ -64,6 +69,7 @@ export default function AmbientGraph() {
       animationId = requestAnimationFrame(draw);
     };
 
+    // Kick off the optimized rendering loop (pure Canvas API, no React re-renders)
     draw();
 
     const handleResize = () => {
@@ -82,5 +88,6 @@ export default function AmbientGraph() {
   }, []);
 
   // z-index 0, fixed to entirely cover the background independently
-  return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none mix-blend-screen opacity-50" />;
+  // Added will-change: transform for compositor optimization
+  return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none mix-blend-screen opacity-50" style={{ willChange: 'transform' }} />;
 }

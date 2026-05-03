@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 import type { VisualizationData, GraphInput } from '../types';
 
-export type AlgorithmType = 'Merge Sort' | 'Quick Sort' | "Dijkstra's Path" | "Kruskal's MST" | "A* Pathfinding" | "BFS Pathfinding";
-type ActiveMode = 'sorting' | 'graph' | 'grid';
+type ActiveMode = 'sorting' | 'searching' | 'graph' | 'grid' | 'dp';
 
 interface UIState {
   theme: 'glacier';
@@ -11,9 +10,10 @@ interface UIState {
   isDebugVisible: boolean;
   
   activeCategory: string; // 'A' through 'F' or catalog id
-  activeSortingAlgorithm: 'Merge Sort' | 'Quick Sort';
-  activeGraphAlgorithm: "Dijkstra's Path" | "Kruskal's MST";
-  activeGridAlgorithm: "A* Pathfinding" | "BFS Pathfinding";
+  activeSortingAlgorithm: string;
+  activeSearchingAlgorithm: string;
+  activeGraphAlgorithm: string;
+  activeGridAlgorithm: string;
   activeMode: ActiveMode;   // which visualisation stage is shown
   isAnimating: boolean;     // true while engine is playing back a trace
   
@@ -28,9 +28,10 @@ interface UIState {
   toggleDebug: () => void;
   
   setActiveCategory: (cat: string) => void;
-  setActiveSortingAlgorithm: (algo: 'Merge Sort' | 'Quick Sort') => void;
-  setActiveGraphAlgorithm: (algo: "Dijkstra's Path" | "Kruskal's MST") => void;
-  setActiveGridAlgorithm: (algo: "A* Pathfinding" | "BFS Pathfinding") => void;
+  setActiveSortingAlgorithm: (algo: string) => void;
+  setActiveSearchingAlgorithm: (algo: string) => void;
+  setActiveGraphAlgorithm: (algo: string) => void;
+  setActiveGridAlgorithm: (algo: string) => void;
   setActiveMode: (mode: ActiveMode) => void;
   setIsAnimating: (v: boolean) => void;
   
@@ -49,7 +50,8 @@ export const useUIStore = create<UIState>((set) => ({
   
   activeCategory: 'sorting',
   activeSortingAlgorithm: 'Merge Sort',
-  activeGraphAlgorithm: "Dijkstra's Path",
+  activeSearchingAlgorithm: 'Binary Search',
+  activeGraphAlgorithm: "Dijkstra's Shortest Path",
   activeGridAlgorithm: "A* Pathfinding",
   activeMode: 'sorting',
   isAnimating: false,
@@ -66,6 +68,7 @@ export const useUIStore = create<UIState>((set) => ({
   
   setActiveCategory: (cat) => set({ activeCategory: cat }),
   setActiveSortingAlgorithm: (algo) => set({ activeSortingAlgorithm: algo }),
+  setActiveSearchingAlgorithm: (algo) => set({ activeSearchingAlgorithm: algo }),
   setActiveGraphAlgorithm: (algo) => set({ activeGraphAlgorithm: algo }),
   setActiveGridAlgorithm: (algo) => set({ activeGridAlgorithm: algo }),
   setActiveMode: (mode) => set({ activeMode: mode }),

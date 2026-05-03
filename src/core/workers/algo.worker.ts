@@ -8,6 +8,7 @@
  */
 
 import type { WorkerMessage, WorkerResponse, AlgorithmPlugin } from '../../types';
+
 import { DijkstraPlugin } from '../plugins/graph/DijkstraPlugin';
 import { KruskalPlugin } from '../plugins/graph/KruskalPlugin';
 import { BFSPlugin } from '../plugins/graph/BFSPlugin';
@@ -15,15 +16,31 @@ import { DFSPlugin } from '../plugins/graph/DFSPlugin';
 import { PrimPlugin } from '../plugins/graph/PrimPlugin';
 import { TopoSortPlugin } from '../plugins/graph/TopoSortPlugin';
 
+import { BubbleSortPlugin } from '../plugins/sorting/BubbleSortPlugin';
+import { HeapSortPlugin } from '../plugins/sorting/HeapSortPlugin';
+import { MergeSortPlugin } from '../plugins/sorting/MergeSortPlugin';
+import { QuickSortPlugin } from '../plugins/sorting/QuickSortPlugin';
+
+import { BinarySearchPlugin } from '../plugins/searching/BinarySearchPlugin';
+import { LinearSearchPlugin } from '../plugins/searching/LinearSearchPlugin';
+
 // Registry: algorithm id → plugin instance
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
-  dijkstra:    new DijkstraPlugin(),
-  kruskal:     new KruskalPlugin(),
-  bfs:         new BFSPlugin(),
-  dfs:         new DFSPlugin(),
-  prim:        new PrimPlugin(),
-  'topo-sort': new TopoSortPlugin(),
+  dijkstra:        new DijkstraPlugin(),
+  kruskal:         new KruskalPlugin(),
+  bfs:             new BFSPlugin(),
+  dfs:             new DFSPlugin(),
+  prim:            new PrimPlugin(),
+  'topo-sort':     new TopoSortPlugin(),
+
+  'bubble-sort':   new BubbleSortPlugin(),
+  'heap-sort':     new HeapSortPlugin(),
+  'merge-sort':    new MergeSortPlugin(),
+  'quick-sort':    new QuickSortPlugin(),
+
+  'binary-search': new BinarySearchPlugin(),
+  'linear-search': new LinearSearchPlugin(),
 };
 
 // Listen for tasks from the WorkerPool

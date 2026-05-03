@@ -1,19 +1,36 @@
-import type { AlgorithmPlugin, ExecutionTrace, EventPayload, VisualizationEvent } from '../../../types';
+/**
+ * @file BinarySearchPlugin.ts
+ * @description Plugin for the Binary Search algorithm.
+ * 
+ * Efficiently finds a target in a sorted array by repeatedly halving the search space.
+ * Time complexity: O(log n), Space complexity: O(1).
+ */
 
-export class BinarySearchPlugin implements AlgorithmPlugin<number[]> {
+import type { AlgorithmPlugin, ExecutionTrace, EventPayload, VisualizationEvent, ArrayInput } from '../../../types';
+
+/**
+ * BinarySearchPlugin — Implements the Binary Search algorithm.
+ */
+export class BinarySearchPlugin implements AlgorithmPlugin<ArrayInput & { target?: number }> {
   id = 'binary-search';
   name = 'Binary Search';
   category = 'searching' as const;
 
   /**
-   * Executes binary search on a sorted array, searching for the last element
-   * as the target (for demonstration). Emits SEARCH_NARROW, SEARCH_CHECK,
-   * and final SEARCH_FOUND / SEARCH_NOT_FOUND events.
+   * Executes the Binary Search algorithm.
+   * 
+   * Assumes/ensures the input array is sorted before starting.
+   * 
+   * @param input - The input data containing the array and an optional target.
+   * @returns An ExecutionTrace with narrow, check, and result events.
    */
-  execute(data: number[]): ExecutionTrace {
-    // Sort input to guarantee binary search precondition
-    const arr = [...data].sort((a, b) => a - b);
-    const target = arr[arr.length - 1]; // search for the largest element
+  execute(input: ArrayInput & { target?: number }): ExecutionTrace {
+    // Binary search requires a sorted array
+    const arr = [...input.values].sort((a, b) => a - b);
+    
+    // Default target to a value known to be in the array for demonstration
+    const target = input.target !== undefined ? input.target : arr[arr.length - 1];
+    
     const events: VisualizationEvent[] = [];
     let step = 0;
     const startTime = performance.now();
@@ -31,39 +48,36 @@ export class BinarySearchPlugin implements AlgorithmPlugin<number[]> {
     let right = arr.length - 1;
     let found = false;
 
+    // Phase: Logarithmic search by halving range
     while (left <= right) {
       const mid = Math.floor((left + right) / 2);
 
-      // Show current search window
+      // Record the current search boundaries
       pushEvent({ type: 'SEARCH_NARROW', left, right, mid });
 
-      // Check the middle element
+      // Record comparison with the middle element
       pushEvent({ type: 'SEARCH_CHECK', index: mid, value: arr[mid], target });
 
       if (arr[mid] === target) {
+        // Target found
         pushEvent({ type: 'SEARCH_FOUND', index: mid, value: arr[mid] });
         found = true;
         break;
       } else if (arr[mid] < target) {
+        // Target is in the right half
         left = mid + 1;
       } else {
+        // Target is in the left half
         right = mid - 1;
       }
     }
 
+    // Record failure if not found
     if (!found) {
       pushEvent({ type: 'SEARCH_NOT_FOUND', target });
     }
 
     const endTime = performance.now();
-
-    pushEvent({
-      type: 'SYSTEM_LOG',
-      level: 'INFO',
-      message: found
-        ? `Binary Search: found ${target} in ${step} steps.`
-        : `Binary Search: ${target} not found after ${step} steps.`
-    });
 
     return {
       events,
@@ -73,7 +87,7 @@ export class BinarySearchPlugin implements AlgorithmPlugin<number[]> {
         executionTimeMs: endTime - startTime,
         nodeCount: arr.length,
         algorithmName: this.name,
-        initialState: arr
+        initialState: arr // Using the sorted array as initial state for visualization
       }
     };
   }

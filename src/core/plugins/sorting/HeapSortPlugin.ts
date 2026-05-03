@@ -1,12 +1,29 @@
-import type { AlgorithmPlugin, ExecutionTrace, EventPayload, VisualizationEvent } from '../../../types';
+/**
+ * @file HeapSortPlugin.ts
+ * @description Plugin for the Heap Sort algorithm.
+ * 
+ * Implements an in-place sort using a binary heap data structure.
+ * Time complexity O(n log n), space complexity O(1).
+ */
 
-export class HeapSortPlugin implements AlgorithmPlugin<number[]> {
+import type { AlgorithmPlugin, ExecutionTrace, EventPayload, VisualizationEvent, ArrayInput } from '../../../types';
+
+/**
+ * HeapSortPlugin — Implements the Heap Sort algorithm.
+ */
+export class HeapSortPlugin implements AlgorithmPlugin<ArrayInput> {
   id = 'heap-sort';
   name = 'Heap Sort';
   category = 'sorting' as const;
 
-  execute(data: number[]): ExecutionTrace {
-    const arr = [...data];
+  /**
+   * Executes the Heap Sort algorithm on the input array.
+   * 
+   * @param input - The input data containing the array values.
+   * @returns An ExecutionTrace with comparison and swap events.
+   */
+  execute(input: ArrayInput): ExecutionTrace {
+    const arr = [...input.values];
     const events: VisualizationEvent[] = [];
     let step = 0;
     const startTime = performance.now();
@@ -23,14 +40,17 @@ export class HeapSortPlugin implements AlgorithmPlugin<number[]> {
     const n = arr.length;
 
     /**
-     * Sift down the element at index i to maintain the max-heap property
-     * within the sub-array arr[0..heapSize-1].
+     * Sift-down operation to maintain max-heap property.
+     * 
+     * @param heapSize - Current size of the heap.
+     * @param i - Root index of the subtree.
      */
     const heapify = (heapSize: number, i: number) => {
       let largest = i;
       const left = 2 * i + 1;
       const right = 2 * i + 2;
 
+      // Phase: Comparing root with left child
       if (left < heapSize) {
         pushEvent({ type: 'ARRAY_COMPARE', indices: [left, largest] });
         if (arr[left] > arr[largest]) {
@@ -38,6 +58,7 @@ export class HeapSortPlugin implements AlgorithmPlugin<number[]> {
         }
       }
 
+      // Phase: Comparing largest with right child
       if (right < heapSize) {
         pushEvent({ type: 'ARRAY_COMPARE', indices: [right, largest] });
         if (arr[right] > arr[largest]) {
@@ -45,28 +66,36 @@ export class HeapSortPlugin implements AlgorithmPlugin<number[]> {
         }
       }
 
-      // If the largest element is not the root, swap and recurse
+      // Phase: Swapping if root is not largest
       if (largest !== i) {
         const temp = arr[i];
         arr[i] = arr[largest];
         arr[largest] = temp;
-        pushEvent({ type: 'ARRAY_SWAP', indices: [i, largest], values: [arr[i], arr[largest]] });
+        pushEvent({ 
+          type: 'ARRAY_SWAP', 
+          indices: [i, largest], 
+          values: [arr[i], arr[largest]] 
+        });
         heapify(heapSize, largest);
       }
     };
 
-    // Build a max-heap from the unordered array (bottom-up)
+    // Phase 1: Build max-heap (bottom-up)
     for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
       heapify(n, i);
     }
 
-    // Extract elements from heap one by one
+    // Phase 2: Extract elements from heap one by one
     for (let i = n - 1; i > 0; i--) {
       // Move current root (max) to the end
       const temp = arr[0];
       arr[0] = arr[i];
       arr[i] = temp;
-      pushEvent({ type: 'ARRAY_SWAP', indices: [0, i], values: [arr[0], arr[i]] });
+      pushEvent({ 
+        type: 'ARRAY_SWAP', 
+        indices: [0, i], 
+        values: [arr[0], arr[i]] 
+      });
 
       // Heapify the reduced heap
       heapify(i, 0);
@@ -82,7 +111,7 @@ export class HeapSortPlugin implements AlgorithmPlugin<number[]> {
         executionTimeMs: endTime - startTime,
         nodeCount: arr.length,
         algorithmName: this.name,
-        initialState: [...data]
+        initialState: [...input.values]
       }
     };
   }

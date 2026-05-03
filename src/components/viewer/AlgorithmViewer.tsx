@@ -2,11 +2,16 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
 import { findAlgorithm } from '../../data/algorithmCatalog';
+import { globalEngine } from '../../core/AnimationEngine';
 import Sidebar from '../layout/Sidebar';
 import VisualStage from '../visualizer/VisualStage';
 import GraphStage from '../visualizer/GraphStage';
+import SortingStage from '../visualizer/SortingStage';
+import SearchingStage from '../visualizer/SearchingStage';
+import MatrixStage from '../visualizer/MatrixStage';
 import MonacoCodeEditor from '../hud/MonacoCodeEditor';
 import EventLog from '../hud/EventLog';
+import PlaybackDeck from '../controls/PlaybackDeck';
 import type { GraphInput } from '../../types';
 
 // Demo graph nodes / edges — will be replaced when user generates a new graph
@@ -25,7 +30,17 @@ const DEMO_GRAPH: GraphInput = { nodes: DEMO_NODES, edges: DEMO_EDGES, startNode
 export default function AlgorithmViewer() {
   const { category, id } = useParams<{ category: string; id: string }>();
   const navigate = useNavigate();
-  const { isSidebarOpen, activeMode, currentGraph, activeGraphAlgorithm, setActiveMode, setActiveSortingAlgorithm, setActiveGraphAlgorithm } = useUIStore();
+  const { 
+    isSidebarOpen, 
+    activeMode, 
+    currentGraph, 
+    activeGraphAlgorithm, 
+    setActiveMode, 
+    setActiveSortingAlgorithm, 
+    setActiveSearchingAlgorithm,
+    setActiveGraphAlgorithm 
+  } = useUIStore();
+  
   const graphToDisplay = currentGraph || DEMO_GRAPH;
 
   useEffect(() => {
@@ -37,32 +52,66 @@ export default function AlgorithmViewer() {
       return;
     }
 
+    if (globalEngine.reset) {
+      globalEngine.reset();
+    } else {
+      globalEngine.pause();
+    }
+    useUIStore.getState().setIsAnimating(false);
+
     if (category === 'sorting') {
       setActiveMode('sorting');
-      if (id === 'merge-sort') setActiveSortingAlgorithm('Merge Sort');
-      else if (id === 'quick-sort') setActiveSortingAlgorithm('Quick Sort');
+      setActiveSortingAlgorithm(match.algorithm.name);
+    } else if (category === 'searching') {
+      setActiveMode('searching');
+      setActiveSearchingAlgorithm(match.algorithm.name);
     } else if (category === 'graphs') {
       setActiveMode('graph');
-      if (id === 'dijkstra') setActiveGraphAlgorithm("Dijkstra's Path");
-      else if (id === 'kruskal') setActiveGraphAlgorithm("Kruskal's MST");
+      setActiveGraphAlgorithm(match.algorithm.name);
+    } else if (category === 'dp') {
+      setActiveMode('dp');
+    } else {
+      setActiveMode('grid');
     }
-  }, [category, id, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveGraphAlgorithm]);
+  }, [category, id, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm]);
+
+  // Determine which stage to render based on the active mode
+  const renderStage = () => {
+    switch (activeMode) {
+      case 'graph':
+        return (
+          <GraphStage 
+            nodes={graphToDisplay.nodes} 
+            edges={graphToDisplay.edges} 
+            isDirected={graphToDisplay.isDirected !== undefined ? graphToDisplay.isDirected : activeGraphAlgorithm !== "Kruskal's MST" && activeGraphAlgorithm !== "Prim's MST"} 
+          />
+        );
+      case 'sorting':
+        return <SortingStage />;
+      case 'searching':
+        return <SearchingStage />;
+      case 'dp':
+        return <MatrixStage />;
+      default:
+        return <VisualStage />;
+    }
+  };
 
   return (
     <div className="pt-20 pb-8 px-6 h-screen w-full flex gap-4 relative z-10 transition-all duration-300">
       {isSidebarOpen && <Sidebar />}
 
       <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated shadow-2xl shadow-ice-blue/5 border border-ice-blue/10">
-        {activeMode === 'graph'
-          ? <GraphStage nodes={graphToDisplay.nodes} edges={graphToDisplay.edges} isDirected={activeGraphAlgorithm !== "Kruskal's MST"} />
-          : <VisualStage />
-        }
+        {renderStage()}
       </div>
 
       <aside className="w-[900px] hidden lg:flex flex-col gap-4 h-full">
         <MonacoCodeEditor />
         <EventLog />
       </aside>
+
+      {/* Global Playback Controls */}
+      <PlaybackDeck />
     </div>
   );
 }

@@ -3,11 +3,19 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useUIStore } from '../store/uiStore';
 import { findAlgorithm } from '../data/algorithmCatalog';
 import { globalEventBus } from '../core/EventBus';
+import { globalEngine } from '../core/AnimationEngine';
 import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
 import VisualStage from '../components/visualizer/VisualStage';
 import GraphStage from '../components/visualizer/GraphStage';
 import GridStage from '../components/visualizer/GridStage';
+import MatrixStage from '../components/visualizer/MatrixStage';
+import SortingStage from '../components/visualizer/SortingStage';
+import SearchingStage from '../components/visualizer/SearchingStage';
+import PlaybackDeck from '../components/controls/PlaybackDeck';
+
+
+
 import MonacoCodeEditor from '../components/hud/MonacoCodeEditor';
 import EventLog from '../components/hud/EventLog';
 import AmbientGraph from '../components/background/AmbientGraph';
@@ -31,7 +39,10 @@ const DEMO_GRAPH = { nodes: DEMO_NODES, edges: DEMO_EDGES, startNodeId: 'n0' };
 export default function VisualizerPage() {
   const { category, algoId } = useParams<{ category: string; algoId: string }>();
   const navigate = useNavigate();
-  const { isSidebarOpen, activeMode, currentGraph, activeGraphAlgorithm, setActiveMode, setActiveSortingAlgorithm, setActiveGraphAlgorithm } = useUIStore();
+  const { 
+    isSidebarOpen, activeMode, currentGraph, 
+    setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm, setActiveGridAlgorithm 
+  } = useUIStore();
   const graphToDisplay = currentGraph || DEMO_GRAPH;
 
   // Sync the UI store with the route params
@@ -43,23 +54,54 @@ export default function VisualizerPage() {
       return;
     }
 
-    // Set the correct mode and algorithm based on the route
+    // Reset previous trace and animations when switching algorithms
+    globalEngine.reset();
+    useUIStore.getState().setIsAnimating(false);
+
+    // Set the correct mode based on the category
     if (category === 'sorting') {
       setActiveMode('sorting');
-      if (algoId === 'merge-sort') setActiveSortingAlgorithm('Merge Sort');
-      else if (algoId === 'quick-sort') setActiveSortingAlgorithm('Quick Sort');
-    } else if (category === 'graphs') {
+      setActiveSortingAlgorithm(found.algorithm.name);
+    } else if (category === 'searching') {
+      setActiveMode('searching');
+      setActiveSearchingAlgorithm(found.algorithm.name);
+    } else if (category === 'graphs' || category === 'trees') {
       setActiveMode('graph');
-      if (algoId === 'dijkstra') setActiveGraphAlgorithm("Dijkstra's Path");
-      else if (algoId === 'kruskal') setActiveGraphAlgorithm("Kruskal's MST");
+      setActiveGraphAlgorithm(found.algorithm.name);
+    } else if (category === 'grid') {
+      setActiveMode('grid');
+      setActiveGridAlgorithm(found.algorithm.name);
+    } else if (category === 'dp') {
+      setActiveMode('dp');
     }
-  }, [category, algoId, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveGraphAlgorithm]);
+  }, [category, algoId, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm, setActiveGridAlgorithm]);
+
+
 
   // Listen for graph updates from the sandbox
   useEffect(() => {
     const unsub = globalEventBus.subscribe((e) => {
       if (e.type === 'TRACE_LOADED' && e.metadata && e.metadata.initialGraph) {
-        useUIStore.getState().setCurrentGraph(e.metadata.initialGraph as GraphInput);
+        const newGraph = e.metadata.initialGraph as GraphInput;
+        const current = useUIStore.getState().currentGraph;
+        
+        // Merge coordinates from current graph to preserve beautiful layouts
+        if (current && current.nodes && current.nodes.length > 0) {
+          newGraph.nodes = newGraph.nodes.map(node => {
+            const existingNode = current.nodes.find(n => n.id === node.id);
+            if (existingNode) {
+              return { ...node, x: existingNode.x, y: existingNode.y };
+            }
+            // Fallback for completely new nodes added in code
+            return { 
+              ...node, 
+              x: typeof node.x === 'number' ? node.x : Math.random() * 400, 
+              y: typeof node.y === 'number' ? node.y : Math.random() * 400 
+            };
+          });
+        }
+        
+        useUIStore.getState().setCurrentGraph(newGraph);
       }
     });
     return () => unsub();
@@ -94,11 +136,18 @@ export default function VisualizerPage() {
         <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated shadow-2xl shadow-ice-blue/5 border border-ice-blue/10">
           {/* Switch between sorting bars, force-directed graph, and css grid */}
           {activeMode === 'graph'
-            ? <GraphStage nodes={graphToDisplay.nodes} edges={graphToDisplay.edges} isDirected={activeGraphAlgorithm !== "Kruskal's MST"} />
+            ? <GraphStage nodes={graphToDisplay.nodes} edges={graphToDisplay.edges} isDirected={(graphToDisplay as any).isDirected !== undefined ? (graphToDisplay as any).isDirected : !['kruskal', 'prim'].includes(algoId || '')} />
             : activeMode === 'grid'
             ? <GridStage />
+            : activeMode === 'dp'
+            ? <MatrixStage />
+            : activeMode === 'searching'
+            ? <SearchingStage />
+            : activeMode === 'sorting'
+            ? <SortingStage />
             : <VisualStage />
           }
+
         </div>
 
         <aside className="w-[900px] hidden lg:flex flex-col gap-4 h-full">
@@ -106,6 +155,8 @@ export default function VisualizerPage() {
            <EventLog />
         </aside>
       </div>
+
+      <PlaybackDeck />
     </div>
   );
 }

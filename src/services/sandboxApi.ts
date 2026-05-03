@@ -42,11 +42,15 @@ export async function executeInSandbox(
   if (!res.ok) {
     // Try to extract a JSON error message from the backend
     let detail = `HTTP ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body?.error) detail = body.error;
-    } catch {
-      // body wasn't JSON, keep the HTTP status
+    if (res.status === 502) {
+      detail = 'HTTP 502: Go backend is unreachable. Please ensure the backend is running (e.g., "docker compose up").';
+    } else {
+      try {
+        const body = await res.json();
+        if (body?.error) detail = body.error;
+      } catch {
+        // body wasn't JSON, keep the HTTP status
+      }
     }
     throw new Error(detail);
   }

@@ -166,11 +166,25 @@ export class AnimationEngine {
   }
 
   /**
+   * Reset the engine state completely, cleaning up traces and active animations.
+   */
+  public reset(): void {
+    this.pause();
+    this.currentTrace = null;
+    this.currentStep = 0;
+    this.accumulatedTime = 0;
+    this.activeAnimations.clear();
+    this.emitPlaybackState();
+  }
+
+  /**
    * Advance to the next algorithm step
    */
   public stepForward(): void {
-    if (!this.currentTrace || this.currentStep >= this.currentTrace.events.length)
+    if (!this.currentTrace || this.currentStep >= this.currentTrace.events.length) {
+      this.pause();
       return;
+    }
 
     const event = this.currentTrace.events[this.currentStep];
     globalEventBus.emit(event);
@@ -257,6 +271,10 @@ export class AnimationEngine {
    */
   public cancelAnimation(id: string): void {
     this.activeAnimations.delete(id);
+  }
+
+  public getTrace(): ExecutionTrace | null {
+    return this.currentTrace;
   }
 
   /**

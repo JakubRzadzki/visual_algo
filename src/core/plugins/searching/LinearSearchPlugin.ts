@@ -1,18 +1,32 @@
-import type { AlgorithmPlugin, ExecutionTrace, EventPayload, VisualizationEvent } from '../../../types';
+/**
+ * @file LinearSearchPlugin.ts
+ * @description Plugin for the Linear Search algorithm.
+ * 
+ * Scans elements sequentially to find a target value.
+ * Time complexity: O(n), Space complexity: O(1).
+ */
 
-export class LinearSearchPlugin implements AlgorithmPlugin<number[]> {
+import type { AlgorithmPlugin, ExecutionTrace, EventPayload, VisualizationEvent, ArrayInput } from '../../../types';
+
+/**
+ * LinearSearchPlugin — Implements the Linear Search algorithm.
+ */
+export class LinearSearchPlugin implements AlgorithmPlugin<ArrayInput & { target?: number }> {
   id = 'linear-search';
   name = 'Linear Search';
   category = 'searching' as const;
 
   /**
-   * Executes linear search, scanning every element sequentially.
-   * Searches for the last element as the target (for demonstration).
-   * Emits SEARCH_CHECK for each comparison and SEARCH_FOUND / SEARCH_NOT_FOUND.
+   * Executes the Linear Search algorithm.
+   * 
+   * @param input - The input data containing the array and an optional target.
+   * @returns An ExecutionTrace with search check and result events.
    */
-  execute(data: number[]): ExecutionTrace {
-    const arr = [...data];
-    const target = arr[arr.length - 1]; // search for the last element
+  execute(input: ArrayInput & { target?: number }): ExecutionTrace {
+    const arr = [...input.values];
+    // If target is not provided, default to the last element
+    const target = input.target !== undefined ? input.target : arr[arr.length - 1];
+    
     const events: VisualizationEvent[] = [];
     let step = 0;
     const startTime = performance.now();
@@ -28,30 +42,25 @@ export class LinearSearchPlugin implements AlgorithmPlugin<number[]> {
 
     let found = false;
 
+    // Phase: Sequential scan of the array
     for (let i = 0; i < arr.length; i++) {
-      // Check every element one by one
+      // Record comparison check
       pushEvent({ type: 'SEARCH_CHECK', index: i, value: arr[i], target });
 
       if (arr[i] === target) {
+        // Target found
         pushEvent({ type: 'SEARCH_FOUND', index: i, value: arr[i] });
         found = true;
         break;
       }
     }
 
+    // Record failure if not found
     if (!found) {
       pushEvent({ type: 'SEARCH_NOT_FOUND', target });
     }
 
     const endTime = performance.now();
-
-    pushEvent({
-      type: 'SYSTEM_LOG',
-      level: 'INFO',
-      message: found
-        ? `Linear Search: found ${target} at index ${step - 2}.`
-        : `Linear Search: ${target} not found after scanning ${arr.length} elements.`
-    });
 
     return {
       events,
@@ -61,7 +70,7 @@ export class LinearSearchPlugin implements AlgorithmPlugin<number[]> {
         executionTimeMs: endTime - startTime,
         nodeCount: arr.length,
         algorithmName: this.name,
-        initialState: [...data]
+        initialState: [...input.values]
       }
     };
   }

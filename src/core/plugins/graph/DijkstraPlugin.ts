@@ -43,13 +43,26 @@ export class DijkstraPlugin implements AlgorithmPlugin<GraphInput> {
       adj[e.to]?.push({ to: e.from, edge: e }); // undirected
     }
 
+    const visited = new Set<string>();
+
     while (pq.length > 0) {
       // Pop the node with the smallest tentative distance
       pq.sort((a, b) => a.priority - b.priority);
-      const { id: u } = pq.shift()!;
+      const { id: u, priority } = pq.shift()!;
+
+      if (visited.has(u)) continue;
+      visited.add(u);
+
+      // Highlight current processing node
+      push({ type: 'GRAPH_NODE_HIGHLIGHT', nodeId: u, distance: priority });
 
       for (const { to: v, edge } of adj[u] ?? []) {
+        if (visited.has(v)) continue;
+
         const alt = dist[u] + edge.weight;
+        
+        // Visualize the edge being considered
+        push({ type: 'GRAPH_EDGE_HIGHLIGHT', edgeId: edge.id, accepted: alt < dist[v] });
 
         if (alt < dist[v]) {
           dist[v] = alt;

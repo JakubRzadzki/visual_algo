@@ -4,6 +4,7 @@ import type { editor } from 'monaco-editor';
 import { globalEventBus } from '../../core/EventBus';
 import { globalEngine } from '../../core/AnimationEngine';
 import { useUIStore } from '../../store/uiStore';
+import { globalWorkerPool } from '../../core/WorkerPool';
 import { executeInSandbox, buildExecutionTrace, saveSnapshot } from '../../services/sandboxApi';
 import { useToast } from './Toast';
 import { Copy, Download, Check, Save, ChevronDown, Play, Loader2, Share2 } from 'lucide-react';
@@ -107,9 +108,13 @@ function defineGlacierDark(monaco: Monaco) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function MonacoCodeEditor() {
-  const globalAlgo = useUIStore(state =>
-    state.activeMode === 'sorting' ? state.activeSortingAlgorithm : state.activeGraphAlgorithm
-  );
+  const activeMode = useUIStore(state => state.activeMode);
+  const globalAlgo = useUIStore(state => {
+    if (state.activeMode === 'sorting') return state.activeSortingAlgorithm;
+    if (state.activeMode === 'searching') return state.activeSearchingAlgorithm;
+    if (state.activeMode === 'graph') return state.activeGraphAlgorithm;
+    return state.activeSortingAlgorithm;
+  });
   const setIsAnimating = useUIStore(state => state.setIsAnimating);
   const currentGraph = useUIStore(state => state.currentGraph);
 
@@ -121,6 +126,9 @@ export default function MonacoCodeEditor() {
   const [editorContent, setEditorContent] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [activeLine, setActiveLine] = useState<number | null>(null);
+  const [useLocalRunner, setUseLocalRunner] = useState<boolean>(true);
+  
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monaco = useMonaco();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -135,10 +143,48 @@ export default function MonacoCodeEditor() {
     const unsubscribe = globalEventBus.subscribe((e) => {
       if (e.type === 'TRACE_LOADED') {
         setAlgoName(e.metadata.algorithmName);
+        setActiveLine(null);
+      } else if (['ARRAY_COMPARE', 'ARRAY_SWAP', 'SEARCH_CHECK', 'SEARCH_FOUND', 'SEARCH_NARROW'].includes(e.type)) {
+        // Bonus: Highlight the currently executing line using heuristic pattern matching
+        if (!editorRef.current) return;
+        const model = editorRef.current.getModel();
+        if (!model) return;
+        const lines = model.getLinesContent();
+        
+        let targetPattern = '';
+        if (e.type === 'ARRAY_COMPARE') targetPattern = 'if ';
+        else if (e.type === 'ARRAY_SWAP') targetPattern = 'temp';
+        else if (e.type === 'SEARCH_CHECK') targetPattern = '==';
+        else if (e.type === 'SEARCH_FOUND') targetPattern = 'return';
+        else if (e.type === 'SEARCH_NARROW') targetPattern = 'mid';
+        
+        if (targetPattern) {
+          const idx = lines.findIndex(l => l.toLowerCase().includes(targetPattern));
+          if (idx !== -1) setActiveLine(idx + 1);
+        }
       }
     });
     return () => unsubscribe();
   }, []);
+
+  // Apply monaco decorations for active line highlighting
+  useEffect(() => {
+    if (!editorRef.current || !activeLine || !monaco) return;
+    const model = editorRef.current.getModel();
+    if (!model) return;
+
+    const decorationId = editorRef.current.deltaDecorations([], [
+      {
+        range: new monaco.Range(activeLine, 1, activeLine, 1),
+        options: {
+          isWholeLine: true,
+          className: 'bg-cyan-500/20 border-l-4 border-cyan-400',
+        }
+      }
+    ]);
+    
+    return () => { editorRef.current?.deltaDecorations(decorationId, []); };
+  }, [activeLine, monaco, editorContent]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -156,8 +202,17 @@ export default function MonacoCodeEditor() {
     const algoIdToFilename: Record<string, string> = {
       'Merge Sort': 'merge-sort',
       'Quick Sort': 'quick-sort',
+      'Bubble Sort': 'bubble-sort',
+      'Heap Sort': 'heap-sort',
+      'Binary Search': 'binary-search',
+      'Linear Search': 'linear-search',
       "Dijkstra's Path": 'dijkstra',
+      "Dijkstra's Shortest Path": 'dijkstra',
       "Kruskal's MST": 'kruskal',
+      'Breadth-First Search': 'bfs',
+      'Depth-First Search': 'dfs',
+      "Prim's MST": 'prim',
+      'Topological Sort': 'topo-sort',
     };
     const filename = algoIdToFilename[algoName] || 'merge-sort';
 
@@ -169,18 +224,53 @@ export default function MonacoCodeEditor() {
     return '';
   }, [language, algoName]);
 
-  // Update editor content whenever language or algorithm changes
+  // Update editor content whenever language, algorithm, or graph template changes
   useEffect(() => {
-    // Check localStorage for saved edits first
-    const storageKey = `monaco-editor-${algoName}-${language}`;
+    const graphId = currentGraph ? `${currentGraph.nodes.length}-${currentGraph.edges.length}-${currentGraph.edges.map(e => e.id).join('')}` : 'default';
+    const storageKey = `monaco-editor-${algoName}-${language}-${graphId}`;
     const savedCode = localStorage.getItem(storageKey);
-    const code = savedCode || getSourceCode();
+    let code = savedCode || getSourceCode();
+
+    if (activeMode === 'graph' && currentGraph && language === 'python') {
+      const isEdgeList = /^    edges\s*=\s*\[[\s\S]*?^    \]/m.test(code);
+      const isAdjList = /^    graph\s*=\s*\[[\s\S]*?^    \]/m.test(code);
+
+      if (isEdgeList) {
+        const edgeStrings = currentGraph.edges.map(e => {
+          const u = e.from.replace('n','');
+          const v = e.to.replace('n','');
+          return `        (${u}, ${v}, "${e.id}", ${e.weight})`;
+        });
+        const block = `    edges = [\n${edgeStrings.join(',\n')}\n    ]`;
+        code = code.replace(/^    edges\s*=\s*\[[\s\S]*?^    \]/m, block);
+        code = code.replace(/^    nodes\s*=\s*\d+/m, `    nodes = ${currentGraph.nodes.length}`);
+      } else if (isAdjList) {
+        const numNodes = currentGraph.nodes.length;
+        const adj: [number, number, string][][] = Array.from({ length: numNodes }, () => []);
+        currentGraph.edges.forEach(e => {
+          const u = parseInt(e.from.replace('n', ''), 10);
+          const v = parseInt(e.to.replace('n', ''), 10);
+          if (!isNaN(u) && !isNaN(v)) {
+            adj[u].push([v, e.weight, e.id]);
+          }
+        });
+        let block = `    graph = [\n`;
+        adj.forEach(neighbors => {
+          const neighborStrs = neighbors.map(n => `(${n[0]}, ${n[1]}, "${n[2]}")`);
+          block += `        [${neighborStrs.join(', ')}],\n`;
+        });
+        block += `    ]`;
+        code = code.replace(/^    graph\s*=\s*\[[\s\S]*?^    \]/m, block);
+      }
+    }
+
     setEditorContent(code);
-  }, [language, algoName, getSourceCode]);
+  }, [language, algoName, getSourceCode, activeMode, currentGraph]);
 
   // Sync the array in the editor to the visualization canvas directly
   useEffect(() => {
-    if (globalAlgo !== 'Merge Sort' && globalAlgo !== 'Quick Sort') return;
+    if (activeMode !== 'sorting' && activeMode !== 'searching') return;
+    if (useUIStore.getState().isAnimating) return;
     
     const timeout = setTimeout(() => {
       let match = null;
@@ -195,23 +285,14 @@ export default function MonacoCodeEditor() {
       if (match && match[1]) {
         const arr = match[1].split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
         if (arr.length > 0) {
-          globalEngine.loadTrace({
-            events: [],
-            metadata: {
-              algorithmName: globalAlgo,
-              initialState: arr,
-              timeComplexity: 'N/A',
-              spaceComplexity: 'N/A',
-              executionTimeMs: 0,
-              nodeCount: arr.length
-            }
-          });
+          useUIStore.getState().setVisualizationData({ values: arr });
         }
       }
     }, 500);
     
     return () => clearTimeout(timeout);
-  }, [editorContent, language, globalAlgo]);
+  }, [editorContent, language, activeMode]);
+
 
   // Define theme once Monaco is ready
   useEffect(() => {
@@ -268,7 +349,8 @@ export default function MonacoCodeEditor() {
 
   const handleSave = () => {
     const code = editorRef.current?.getValue() || editorContent;
-    const storageKey = `monaco-editor-${algoName}-${language}`;
+    const graphId = currentGraph ? `${currentGraph.nodes.length}-${currentGraph.edges.length}-${currentGraph.edges.map(e => e.id).join('')}` : 'default';
+    const storageKey = `monaco-editor-${algoName}-${language}-${graphId}`;
     localStorage.setItem(storageKey, code);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -308,6 +390,48 @@ export default function MonacoCodeEditor() {
     const code = editorRef.current?.getValue() || editorContent;
     if (!code.trim()) {
       showToast('Editor is empty', 'error', 'Write some code before running.');
+      return;
+    }
+
+    const algoIdMap: Record<string, string> = {
+      'Merge Sort': 'merge-sort',
+      'Quick Sort': 'quick-sort',
+      'Bubble Sort': 'bubble-sort',
+      'Heap Sort': 'heap-sort',
+      'Binary Search': 'binary-search',
+      'Linear Search': 'linear-search',
+      "Dijkstra's Path": 'dijkstra',
+      "Dijkstra's Shortest Path": 'dijkstra',
+      "Kruskal's MST": 'kruskal',
+      'Breadth-First Search': 'bfs',
+      'Depth-First Search': 'dfs',
+      "Prim's MST": 'prim',
+      'Topological Sort': 'topo-sort',
+    };
+    const mappedAlgoId = algoIdMap[globalAlgo] || 'dijkstra';
+
+    if (useLocalRunner) {
+      setIsRunning(true);
+      const startTime = performance.now();
+      try {
+        const trace = await globalWorkerPool.run(mappedAlgoId, currentGraph || { nodes: [], edges: [] });
+        const elapsedMs = Math.round(performance.now() - startTime);
+
+        globalEngine.loadTrace(trace);
+        globalEngine.setSpeed(1.0);
+        setIsAnimating(true);
+        globalEngine.play();
+
+        showToast(
+          `Trace loaded via Browser — ${trace.events.length} steps`,
+          'success',
+          `Executed locally in ${elapsedMs}ms`,
+        );
+      } catch (err) {
+        showToast('Local execution failed', 'error', err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setIsRunning(false);
+      }
       return;
     }
 
@@ -357,7 +481,7 @@ export default function MonacoCodeEditor() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, editorContent, language, algoName, showToast, setIsAnimating]);
+  }, [isRunning, editorContent, language, algoName, showToast, setIsAnimating, useLocalRunner, globalAlgo, currentGraph]);
 
   return (
     <div
@@ -383,6 +507,17 @@ export default function MonacoCodeEditor() {
         </div>
 
         <div className="flex items-center gap-1.5">
+          {/* Local / Docker Switch */}
+          <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50 cursor-pointer hover:border-cyan-400/30 transition text-xs select-none">
+            <input
+              type="checkbox"
+              checked={useLocalRunner}
+              onChange={(e) => setUseLocalRunner(e.target.checked)}
+              className="rounded border-slate-700 bg-slate-900 text-cyan-400 focus:ring-0 cursor-pointer"
+            />
+            <span className="text-slate-300 font-medium">Browser</span>
+          </label>
+
           {/* ▶ Run Code Button */}
           <button
             id="run-code-btn"
@@ -393,7 +528,7 @@ export default function MonacoCodeEditor() {
                 ? 'bg-cyan-500/10 text-cyan-300/60 border border-cyan-500/20 cursor-wait'
                 : 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 text-cyan-300 border border-cyan-500/30 hover:from-cyan-500/30 hover:to-emerald-500/30 hover:text-cyan-200 hover:border-cyan-400/40 hover:shadow-[0_0_12px_rgba(6,182,212,0.2)] active:scale-[0.97]'
             }`}
-            title="Run code in sandbox (Ctrl+Enter)"
+            title="Run code (Ctrl+Enter)"
           >
             {isRunning ? (
               <>
