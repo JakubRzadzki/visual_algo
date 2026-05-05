@@ -22,10 +22,12 @@ interface UIState {
   
   isLoading: boolean;       // for backend requests
   shareLink: string;        // UUID of saved snapshot
+  isCodePanelOpen: boolean; // toggle right aside code & terminal pane
 
   setAnimationSpeed: (speed: number) => void;
   toggleSidebar: () => void;
   toggleDebug: () => void;
+  toggleCodePanel: () => void;
   
   setActiveCategory: (cat: string) => void;
   setActiveSortingAlgorithm: (algo: string) => void;
@@ -47,6 +49,7 @@ export const useUIStore = create<UIState>((set) => ({
   animationSpeed: 1.0,
   isSidebarOpen: true,
   isDebugVisible: false,
+  isCodePanelOpen: true,
   
   activeCategory: 'sorting',
   activeSortingAlgorithm: 'Merge Sort',
@@ -65,6 +68,7 @@ export const useUIStore = create<UIState>((set) => ({
   setAnimationSpeed: (speed) => set({ animationSpeed: Math.max(0.25, Math.min(speed, 4.0)) }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   toggleDebug: () => set((state) => ({ isDebugVisible: !state.isDebugVisible })),
+  toggleCodePanel: () => set((state) => ({ isCodePanelOpen: !state.isCodePanelOpen })),
   
   setActiveCategory: (cat) => set({ activeCategory: cat }),
   setActiveSortingAlgorithm: (algo) => set({ activeSortingAlgorithm: algo }),

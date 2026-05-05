@@ -3,7 +3,7 @@
 @theme {
   --color-ice-blue: #7dd3fc;
   --color-ice-lavender: #c8a0f0;
-  --color-glacier-bg: #0a0e1a;
+  --color-glacier-bg: #020617;
   --color-glacier-surface: rgba(15, 21, 36, 0.6);
   --color-glacier-surface-elevated: rgba(15, 21, 36, 0.75);
   --color-glacier-border: rgba(125, 211, 252, 0.1);
@@ -32,10 +32,120 @@
   }
 }
 
+/* ────────────────────────────────────────────────────
+ * Animated gradient for the title text
+ * ──────────────────────────────────────────────────── */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 6s ease-in-out infinite;
+}
+
+/* ────────────────────────────────────────────────────
+ * Category Card Hover Effects
+ * Gated behind @media (hover: hover) to avoid sticky
+ * hover states on touch devices.
+ * ──────────────────────────────────────────────────── */
+@keyframes shine-sweep {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (hover: hover) {
+  .hover-card {
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .hover-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    border-color: rgba(34, 211, 238, 0.15);
+    box-shadow:
+      0 0 30px rgba(34, 211, 238, 0.06),
+      0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .hover-card:hover .shine-sweep {
+    animation: shine-sweep 1.2s ease-in-out;
+  }
+}
+
+/* ────────────────────────────────────────────────────
+ * Reduced Motion: Disable or simplify all animations
+ * ──────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient-shift {
+    animation: none;
+  }
+
+  .hover-card,
+  .hover-card:hover {
+    transition: none;
+    transform: none;
+  }
+
+  .hover-card:hover .shine-sweep {
+    animation: none;
+  }
+}
+
+/* ────────────────────────────────────────────────────
+ * Scrollbar Hiding Utility
+ * ──────────────────────────────────────────────────── */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ────────────────────────────────────────────────────
+ * Cyber Range Slider — custom styled input[type=range]
+ * for the sorting playback controls.
+ * ──────────────────────────────────────────────────── */
+.cyber-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+  cursor: pointer;
+}
+
+.cyber-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #22d3ee;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.cyber-range::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.6);
+}
+
+.cyber-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #22d3ee;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+  cursor: pointer;
+}
+
+.cyber-range::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
 }

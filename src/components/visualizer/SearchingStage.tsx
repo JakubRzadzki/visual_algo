@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import type { VisualizationEvent, ArrayInput } from '../../types';
 import { globalEventBus } from '../../core/EventBus';
 import { globalEngine } from '../../core/AnimationEngine';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useUIStore } from '../../store/uiStore';
 
 export default function SearchingStage() {
@@ -17,7 +17,7 @@ export default function SearchingStage() {
     if (visualizationData && 'values' in visualizationData) {
       return [...(visualizationData as ArrayInput).values];
     }
-    return [];
+    return [3, 9, 10, 27, 38, 43, 82];
   });
   const [, setStepCounter] = useState<number>(0);
 
@@ -169,7 +169,8 @@ export default function SearchingStage() {
       </div>
 
       {/* ── 2. Middle Section: Array Elements with Exit Animations ── */}
-      <div className="flex flex-nowrap items-center justify-center w-full max-w-full relative min-h-[160px] px-2 overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center w-full">
+        <div className="flex flex-nowrap items-center justify-center w-full max-w-full relative min-h-[160px] px-2 overflow-hidden">
         <AnimatePresence>
           {array
             .map((value, index) => ({ value, index }))
@@ -266,6 +267,7 @@ export default function SearchingStage() {
               );
             })}
         </AnimatePresence>
+        </div>
       </div>
 
 

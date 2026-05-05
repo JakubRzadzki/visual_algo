@@ -148,7 +148,7 @@ export default function VisualizerPage() {
           }
 
           {/* Controls are now scoped to the visual stage */}
-          <PlaybackDeck />
+          {activeMode !== 'sorting' && <PlaybackDeck />}
         </div>
 
         <aside className="w-[900px] hidden lg:flex flex-col gap-4 h-full">

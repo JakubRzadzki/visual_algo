@@ -136,6 +136,7 @@ export default function MonacoCodeEditor() {
   // Sync algorithm name from global state and event bus
   useEffect(() => {
     setAlgoName(globalAlgo);
+    useUIStore.getState().setIsAnimating(false);
   }, [globalAlgo]);
 
   useEffect(() => {
@@ -161,10 +162,20 @@ export default function MonacoCodeEditor() {
           const idx = lines.findIndex(l => l.toLowerCase().includes(targetPattern));
           if (idx !== -1) setActiveLine(idx + 1);
         }
+      } else if ((e as any).type === 'ARRAY_SET' && (e as any).metadata && (e as any).metadata.newArray) {
+        const newArr = (e as any).metadata.newArray as number[];
+        setEditorContent(prev => {
+          if (language === 'python') {
+            return prev.replace(/^(\s*)arr\s*=\s*\[([\d\s,]+)\]/m, `$1arr = [${newArr.join(', ')}]`);
+          } else if (language === 'cpp') {
+            return prev.replace(/^(\s*)(?:std::)?vector<int>\s+arr\s*=\s*\{([\d\s,]+)\};/m, `$1vector<int> arr = {${newArr.join(', ')}};`);
+          }
+          return prev;
+        });
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [language]);
 
   // Apply monaco decorations for active line highlighting
   useEffect(() => {
@@ -626,7 +637,10 @@ export default function MonacoCodeEditor() {
           language={LANGUAGE_MONACO_IDS[language]}
           value={editorContent}
           theme="GlacierDark"
-          onChange={(value) => setEditorContent(value || '')}
+          onChange={(value) => {
+            setEditorContent(value || '');
+            useUIStore.getState().setIsAnimating(false);
+          }}
           onMount={handleEditorMount}
           loading={
             <div className="flex items-center justify-center h-full text-slate-500 text-sm">

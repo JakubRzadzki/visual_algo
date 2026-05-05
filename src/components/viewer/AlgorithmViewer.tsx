@@ -25,7 +25,7 @@ const DEMO_EDGES = DEMO_NODES.map((_, i) => ({
 const DEMO_GRAPH: GraphInput = { nodes: DEMO_NODES, edges: DEMO_EDGES, startNodeId: 'n0' };
 
 /**
- * AlgorithmViewer
+ * AlgorithmViewer handles the main visualization layout and routing
  */
 export default function AlgorithmViewer() {
   const { category, id } = useParams<{ category: string; id: string }>();
@@ -102,7 +102,7 @@ export default function AlgorithmViewer() {
     <div className="pt-20 pb-8 px-6 h-screen w-full flex gap-4 relative z-10 transition-all duration-300">
       {isSidebarOpen && <Sidebar />}
 
-      <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated shadow-2xl shadow-ice-blue/5 border border-ice-blue/10">
+      <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated border border-white/10 shadow-2xl">
         {renderStage()}
       </div>
 
@@ -111,8 +111,8 @@ export default function AlgorithmViewer() {
         <EventLog />
       </aside>
 
-      {/* Global Playback Controls */}
-      <PlaybackDeck />
+      {/* Global Playback Controls (Only rendered if NOT in sorting mode) */}
+      {activeMode !== 'sorting' && <PlaybackDeck />}
     </div>
   );
 }
