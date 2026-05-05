@@ -39,7 +39,7 @@ export default function Sidebar() {
 
   const handleRunGraphAlgo = async () => {
     if (!currentGraph) {
-      setStatus('❌ Choose or select a graph variation first');
+      setStatus('[ERROR] Choose or select a graph variation first');
       return;
     }
     if (!algoId) return;
@@ -55,9 +55,9 @@ export default function Sidebar() {
       setIsAnimating(true);
       globalEngine.play();
 
-      setStatus(`✓ Done — ${trace.events.length} events`);
+      setStatus(`[DONE] Trace generated: ${trace.events.length} events`);
     } catch (err) {
-      setStatus(`❌ ${String(err)}`);
+      setStatus(`[ERROR] ${String(err)}`);
     } finally {
       setRunning(false);
       setTimeout(() => setIsAnimating(false), 3000);

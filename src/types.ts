@@ -95,7 +95,7 @@ export interface AlgorithmPlugin<InputShape = unknown> {
 export interface WorkerMessage {
   taskId: string;           // unique id to match request → response
   algorithmId: string;      // e.g. 'dijkstra' | 'kruskal'
-  payload: any;             // serialized input data (GraphInput, ArrayInput, etc.)
+  payload: VisualizationData;             // serialized input data (GraphInput, ArrayInput, etc.)
 }
 
 /** Response sent FROM a worker BACK to the main thread */

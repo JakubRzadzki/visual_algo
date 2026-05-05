@@ -15,17 +15,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '../../store/uiStore';
 
 export default function SortingStage() {
-  const [array, setArray] = useState<number[]>([]);
-  const [activeEvent, setActiveEvent] = useState<VisualizationEvent | null>(null);
-
-  // Initialize array from store if available
   const { visualizationData } = useUIStore();
-
-  useEffect(() => {
+  const [array, setArray] = useState<number[]>(() => {
     if (visualizationData && 'values' in visualizationData) {
-      setArray([...(visualizationData as ArrayInput).values]);
+      return [...(visualizationData as ArrayInput).values];
     }
-  }, [visualizationData]);
+    return [];
+  });
+  const [activeEvent, setActiveEvent] = useState<VisualizationEvent | null>(null);
 
   useEffect(() => {
     const unsubscribe = globalEventBus.subscribe((event: VisualizationEvent) => {
@@ -132,42 +129,54 @@ export default function SortingStage() {
             const hasPointer = isPointerI || isPointerJ || isPointerK;
 
             // Color logic for bar
-            let bgColor = 'bg-gradient-to-t from-sky-600/80 to-sky-400/80';
+            let bgColor = 'bg-gradient-to-t from-sky-600/60 to-sky-400/60'; // Dimmer default
+            let scale = 1;
+            
             if (activeEvent?.type === 'SEARCH_FOUND' && index === targetPointer) {
-              bgColor = 'bg-gradient-to-t from-emerald-600 to-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.4)]';
+              bgColor = 'bg-gradient-to-t from-emerald-500 to-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.5)] ring-2 ring-emerald-300';
+              scale = 1.1;
             } else if (hasPointer) {
-              bgColor = 'bg-gradient-to-t from-amber-600 to-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.4)]';
+              bgColor = 'bg-gradient-to-t from-amber-500 to-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.5)] ring-2 ring-amber-300';
+              scale = 1.1;
             } else if (activeEvent?.type === 'SEARCH_NARROW') {
               if (index < activeEvent.left || index > activeEvent.right) {
-                bgColor = 'bg-slate-800/30 border-slate-700/20 text-slate-700 opacity-40';
+                bgColor = 'bg-slate-800/20 border-slate-700/10 text-slate-700 opacity-20';
+                scale = 0.95;
               }
             }
 
             return (
-              <div key={`col-${index}`} className="flex flex-col items-center justify-end h-full min-h-[160px]">
+              <div key={`col-${index}`} className="flex flex-col items-center justify-end h-full min-h-[160px] relative">
                 {/* Visual bar with value on top */}
                 <motion.div
                   layout
                   initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`w-12 rounded-t-lg transition-all duration-300 flex items-end justify-center pb-3 font-bold text-sm select-none border border-white/5 ${bgColor}`}
+                  animate={{ opacity: 1, y: 0, scale: scale }}
+                  className={`w-12 rounded-t-xl transition-all duration-300 flex items-end justify-center pb-3 font-black text-sm select-none border border-white/10 ${bgColor}`}
                   style={{ height: `${Math.max(heightPercent, 12)}%` }}
                 >
                   <span className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{value}</span>
                 </motion.div>
 
                 {/* Arrow pointer area below each bar */}
-                <div className="h-12 w-full flex flex-col items-center justify-start mt-2">
+                <div className="h-16 w-full flex flex-col items-center justify-start mt-3">
                   {hasPointer && (
                     <motion.div
                       layoutId={`pointer-${index}`}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0, y: -20, scale: 0.5 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
                       className="flex flex-col items-center select-none"
                     >
-                      <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[10px] border-b-amber-400 mb-1 animate-bounce" />
-                      <span className="text-amber-400 font-extrabold text-[11px] uppercase tracking-wider bg-slate-900/60 border border-amber-400/30 rounded px-1.5 py-0.5">
-                        {isPointerI ? 'i' : isPointerJ ? 'j' : 'mid'}
+                      {/* Bouncing Arrow */}
+                      <motion.div 
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{ repeat: Infinity, duration: 1, ease: "easeInOut" }}
+                        className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[14px] border-b-amber-400 mb-2 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]" 
+                      />
+                      
+                      {/* Pointer Label */}
+                      <span className="text-white font-black text-[10px] uppercase tracking-[0.15em] bg-amber-500 border-2 border-amber-300 shadow-lg shadow-amber-500/40 rounded-full px-2.5 py-0.5">
+                        {isPointerI ? 'i' : isPointerJ ? 'j' : 'ptr'}
                       </span>
                     </motion.div>
                   )}

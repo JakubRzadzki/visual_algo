@@ -10,8 +10,8 @@ interface LogEntry {
 
 export default function EventLog() {
   const [logs, setLogs] = useState<LogEntry[]>([
-    { id: 'init', message: <span className="text-emerald-400 font-medium">✨ [SYSTEM] Visualizer Engine initialized.</span> },
-    { id: 'wait', message: <span className="text-slate-500 font-medium">⏳ [ACTION] Waiting for algorithm execution trace...</span> }
+    { id: 'init', message: <span className="text-emerald-400 font-medium">[SYSTEM] Visualizer Engine initialized.</span> },
+    { id: 'wait', message: <span className="text-slate-500 font-medium">[ACTION] Waiting for algorithm execution trace...</span> }
   ]);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -20,28 +20,28 @@ export default function EventLog() {
       switch (e.type) {
         case 'SYSTEM_LOG': {
           const color = e.level === 'ERROR' ? 'text-rose-400 font-bold' : e.level === 'WARN' ? 'text-amber-400 font-semibold' : 'text-cyan-400';
-          return <span className={color}>📋 [SYS] {e.message}</span>;
+          return <span className={color}>[SYS] {e.message}</span>;
         }
         case 'ARRAY_COMPARE':
-          return <span className="text-slate-400">⚖️ [SORT] Compared elements at indices [{e.indices[0]}, {e.indices[1]}]</span>;
+          return <span className="text-slate-400">[SORT] Compared elements at indices [{e.indices[0]}, {e.indices[1]}]</span>;
         case 'ARRAY_SWAP':
-          return <span className="text-ice-blue font-semibold">🔄 [SORT] Swapped values {e.values[0]} ⇄ {e.values[1]}</span>;
+          return <span className="text-ice-blue font-semibold">[SORT] Swapped values {e.values[0]} ⇄ {e.values[1]}</span>;
         case 'ARRAY_SET':
-          return <span className="text-purple-400">📝 [SORT] Set index {e.index} to {e.value}</span>;
+          return <span className="text-purple-400">[SORT] Set index {e.index} to {e.value}</span>;
         case 'SEARCH_CHECK':
-          return <span className="text-amber-400 font-medium">🔍 [SEARCH] Comparing element {e.value} at index [{e.index}] with target {e.target}</span>;
+          return <span className="text-amber-400 font-medium">[SEARCH] Comparing element {e.value} at index [{e.index}] with target {e.target}</span>;
         case 'SEARCH_FOUND':
-          return <span className="text-emerald-400 font-bold">🎯 [SEARCH] Target element {e.value} found at index [{e.index}]!</span>;
+          return <span className="text-emerald-400 font-bold">[SEARCH] Target element {e.value} found at index [{e.index}]!</span>;
         case 'SEARCH_NOT_FOUND':
-          return <span className="text-rose-400 font-bold">❌ [SEARCH] Element {e.target} was not found in the array.</span>;
+          return <span className="text-rose-400 font-bold">[SEARCH] Element {e.target} was not found in the array.</span>;
         case 'SEARCH_NARROW':
-          return <span className="text-cyan-400">🎯 [SEARCH] Narrowed bounds to [{e.left}, {e.right}] with middle index [{e.mid}]</span>;
+          return <span className="text-cyan-400">[SEARCH] Narrowed bounds to [{e.left}, {e.right}] with middle index [{e.mid}]</span>;
         case 'TRACE_LOADED':
-          return <span className="text-teal-300 font-semibold">📊 [DATA] Trace for {e.metadata.algorithmName} loaded successfully.</span>;
+          return <span className="text-teal-300 font-semibold">[DATA] Trace for {e.metadata.algorithmName} loaded successfully.</span>;
         case 'GRAPH_NODE_HIGHLIGHT':
-          return <span className="text-emerald-400">📍 [GRAPH] Visiting node "{e.nodeId}"</span>;
+          return <span className="text-emerald-400">[GRAPH] Visiting node "{e.nodeId}"</span>;
         case 'GRAPH_EDGE_HIGHLIGHT':
-          return <span className="text-amber-400">⚡ [GRAPH] Traversing edge "{e.edgeId}"</span>;
+          return <span className="text-amber-400">[GRAPH] Traversing edge "{e.edgeId}"</span>;
         default:
           return null;
       }
@@ -76,36 +76,30 @@ export default function EventLog() {
   };
 
   return (
-    <div className="h-48 glass-panel-elevated p-0 flex flex-col font-mono text-sm border border-ice-blue/10 rounded-xl bg-slate-950/80 overflow-hidden select-none hover:border-ice-blue/25 transition-all duration-300 shadow-xl shadow-black/40">
-      {/* Premium Terminal Header */}
-      <div className="flex justify-between items-center px-4 py-2 bg-slate-900/60 border-b border-ice-blue/10 select-none">
+    <div className="h-48 glass-panel-elevated p-0 flex flex-col font-mono text-sm border border-ice-blue/10 rounded-xl bg-[#0c0c0c] overflow-hidden select-none hover:border-ice-blue/25 transition-all duration-300 shadow-xl shadow-black/40">
+      {/* Windows CMD Style Header */}
+      <div className="flex justify-between items-center px-4 py-2 bg-[#1e1e1e] border-b border-white/5 select-none">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-400 cursor-pointer transition" />
-            <div className="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400 cursor-pointer transition" />
-            <div className="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-400 cursor-pointer transition" />
-          </div>
-          <div className="w-px h-3 bg-slate-800 mx-1" />
           <div className="flex items-center gap-2 text-slate-300">
-            <TerminalIcon className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-xs font-sans font-bold uppercase tracking-wider text-slate-300 select-none">Terminal Console</span>
+            <TerminalIcon className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-[11px] font-sans font-medium text-slate-400 select-none">Command Prompt - Visualizer Engine</span>
           </div>
         </div>
 
         <button
           onClick={clearLogs}
-          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all duration-200"
+          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all duration-200"
           title="Clear console output"
         >
           <Trash2 className="w-3.5 h-3.5" />
-          <span className="font-sans">Clear</span>
+          <span className="font-sans">cls</span>
         </button>
       </div>
 
       {/* Terminal Content Area */}
-      <div className="flex-1 overflow-y-auto p-3.5 space-y-1.5 pr-2 scrollbar-thin scrollbar-thumb-ice-blue/20 bg-black/30 backdrop-blur-md">
+      <div className="flex-1 overflow-y-auto p-4 space-y-1 pr-2 scrollbar-thin scrollbar-thumb-white/10 bg-black/40">
         {logs.map((log) => (
-          <div key={log.id} className="text-xs font-mono leading-relaxed tracking-wide select-text">
+          <div key={log.id} className="text-[12px] font-mono leading-tight tracking-normal select-text">
             {log.message}
           </div>
         ))}

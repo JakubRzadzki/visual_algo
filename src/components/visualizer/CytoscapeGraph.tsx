@@ -33,7 +33,6 @@ export default function CytoscapeGraph({
   // Dynamic Info Sidebar states
   const [distances, setDistances] = useState<Record<string, number>>({});
   const [indegree, setIndegree] = useState<Record<string, number>>({});
-  const [visited, setVisited] = useState<string[]>([]);
   const [queue, setQueue] = useState<string[]>([]);
   const [mstEdges, setMstEdges] = useState<string[]>([]);
   const [msg, setMsg] = useState<string>('');
@@ -45,7 +44,6 @@ export default function CytoscapeGraph({
     // Initializing state
     const d: Record<string, number> = {};
     const ind: Record<string, number> = {};
-    const vis: string[] = [];
     let q: string[] = [];
     const mst: string[] = [];
     let currentMsg = '';
@@ -62,7 +60,6 @@ export default function CytoscapeGraph({
       if (ev.type === 'SYSTEM_LOG') {
         currentMsg = ev.message;
       } else if (ev.type === 'GRAPH_NODE_HIGHLIGHT' && ev.nodeId) {
-        if (!vis.includes(ev.nodeId)) vis.push(ev.nodeId);
         if (activeAlgo === 'bfs' || activeAlgo === 'dfs') {
           if (!q.includes(ev.nodeId)) q.push(ev.nodeId);
         }
@@ -91,7 +88,6 @@ export default function CytoscapeGraph({
 
     setDistances(d);
     setIndegree(ind);
-    setVisited(vis);
     setQueue(q);
     setMstEdges(mst);
     setMsg(currentMsg);
@@ -134,14 +130,7 @@ export default function CytoscapeGraph({
     return [...nodeElements, ...edgeElements];
   }, [graph.nodes, graph.edges]);
 
-  // Completely reset visual styles and state when algorithm or elements change
-  useEffect(() => {
-    if (!cyRef.current) return;
-    cyRef.current.elements().removeStyle();
-    cyRef.current.elements().removeClass('highlight-visited highlight-relax highlight-accept highlight-reject');
-    layoutRanRef.current = false;
-    syncStateWithEvents([]);
-  }, [algoId, activeGraphAlgorithm, elements]);
+
 
   // Handle visualization events during traces
   useEffect(() => {
@@ -259,10 +248,20 @@ export default function CytoscapeGraph({
     const layout = cyRef.current.layout({
       name: layoutName,
       animate: true,
-      animationDuration: 600,
+      animationDuration: 800,
       fit: true,
-      padding: 50,
-    } as any);
+      padding: 60,
+      randomize: false,
+      nodeRepulsion: () => 4500,
+      idealEdgeLength: () => 100,
+      edgeElasticity: () => 100,
+      nestingFactor: 1.2,
+      gravity: 80,
+      numIter: 1000,
+      initialTemp: 200,
+      coolingFactor: 0.95,
+      minTemp: 1.0,
+    } as unknown as cytoscape.LayoutOptions);
 
     layout.run();
     cyRef.current.fit();
@@ -340,8 +339,8 @@ export default function CytoscapeGraph({
                 'line-color': '#4b5563',
                 'width': 2,
                 'curve-style': 'bezier',
-                'source-distance': -3,
-                'target-distance': -3,
+                'source-distance': 0,
+                'target-distance': 0,
                 'label': 'data(label)',
                 'font-size': 10,
                 'color': '#9ca3af',

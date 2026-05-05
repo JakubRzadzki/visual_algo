@@ -6,7 +6,7 @@ import { globalEventBus } from '../core/EventBus';
 import { globalEngine } from '../core/AnimationEngine';
 import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
-import VisualStage from '../components/visualizer/VisualStage';
+
 import GraphStage from '../components/visualizer/GraphStage';
 import GridStage from '../components/visualizer/GridStage';
 import MatrixStage from '../components/visualizer/MatrixStage';
@@ -18,7 +18,6 @@ import PlaybackDeck from '../components/controls/PlaybackDeck';
 
 import MonacoCodeEditor from '../components/hud/MonacoCodeEditor';
 import EventLog from '../components/hud/EventLog';
-import AmbientGraph from '../components/background/AmbientGraph';
 import AriaLiveRegion from '../components/a11y/AriaLiveRegion';
 import { ArrowLeft } from 'lucide-react';
 import type { GraphNode, GraphInput } from '../types';
@@ -109,15 +108,15 @@ export default function VisualizerPage() {
 
 
   return (
-    <div className="relative min-h-screen bg-glacier-bg text-slate-200 selection:bg-ice-blue/30 selection:text-ice-blue overflow-hidden cursor-default">
+    <div className="relative h-screen bg-glacier-bg text-slate-200 selection:bg-ice-blue/30 selection:text-ice-blue overflow-hidden cursor-default">
       <AriaLiveRegion />
       {/* Dynamic Floating Mesh */}
-      <AmbientGraph />
+
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#0a0e1a]/80 via-[#0f1524]/60 to-[#0a0e1a]/80 pointer-events-none" />
 
       <Navbar />
 
-      <div className="pt-20 pb-8 px-6 h-screen w-full flex gap-4 relative z-10 transition-all duration-300">
+      <div className="pt-20 px-6 h-screen w-full flex gap-4 relative z-10 transition-all duration-300">
         {/* Back Button + Sidebar */}
         <div className="flex flex-col gap-3">
           <Link
@@ -136,18 +135,20 @@ export default function VisualizerPage() {
         <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated shadow-2xl shadow-ice-blue/5 border border-ice-blue/10">
           {/* Switch between sorting bars, force-directed graph, and css grid */}
           {activeMode === 'graph'
-            ? <GraphStage nodes={graphToDisplay.nodes} edges={graphToDisplay.edges} isDirected={(graphToDisplay as any).isDirected !== undefined ? (graphToDisplay as any).isDirected : !['kruskal', 'prim'].includes(algoId || '')} />
+            ? <GraphStage key={`${algoId}-${currentGraph?.nodes.length}-${currentGraph?.edges.length}`} nodes={graphToDisplay.nodes} edges={graphToDisplay.edges} isDirected={(graphToDisplay as GraphInput).isDirected !== undefined ? (graphToDisplay as GraphInput).isDirected : !['kruskal', 'prim'].includes(algoId || '')} />
             : activeMode === 'grid'
             ? <GridStage />
             : activeMode === 'dp'
             ? <MatrixStage />
             : activeMode === 'searching'
-            ? <SearchingStage />
+            ? <SearchingStage key={algoId} />
             : activeMode === 'sorting'
-            ? <SortingStage />
-            : <VisualStage />
+            ? <SortingStage key={algoId} />
+            : <div className="flex-1 flex items-center justify-center text-slate-500 italic">Select an algorithm to begin</div>
           }
 
+          {/* Controls are now scoped to the visual stage */}
+          <PlaybackDeck />
         </div>
 
         <aside className="w-[900px] hidden lg:flex flex-col gap-4 h-full">
@@ -155,8 +156,6 @@ export default function VisualizerPage() {
            <EventLog />
         </aside>
       </div>
-
-      <PlaybackDeck />
     </div>
   );
 }

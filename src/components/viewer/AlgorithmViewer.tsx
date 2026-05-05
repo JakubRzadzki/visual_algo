@@ -4,7 +4,7 @@ import { useUIStore } from '../../store/uiStore';
 import { findAlgorithm } from '../../data/algorithmCatalog';
 import { globalEngine } from '../../core/AnimationEngine';
 import Sidebar from '../layout/Sidebar';
-import VisualStage from '../visualizer/VisualStage';
+
 import GraphStage from '../visualizer/GraphStage';
 import SortingStage from '../visualizer/SortingStage';
 import SearchingStage from '../visualizer/SearchingStage';
@@ -81,19 +81,20 @@ export default function AlgorithmViewer() {
       case 'graph':
         return (
           <GraphStage 
+            key={id}
             nodes={graphToDisplay.nodes} 
             edges={graphToDisplay.edges} 
             isDirected={graphToDisplay.isDirected !== undefined ? graphToDisplay.isDirected : activeGraphAlgorithm !== "Kruskal's MST" && activeGraphAlgorithm !== "Prim's MST"} 
           />
         );
       case 'sorting':
-        return <SortingStage />;
+        return <SortingStage key={id} />;
       case 'searching':
-        return <SearchingStage />;
+        return <SearchingStage key={id} />;
       case 'dp':
-        return <MatrixStage />;
+        return <MatrixStage key={id} />;
       default:
-        return <VisualStage />;
+        return <div className="flex-1 flex items-center justify-center text-slate-500 italic">Select an algorithm to begin</div>;
     }
   };
 

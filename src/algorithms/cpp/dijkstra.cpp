@@ -31,7 +31,9 @@ void dijkstra(int src, vector<vector<Edge>>& graph) {
   emitNodeHighlight(src, 0);
 
   while (!pq.empty()) {
-    auto [d, u] = pq.top();
+    pair<int, int> top = pq.top();
+    int d = top.first;
+    int u = top.second;
     pq.pop();
     if (d > dist[u]) continue;
     for (auto& edge : graph[u]) {

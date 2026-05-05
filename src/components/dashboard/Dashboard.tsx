@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Search, Zap, ArrowRight, Clock, HardDrive } from 'lucide-react';
 import { ALGORITHM_CATALOG } from '../../data/algorithmCatalog';
 import type { CategoryEntry, AlgorithmEntry } from '../../data/algorithmCatalog';
-import AmbientGraph from '../background/AmbientGraph';
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ export default function Dashboard() {
   return (
     <div className="relative min-h-screen bg-glacier-bg text-slate-200 overflow-y-auto overflow-x-hidden">
       {/* Background */}
-      <AmbientGraph />
+
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#0a0e1a]/80 via-[#0f1524]/60 to-[#0a0e1a]/80 pointer-events-none" />
 
       {/* Content */}

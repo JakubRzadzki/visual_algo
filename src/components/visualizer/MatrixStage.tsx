@@ -35,7 +35,6 @@ export default function MatrixStage() {
   const [rowHeaders, setRowHeaders] = useState<string[]>([]);
   const [colHeaders, setColHeaders] = useState<string[]>([]);
   
-  const gridRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   /**
@@ -61,20 +60,21 @@ export default function MatrixStage() {
   useEffect(() => {
     const unsubscribe = globalEventBus.subscribe((event: VisualizationEvent) => {
       switch (event.type) {
-        case 'TRACE_LOADED':
+        case 'TRACE_LOADED': {
           // Reset matrix based on metadata or default
           const size = event.metadata.nodeCount || 5;
           initMatrix(size, size);
           setActiveCell(null);
           setDependencies([]);
           break;
+        }
 
-        case 'MATRIX_CELL_UPDATE':
+        case 'MATRIX_CELL_UPDATE': {
           const { row, col, value, dependencies: deps = [] } = event;
           
           setCells(prev => {
             // Create a deep copy and expand if necessary
-            let next = [...prev.map(r => r.map(c => ({ ...c, highlighted: false, isDependency: false })))];
+            const next = [...prev.map(r => r.map(c => ({ ...c, highlighted: false, isDependency: false })))];
             
             // Expansion logic (if matrix grows dynamically)
             while (next.length <= row) {
@@ -104,8 +104,9 @@ export default function MatrixStage() {
           if (row >= rows) setRows(row + 1);
           if (col >= cols) setCols(col + 1);
           break;
+        }
 
-        case 'MATRIX_CELL_HIGHLIGHT':
+        case 'MATRIX_CELL_HIGHLIGHT': {
           setCells(prev => {
             if (event.row >= prev.length || event.col >= prev[event.row].length) return prev;
             const next = prev.map(r => [...r]);
@@ -117,6 +118,7 @@ export default function MatrixStage() {
             return next;
           });
           break;
+        }
       }
     });
 
@@ -127,7 +129,7 @@ export default function MatrixStage() {
    * Calculates the SVG coordinates for dependency arrows.
    */
   const arrows = useMemo(() => {
-    if (!activeCell || dependencies.length === 0 || !gridRef.current) return [];
+    if (!activeCell || dependencies.length === 0) return [];
 
     const CELL_SIZE = 48; // 3rem = 48px
     const GAP = 4; // gap-1 = 4px
@@ -174,7 +176,7 @@ export default function MatrixStage() {
           </AnimatePresence>
         </svg>
 
-        <div ref={gridRef} className="relative z-10">
+        <div className="relative z-10">
           {/* Column headers */}
           <div className="flex gap-1 mb-1 ml-10">
             {colHeaders.map((h, i) => (

@@ -4,7 +4,7 @@ import type { editor } from 'monaco-editor';
 import { globalEventBus } from '../../core/EventBus';
 import { globalEngine } from '../../core/AnimationEngine';
 import { useUIStore } from '../../store/uiStore';
-import { globalWorkerPool } from '../../core/WorkerPool';
+
 import { executeInSandbox, buildExecutionTrace, saveSnapshot } from '../../services/sandboxApi';
 import { useToast } from './Toast';
 import { Copy, Download, Check, Save, ChevronDown, Play, Loader2, Share2 } from 'lucide-react';
@@ -127,7 +127,6 @@ export default function MonacoCodeEditor() {
   const [isRunning, setIsRunning] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [activeLine, setActiveLine] = useState<number | null>(null);
-  const [useLocalRunner, setUseLocalRunner] = useState<boolean>(true);
   
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monaco = useMonaco();
@@ -232,8 +231,8 @@ export default function MonacoCodeEditor() {
     let code = savedCode || getSourceCode();
 
     if (activeMode === 'graph' && currentGraph && language === 'python') {
-      const isEdgeList = /^    edges\s*=\s*\[[\s\S]*?^    \]/m.test(code);
-      const isAdjList = /^    graph\s*=\s*\[[\s\S]*?^    \]/m.test(code);
+      const isEdgeList = /^ {4}edges\s*=\s*\[[\s\S]*?^ {4}\]/m.test(code);
+      const isAdjList = /^ {4}graph\s*=\s*\[[\s\S]*?^ {4}\]/m.test(code);
 
       if (isEdgeList) {
         const edgeStrings = currentGraph.edges.map(e => {
@@ -242,8 +241,8 @@ export default function MonacoCodeEditor() {
           return `        (${u}, ${v}, "${e.id}", ${e.weight})`;
         });
         const block = `    edges = [\n${edgeStrings.join(',\n')}\n    ]`;
-        code = code.replace(/^    edges\s*=\s*\[[\s\S]*?^    \]/m, block);
-        code = code.replace(/^    nodes\s*=\s*\d+/m, `    nodes = ${currentGraph.nodes.length}`);
+        code = code.replace(/^ {4}edges\s*=\s*\[[\s\S]*?^ {4}\]/m, block);
+        code = code.replace(/^ {4}nodes\s*=\s*\d+/m, `    nodes = ${currentGraph.nodes.length}`);
       } else if (isAdjList) {
         const numNodes = currentGraph.nodes.length;
         const adj: [number, number, string][][] = Array.from({ length: numNodes }, () => []);
@@ -260,7 +259,7 @@ export default function MonacoCodeEditor() {
           block += `        [${neighborStrs.join(', ')}],\n`;
         });
         block += `    ]`;
-        code = code.replace(/^    graph\s*=\s*\[[\s\S]*?^    \]/m, block);
+        code = code.replace(/^ {4}graph\s*=\s*\[[\s\S]*?^ {4}\]/m, block);
       }
     }
 
@@ -393,47 +392,10 @@ export default function MonacoCodeEditor() {
       return;
     }
 
-    const algoIdMap: Record<string, string> = {
-      'Merge Sort': 'merge-sort',
-      'Quick Sort': 'quick-sort',
-      'Bubble Sort': 'bubble-sort',
-      'Heap Sort': 'heap-sort',
-      'Binary Search': 'binary-search',
-      'Linear Search': 'linear-search',
-      "Dijkstra's Path": 'dijkstra',
-      "Dijkstra's Shortest Path": 'dijkstra',
-      "Kruskal's MST": 'kruskal',
-      'Breadth-First Search': 'bfs',
-      'Depth-First Search': 'dfs',
-      "Prim's MST": 'prim',
-      'Topological Sort': 'topo-sort',
-    };
-    const mappedAlgoId = algoIdMap[globalAlgo] || 'dijkstra';
 
-    if (useLocalRunner) {
-      setIsRunning(true);
-      const startTime = performance.now();
-      try {
-        const trace = await globalWorkerPool.run(mappedAlgoId, currentGraph || { nodes: [], edges: [] });
-        const elapsedMs = Math.round(performance.now() - startTime);
 
-        globalEngine.loadTrace(trace);
-        globalEngine.setSpeed(1.0);
-        setIsAnimating(true);
-        globalEngine.play();
 
-        showToast(
-          `Trace loaded via Browser — ${trace.events.length} steps`,
-          'success',
-          `Executed locally in ${elapsedMs}ms`,
-        );
-      } catch (err) {
-        showToast('Local execution failed', 'error', err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setIsRunning(false);
-      }
-      return;
-    }
+
 
     const backendLang = LANGUAGE_TO_BACKEND[language];
     setIsRunning(true);
@@ -481,7 +443,7 @@ export default function MonacoCodeEditor() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, editorContent, language, algoName, showToast, setIsAnimating, useLocalRunner, globalAlgo, currentGraph]);
+  }, [isRunning, editorContent, language, algoName, showToast, setIsAnimating, globalAlgo, currentGraph]);
 
   return (
     <div
@@ -507,16 +469,7 @@ export default function MonacoCodeEditor() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* Local / Docker Switch */}
-          <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50 cursor-pointer hover:border-cyan-400/30 transition text-xs select-none">
-            <input
-              type="checkbox"
-              checked={useLocalRunner}
-              onChange={(e) => setUseLocalRunner(e.target.checked)}
-              className="rounded border-slate-700 bg-slate-900 text-cyan-400 focus:ring-0 cursor-pointer"
-            />
-            <span className="text-slate-300 font-medium">Browser</span>
-          </label>
+
 
           {/* ▶ Run Code Button */}
           <button
