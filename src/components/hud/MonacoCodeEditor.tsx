@@ -479,7 +479,7 @@ export default function MonacoCodeEditor() {
           <span className="text-slate-500 text-xs">{algoName}</span>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
 
 
           {/* ▶ Run Code Button */}

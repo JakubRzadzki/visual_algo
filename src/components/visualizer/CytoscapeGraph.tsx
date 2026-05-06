@@ -379,7 +379,7 @@ export default function CytoscapeGraph({
       </div>
 
       {/* Modern Algorithm Sidebar Panel */}
-      <div className="w-80 h-full border-l border-white/10 p-4 flex flex-col gap-4 bg-[#0a0f1d]/70 backdrop-blur overflow-y-auto select-none z-10 text-slate-200">
+      <div className="w-64 h-full border-l border-white/10 p-3 sm:p-4 flex flex-col gap-4 bg-[#0a0f1d]/70 backdrop-blur overflow-y-auto select-none z-10 text-slate-200">
         <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Algorithm State</h4>
         
         {msg && (

@@ -151,7 +151,7 @@ export default function VisualizerPage() {
           {activeMode !== 'sorting' && <PlaybackDeck />}
         </div>
 
-        <aside className="w-[900px] hidden lg:flex flex-col gap-4 h-full">
+        <aside className="w-[350px] lg:w-[400px] xl:w-[420px] 2xl:w-[450px] min-w-0 hidden lg:flex flex-col gap-4 h-full">
            <MonacoCodeEditor />
            <EventLog />
         </aside>

@@ -90,7 +90,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="text-center mb-10 sm:mb-14"
+          className="text-center mb-8 sm:mb-10"
         >
           {/* Glowing Icon */}
           <div className="flex items-center justify-center gap-3 mb-5">
@@ -110,7 +110,7 @@ export default function Dashboard() {
           </div>
 
           {/* Animated Gradient Title */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
             <span
               className="bg-clip-text text-transparent animate-gradient-shift"
               style={{
@@ -143,7 +143,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-2xl mx-auto mb-12 sm:mb-16"
+          className="max-w-2xl mx-auto mb-10 sm:mb-12"
         >
           <div className="relative group">
             {/* Animated glow behind input on focus */}
@@ -161,7 +161,7 @@ export default function Dashboard() {
               placeholder="Search algorithms… (e.g. Dijkstra, Quick Sort, A*)"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="relative w-full pl-14 pr-6 py-4 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-white/[0.08] text-slate-200 text-base placeholder:text-slate-500 focus:outline-none focus:border-cyan-400/30 focus:shadow-[0_0_40px_rgba(34,211,238,0.08)] transition-all duration-300 z-10"
+              className="relative w-full pl-14 pr-6 py-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-white/[0.08] text-slate-200 text-base placeholder:text-slate-500 focus:outline-none focus:border-cyan-400/30 focus:shadow-[0_0_40px_rgba(34,211,238,0.08)] transition-all duration-300 z-10"
             />
             {searchQuery && (
               <button
@@ -192,7 +192,7 @@ export default function Dashboard() {
           ) : (
             <motion.div
               key="grid"
-              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5"
               layout
             >
               {filteredCatalog.map((cat, catIdx) => (
@@ -263,7 +263,7 @@ function AnimatedCategoryCard({
         ease: [0.22, 1, 0.36, 1],
       }}
       layout
-      className="hover-card group relative rounded-2xl border border-white/[0.06] bg-slate-900/40 backdrop-blur-xl p-5 sm:p-6 transition-all duration-300 overflow-visible"
+      className="hover-card group relative rounded-2xl border border-white/[0.06] bg-slate-900/40 backdrop-blur-xl p-4 sm:p-5 transition-all duration-300 overflow-visible"
       style={{ willChange: 'transform, opacity' }}
     >
       {/* Gradient top-border accent */}
@@ -300,7 +300,7 @@ function AnimatedCategoryCard({
           className="w-10 h-10 rounded-lg object-cover"
         />
         <h2 className="text-base sm:text-lg font-bold text-slate-200 tracking-wide">{cat.label}</h2>
-        <span className="ml-auto text-xs text-slate-500 bg-white/5 px-2.5 py-1 rounded-full">
+        <span className="ml-auto text-[10px] text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
           {cat.algorithms.length} algo{cat.algorithms.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -318,7 +318,7 @@ function AnimatedCategoryCard({
               disabled={!algo.available}
               whileHover={algo.available ? { scale: 1.05 } : {}}
               whileTap={algo.available ? { scale: 0.97 } : {}}
-              className={`relative px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 ${
+              className={`relative px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
                 algo.available
                   ? `border-white/[0.08] text-slate-200 hover:bg-white/10 hover:border-white/20 cursor-pointer`
                   : 'border-white/[0.03] text-slate-500 cursor-not-allowed opacity-50'
