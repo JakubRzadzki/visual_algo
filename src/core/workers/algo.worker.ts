@@ -24,6 +24,11 @@ import { QuickSortPlugin } from '../plugins/sorting/QuickSortPlugin';
 import { BinarySearchPlugin } from '../plugins/searching/BinarySearchPlugin';
 import { LinearSearchPlugin } from '../plugins/searching/LinearSearchPlugin';
 
+import { BSTPlugin } from '../plugins/trees/BSTPlugin';
+import { AVLTreePlugin } from '../plugins/trees/AVLTreePlugin';
+import { MaxHeapPlugin } from '../plugins/trees/MaxHeapPlugin';
+import { UnionFindPlugin } from '../plugins/trees/UnionFindPlugin';
+
 // Registry: algorithm id → plugin instance
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
@@ -41,6 +46,11 @@ const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
 
   'binary-search': new BinarySearchPlugin(),
   'linear-search': new LinearSearchPlugin(),
+
+  'bst':           new BSTPlugin(),
+  'avl':           new AVLTreePlugin(),
+  'max-heap':      new MaxHeapPlugin(),
+  'union-find':    new UnionFindPlugin(),
 };
 
 // Listen for tasks from the WorkerPool

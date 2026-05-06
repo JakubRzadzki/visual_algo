@@ -1,11 +1,14 @@
 import { useEffect, useRef, useMemo, useState } from 'react';
 import CytoscapeComponent from 'react-cytoscapejs';
 import cytoscape from 'cytoscape';
+import dagre from 'cytoscape-dagre';
 import { useParams } from 'react-router-dom';
 import { globalEventBus } from '../../core/EventBus';
 import { globalEngine } from '../../core/AnimationEngine';
 import { useUIStore } from '../../store/uiStore';
 import type { GraphInput, GraphNode, GraphEdge, VisualizationEvent } from '../../types';
+
+cytoscape.use(dagre);
 
 /**
  * CytoscapeGraph
@@ -26,9 +29,8 @@ export default function CytoscapeGraph({
   const cyRef = useRef<cytoscape.Core | null>(null);
   const layoutRanRef = useRef(false);
   const activeGraphAlgorithm = useUIStore((state) => state.activeGraphAlgorithm);
-
-  // Layout selector (cose is force-directed auto layout)
-  const [layoutName, setLayoutName] = useState<'preset' | 'cose'>('cose');
+  // Layout selector
+  const [layoutName, setLayoutName] = useState<'preset' | 'cose' | 'dagre'>('cose');
 
   // Dynamic Info Sidebar states
   const [distances, setDistances] = useState<Record<string, number>>({});
@@ -115,6 +117,7 @@ export default function CytoscapeGraph({
     const nodeElements = graph.nodes.map((node: GraphNode) => ({
       data: { id: node.id, label: node.label },
       position: { x: node.x, y: node.y },
+      classes: node.hidden ? 'hidden-element' : '',
     }));
 
     const edgeElements = graph.edges.map((edge: GraphEdge) => ({
@@ -125,6 +128,7 @@ export default function CytoscapeGraph({
         weight: edge.weight,
         label: `${edge.weight}`,
       },
+      classes: edge.hidden ? 'hidden-element' : '',
     }));
 
     return [...nodeElements, ...edgeElements];
@@ -160,11 +164,27 @@ export default function CytoscapeGraph({
         } else if ((event.type === 'GRAPH_EDGE_HIGHLIGHT' || event.type === 'GRAPH_RELAX') && event.edgeId) {
           const edge = cyRef.current.getElementById(event.edgeId);
           if (edge.length > 0) edge.removeStyle();
+        } else if (event.type === 'GRAPH_NODE_ADD') {
+          const node = cyRef.current.getElementById((event as any).nodeId);
+          if (node.length > 0) node.addClass('hidden-element');
+        } else if (event.type === 'GRAPH_EDGE_ADD') {
+          const edge = cyRef.current.getElementById((event as any).edgeId);
+          if (edge.length > 0) edge.addClass('hidden-element');
         }
         return;
       }
 
-      if (event.type === 'GRAPH_NODE_HIGHLIGHT') {
+      if (event.type === 'GRAPH_NODE_ADD') {
+        const nodeId = (event as any).nodeId;
+        if (nodeId && cyRef.current.getElementById(nodeId).length > 0) {
+          cyRef.current.getElementById(nodeId).removeClass('hidden-element');
+        }
+      } else if (event.type === 'GRAPH_EDGE_ADD') {
+        const edgeId = (event as any).edgeId;
+        if (edgeId && cyRef.current.getElementById(edgeId).length > 0) {
+          cyRef.current.getElementById(edgeId).removeClass('hidden-element');
+        }
+      } else if (event.type === 'GRAPH_NODE_HIGHLIGHT') {
         const nodeId = event.nodeId;
         if (nodeId && cyRef.current.getElementById(nodeId).length > 0) {
           const node = cyRef.current.getElementById(nodeId);
@@ -241,12 +261,24 @@ export default function CytoscapeGraph({
     return () => unsubscribe();
   }, [graph, algoId, activeGraphAlgorithm]);
 
-  // Fit bounds and layout nicely on graph elements or layout change
-  useEffect(() => {
-    if (!cyRef.current || elements.length === 0) return;
+  // Configure Dagre layout for trees
+  const dagreLayoutConfig = useMemo(() => ({
+    name: 'dagre',
+    rankDir: 'TB',
+    nodeSep: 60,
+    edgeSep: 20,
+    rankSep: 80,
+    animate: true,
+    animationDuration: 800,
+    animationEasing: 'ease-out',
+    fit: true,
+    padding: 50,
+  }), []);
 
-    const layout = cyRef.current.layout({
-      name: layoutName,
+  const layoutConfig = useMemo(() => {
+    if (graph.layoutHint === 'dagre') return dagreLayoutConfig;
+    return {
+      name: 'cose',
       animate: true,
       animationDuration: 800,
       fit: true,
@@ -261,12 +293,18 @@ export default function CytoscapeGraph({
       initialTemp: 200,
       coolingFactor: 0.95,
       minTemp: 1.0,
-    } as unknown as cytoscape.LayoutOptions);
+    };
+  }, [graph.layoutHint, dagreLayoutConfig]);
 
+  // Fit bounds and layout nicely on graph elements or layout change
+  useEffect(() => {
+    if (!cyRef.current || elements.length === 0) return;
+
+    const layout = cyRef.current.layout(layoutConfig as any);
     layout.run();
     cyRef.current.fit();
     cyRef.current.center();
-  }, [elements, graph.isDirected, layoutName]);
+  }, [elements, graph.isDirected, layoutConfig]);
 
   const activeAlgo = algoId || activeGraphAlgorithm || 'dijkstra';
 
@@ -350,6 +388,12 @@ export default function CytoscapeGraph({
                 'arrow-scale': 1.5,
                 'target-arrow-shape': (graph.isDirected ?? true) ? 'triangle' : 'none',
               } as cytoscape.Css.Edge,
+            },
+            {
+              selector: '.hidden-element',
+              style: {
+                opacity: 0
+              }
             }
           ]}
           cy={(cy: cytoscape.Core) => {

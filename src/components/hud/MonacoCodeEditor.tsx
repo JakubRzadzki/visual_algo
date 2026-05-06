@@ -223,6 +223,10 @@ export default function MonacoCodeEditor() {
       'Depth-First Search': 'dfs',
       "Prim's MST": 'prim',
       'Topological Sort': 'topo-sort',
+      'Binary Search Tree': 'bst',
+      'AVL Tree': 'avl',
+      'Max Heap': 'max-heap',
+      'Union-Find': 'union-find',
     };
     const filename = algoIdToFilename[algoName] || 'merge-sort';
 

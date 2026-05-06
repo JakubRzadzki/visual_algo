@@ -74,10 +74,10 @@ export const ALGORITHM_CATALOG: CategoryEntry[] = [
     borderColor: 'border-amber-500/30',
     glowColor: 'shadow-amber-500/10',
     algorithms: [
-      { id: 'bst',        name: 'Binary Search Tree', shortName: 'BST',       description: 'Ordered insertion & search tree',       timeComplexity: 'O(log n)', spaceComplexity: 'O(n)', available: false },
-      { id: 'avl',        name: 'AVL Tree',           shortName: 'AVL',       description: 'Self-balancing BST with rotations',     timeComplexity: 'O(log n)', spaceComplexity: 'O(n)', available: false },
-      { id: 'max-heap',   name: 'Max Heap',           shortName: 'MaxHeap',   description: 'Complete binary tree max-heap property', timeComplexity: 'O(log n)', spaceComplexity: 'O(n)', available: false },
-      { id: 'union-find', name: 'Union-Find',         shortName: 'UnionFind', description: 'Disjoint set with path compression',    timeComplexity: 'O(α(n))',  spaceComplexity: 'O(n)', available: false },
+      { id: 'bst',        name: 'Binary Search Tree', shortName: 'BST',       description: 'Ordered insertion & search tree',       timeComplexity: 'O(log n)', spaceComplexity: 'O(n)', available: true },
+      { id: 'avl',        name: 'AVL Tree',           shortName: 'AVL',       description: 'Self-balancing BST with rotations',     timeComplexity: 'O(log n)', spaceComplexity: 'O(n)', available: true },
+      { id: 'max-heap',   name: 'Max Heap',           shortName: 'MaxHeap',   description: 'Complete binary tree max-heap property', timeComplexity: 'O(log n)', spaceComplexity: 'O(n)', available: true },
+      { id: 'union-find', name: 'Union-Find',         shortName: 'UnionFind', description: 'Disjoint set with path compression',    timeComplexity: 'O(α(n))',  spaceComplexity: 'O(n)', available: true },
     ],
   },
   {

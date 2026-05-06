@@ -6,6 +6,8 @@ export type EventPayload =
   | { type: "ARRAY_SET"; index: number; value: number; previousValue?: number }
   | { type: "ARRAY_INSERT"; index: number; value: number }
   | { type: "ARRAY_REMOVE"; index: number; value: number }
+  | { type: "GRAPH_NODE_ADD"; nodeId: string; label?: string }
+  | { type: "GRAPH_EDGE_ADD"; edgeId: string; from: string; to: string; weight?: number }
   | { type: "GRAPH_RELAX"; edgeId: string; weight: number }
   | { type: "GRAPH_NODE_HIGHLIGHT"; nodeId: string; distance?: number; status?: string }
   | { type: "GRAPH_EDGE_HIGHLIGHT"; edgeId: string; accepted?: boolean; status?: string }
@@ -36,6 +38,7 @@ export interface GraphNode {
   y: number;
   vx: number; // velocity x (for physics)
   vy: number; // velocity y
+  hidden?: boolean; // initially hidden for dynamic tree building
 }
 
 /** A weighted directed/undirected edge */
@@ -44,6 +47,7 @@ export interface GraphEdge {
   from: string; // node id
   to: string;
   weight: number;
+  hidden?: boolean; // initially hidden for dynamic tree building
 }
 
 /** Input shape passed to graph plugins */
@@ -52,6 +56,7 @@ export interface GraphInput {
   edges: GraphEdge[];
   startNodeId?: string; // for Dijkstra source
   isDirected?: boolean; // false for undirected algorithms like Kruskal, true by default
+  layoutHint?: 'cose' | 'dagre';
 }
 
 /** Snapshot of all node positions (emitted by GraphLayoutEngine per tick) */

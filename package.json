@@ -16,6 +16,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "clsx": "^2.1.1",
     "cytoscape": "^3.33.2",
+    "cytoscape-dagre": "^2.5.0",
     "lucide-react": "^1.8.0",
     "monaco-editor": "^0.55.1",
     "motion": "^12.38.0",
