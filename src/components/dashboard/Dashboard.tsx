@@ -15,7 +15,18 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Zap, ArrowRight, Clock, HardDrive } from 'lucide-react';
+import {
+  Search,
+  Zap,
+  ArrowRight,
+  Clock,
+  HardDrive,
+  BarChart2,
+  Network,
+  GitMerge,
+  Layers,
+  Grid,
+} from 'lucide-react';
 import { ALGORITHM_CATALOG } from '../../data/algorithmCatalog';
 import type { CategoryEntry, AlgorithmEntry } from '../../data/algorithmCatalog';
 
@@ -192,7 +203,7 @@ export default function Dashboard() {
           ) : (
             <motion.div
               key="grid"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
               layout
             >
               {filteredCatalog.map((cat, catIdx) => (
@@ -245,6 +256,81 @@ interface AnimatedCategoryCardProps {
  * Hover effects are gated behind `@media (hover: hover)` via the CSS class
  * `.hover-card` defined in index.css.
  */
+/**
+ * Maps a category ID to its corresponding Lucide React Icon component.
+ *
+ * @param id - The unique category identifier.
+ * @returns A beautifully styled Lucide Icon element matching the category theme.
+ */
+const getCategoryIcon = (id: string): React.ReactElement => {
+  switch (id) {
+    case 'sorting':
+      return <BarChart2 className="w-5 h-5 text-sky-400" />;
+    case 'searching':
+      return <Search className="w-5 h-5 text-violet-400" />;
+    case 'graphs':
+      return <Network className="w-5 h-5 text-emerald-400" />;
+    case 'trees':
+      return <GitMerge className="w-5 h-5 text-amber-400" />;
+    case 'dp':
+      return <Layers className="w-5 h-5 text-rose-400" />;
+    case 'grid':
+      return <Grid className="w-5 h-5 text-indigo-400" />;
+    default:
+      return <Zap className="w-5 h-5 text-cyan-400" />;
+  }
+};
+
+/**
+ * Returns custom hover border and shadow classes tailored to each category color.
+ *
+ * @param id - The unique category identifier.
+ * @returns Tailwind CSS classes for custom hover borders and glow shadows.
+ */
+const getCategoryHoverClasses = (id: string): string => {
+  switch (id) {
+    case 'sorting':
+      return 'hover:border-sky-500/35 hover:shadow-[0_0_30px_rgba(14,165,233,0.12)]';
+    case 'searching':
+      return 'hover:border-violet-500/35 hover:shadow-[0_0_30px_rgba(139,92,246,0.12)]';
+    case 'graphs':
+      return 'hover:border-emerald-500/35 hover:shadow-[0_0_30px_rgba(16,185,129,0.12)]';
+    case 'trees':
+      return 'hover:border-amber-500/35 hover:shadow-[0_0_30px_rgba(245,158,11,0.12)]';
+    case 'dp':
+      return 'hover:border-rose-500/35 hover:shadow-[0_0_30px_rgba(244,63,94,0.12)]';
+    case 'grid':
+      return 'hover:border-indigo-500/35 hover:shadow-[0_0_30px_rgba(99,102,241,0.12)]';
+    default:
+      return 'hover:border-cyan-500/35 hover:shadow-[0_0_30px_rgba(34,211,238,0.12)]';
+  }
+};
+
+/**
+ * Provides custom hover backgrounds, borders, text, and shadow classes for algorithm pills.
+ *
+ * @param categoryId - The unique identifier of the parent category.
+ * @returns Tailwind CSS classes for active hover styling.
+ */
+const getPillHoverStyles = (categoryId: string): string => {
+  switch (categoryId) {
+    case 'sorting':
+      return 'hover:bg-sky-500/10 hover:border-sky-500/30 hover:text-sky-300';
+    case 'searching':
+      return 'hover:bg-violet-500/10 hover:border-violet-500/30 hover:text-violet-300';
+    case 'graphs':
+      return 'hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-300';
+    case 'trees':
+      return 'hover:bg-amber-500/10 hover:border-amber-500/30 hover:text-amber-300';
+    case 'dp':
+      return 'hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-300';
+    case 'grid':
+      return 'hover:bg-indigo-500/10 hover:border-indigo-500/30 hover:text-indigo-300';
+    default:
+      return 'hover:bg-cyan-500/10 hover:border-cyan-500/30 hover:text-cyan-300';
+  }
+};
+
 function AnimatedCategoryCard({
   cat,
   catIdx,
@@ -263,7 +349,9 @@ function AnimatedCategoryCard({
         ease: [0.22, 1, 0.36, 1],
       }}
       layout
-      className="hover-card group relative rounded-2xl border border-white/[0.06] bg-slate-900/40 backdrop-blur-xl p-4 sm:p-5 transition-all duration-300 overflow-visible"
+      className={`hover-card group relative rounded-2xl border border-white/[0.06] bg-slate-900/40 backdrop-blur-xl p-4 sm:p-5 transition-all duration-300 overflow-visible h-full flex flex-col justify-between ${getCategoryHoverClasses(
+        cat.id
+      )}`}
       style={{ willChange: 'transform, opacity' }}
     >
       {/* Gradient top-border accent */}
@@ -272,12 +360,13 @@ function AnimatedCategoryCard({
         aria-hidden="true"
       />
 
-      {/* Shine sweep on hover (CSS-driven via .hover-card:hover .shine-sweep) */}
+      {/* Shine sweep on hover */}
       <div
         className="shine-sweep absolute inset-0 pointer-events-none"
         aria-hidden="true"
         style={{
-          background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 55%, transparent 60%)',
+          background:
+            'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 55%, transparent 60%)',
           backgroundSize: '200% 100%',
           backgroundPosition: '200% 0',
         }}
@@ -292,76 +381,83 @@ function AnimatedCategoryCard({
         }}
       />
 
-      {/* Category Header */}
-      <div className="relative flex items-center gap-3 mb-5">
-        <img
-          src={cat.iconImage}
-          alt={cat.label}
-          className="w-10 h-10 rounded-lg object-cover"
-        />
-        <h2 className="text-base sm:text-lg font-bold text-slate-200 tracking-wide">{cat.label}</h2>
-        <span className="ml-auto text-[10px] text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
-          {cat.algorithms.length} algo{cat.algorithms.length !== 1 ? 's' : ''}
-        </span>
-      </div>
+      <div className="h-full flex flex-col justify-between">
+        {/* Category Header */}
+        <div className="relative flex items-center gap-3 mb-5">
+          <div
+            className={`p-2 rounded-xl bg-gradient-to-br ${cat.color} border border-white/[0.08] flex items-center justify-center text-slate-200`}
+            aria-hidden="true"
+          >
+            {getCategoryIcon(cat.id)}
+          </div>
+          <h2 className="text-base sm:text-lg font-bold text-slate-200 tracking-wide">
+            {cat.label}
+          </h2>
+          <span className="ml-auto text-[10px] text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
+            {cat.algorithms.length} algo{cat.algorithms.length !== 1 ? 's' : ''}
+          </span>
+        </div>
 
-      {/* Algorithm Pills */}
-      <div className="relative flex flex-wrap gap-2">
-        {cat.algorithms.map(algo => {
-          const isHovered = hoveredAlgo === `${cat.id}-${algo.id}`;
-          return (
-            <motion.button
-              key={algo.id}
-              onMouseEnter={() => setHoveredAlgo(`${cat.id}-${algo.id}`)}
-              onMouseLeave={() => setHoveredAlgo(null)}
-              onClick={() => onAlgoClick(cat, algo)}
-              disabled={!algo.available}
-              whileHover={algo.available ? { scale: 1.05 } : {}}
-              whileTap={algo.available ? { scale: 0.97 } : {}}
-              className={`relative px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
-                algo.available
-                  ? `border-white/[0.08] text-slate-200 hover:bg-white/10 hover:border-white/20 cursor-pointer`
-                  : 'border-white/[0.03] text-slate-500 cursor-not-allowed opacity-50'
-              }`}
-            >
-              <span className="flex items-center gap-1.5">
-                {algo.shortName}
-                {algo.available && (
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" />
-                )}
-                {!algo.available && (
-                  <span className="text-[10px] text-slate-600">soon</span>
-                )}
-              </span>
+        {/* Algorithm Pills */}
+        <div className="relative flex flex-wrap gap-2 content-start flex-grow">
+          {cat.algorithms.map(algo => {
+            const isHovered = hoveredAlgo === `${cat.id}-${algo.id}`;
+            return (
+              <motion.button
+                key={algo.id}
+                onMouseEnter={() => setHoveredAlgo(`${cat.id}-${algo.id}`)}
+                onMouseLeave={() => setHoveredAlgo(null)}
+                onClick={() => onAlgoClick(cat, algo)}
+                disabled={!algo.available}
+                whileHover={algo.available ? { scale: 1.05 } : {}}
+                whileTap={algo.available ? { scale: 0.97 } : {}}
+                className={`relative px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
+                  algo.available
+                    ? `border-white/[0.08] text-slate-200 cursor-pointer ${getPillHoverStyles(
+                        cat.id
+                      )}`
+                    : 'border-white/[0.03] text-slate-500 cursor-not-allowed opacity-50'
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  {algo.shortName}
+                  {algo.available && (
+                    <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                  )}
+                  {!algo.available && (
+                    <span className="text-[10px] text-slate-600">soon</span>
+                  )}
+                </span>
 
-              {/* Hover Tooltip */}
-              <AnimatePresence>
-                {isHovered && algo.available && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-cyan-400/15 shadow-2xl shadow-black/50 pointer-events-none"
-                  >
-                    <p className="font-bold text-slate-200 text-sm mb-1">{algo.name}</p>
-                    <p className="text-slate-400 text-xs mb-3">{algo.description}</p>
-                    <div className="flex gap-4 text-[11px]">
-                      <span className="flex items-center gap-1 text-cyan-400">
-                        <Clock className="w-3 h-3" /> {algo.timeComplexity}
-                      </span>
-                      <span className="flex items-center gap-1 text-violet-400">
-                        <HardDrive className="w-3 h-3" /> {algo.spaceComplexity}
-                      </span>
-                    </div>
-                    {/* Arrow */}
-                    <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900/95 border-r border-b border-cyan-400/15 rotate-45" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
-          );
-        })}
+                {/* Hover Tooltip */}
+                <AnimatePresence>
+                  {isHovered && algo.available && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-cyan-400/15 shadow-2xl shadow-black/50 pointer-events-none"
+                    >
+                      <p className="font-bold text-slate-200 text-sm mb-1">{algo.name}</p>
+                      <p className="text-slate-400 text-xs mb-3">{algo.description}</p>
+                      <div className="flex gap-4 text-[11px]">
+                        <span className="flex items-center gap-1 text-cyan-400">
+                          <Clock className="w-3 h-3" /> {algo.timeComplexity}
+                        </span>
+                        <span className="flex items-center gap-1 text-violet-400">
+                          <HardDrive className="w-3 h-3" /> {algo.spaceComplexity}
+                        </span>
+                      </div>
+                      {/* Arrow */}
+                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900/95 border-r border-b border-cyan-400/15 rotate-45" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
     </motion.div>
   );

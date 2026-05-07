@@ -1,75 +1,93 @@
-import { useState, useEffect } from 'react';
+/**
+ * @file Sidebar.tsx
+ * @description Hierarchical sidebar navigation component for algorithm categories.
+ *
+ * Provides tab-based switching between Sorting, Searching, Graphs, and Trees.
+ * Features customizable sub-lists, active visual states, smooth hover animations
+ * with Framer Motion, and consistent minimalist icons from lucide-react.
+ */
+
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { useUIStore } from '../../store/uiStore';
-import { globalWorkerPool } from '../../core/WorkerPool';
-import { globalEngine } from '../../core/AnimationEngine';
+import { useTreeStore, type TreeType } from '../../store/treeStore';
 import { ALGORITHM_CATALOG } from '../../data/algorithmCatalog';
 import { GRAPH_TEMPLATES } from '../../data/graphTemplates';
+import {
+  GitFork,
+  GitMerge,
+  Scale,
+  Layers,
+  Type,
+  TrendingUp,
+  Activity,
+  Database,
+  Search,
+} from 'lucide-react';
 
-export default function Sidebar() {
+/**
+ * Sidebar Component
+ *
+ * Renders the primary navigation sidebar on the left of the workspace.
+ * Manages mode selection and highlights active algorithms or structures.
+ *
+ * @returns The rendered Sidebar navigation panel.
+ */
+export default function Sidebar(): React.ReactElement {
   const navigate = useNavigate();
-  const { algoId } = useParams();
-  const { 
-    activeMode, setActiveMode, setIsAnimating, 
-    activeSortingAlgorithm, activeSearchingAlgorithm,
-    setCurrentGraph, currentGraph
+  const { algoId } = useParams<{ algoId: string }>();
+  const {
+    activeMode,
+    setActiveMode,
+    activeSortingAlgorithm,
+    activeSearchingAlgorithm,
+    setCurrentGraph,
+    currentGraph,
   } = useUIStore();
-  
-  const [running, setRunning]           = useState(false);
-  const [status, setStatus]             = useState('');
 
-  // Load algorithm definitions from the Catalog dynamically
-  const sortingCategory = ALGORITHM_CATALOG.find(c => c.id === 'sorting');
-  const searchingCategory = ALGORITHM_CATALOG.find(c => c.id === 'searching');
-  const graphCategory = ALGORITHM_CATALOG.find(c => c.id === 'graphs');
+  const { activeTreeType, setTreeType } = useTreeStore();
 
-  const sortingAlgos = sortingCategory?.algorithms.filter(a => a.available) || [];
-  const searchingAlgos = searchingCategory?.algorithms.filter(a => a.available) || [];
-  const graphAlgos = graphCategory?.algorithms.filter(a => a.available) || [];
+  // Load algorithm definitions from the Catalog
+  const sortingCategory = ALGORITHM_CATALOG.find((c) => c.id === 'sorting');
+  const searchingCategory = ALGORITHM_CATALOG.find((c) => c.id === 'searching');
+  const graphCategory = ALGORITHM_CATALOG.find((c) => c.id === 'graphs');
 
-  // When algoId changes, set the first template immediately
-  useEffect(() => {
-    if (activeMode === 'graph' && algoId && GRAPH_TEMPLATES[algoId]) {
-      const templates = GRAPH_TEMPLATES[algoId];
-      if (templates && templates.length > 0) {
-        setCurrentGraph(templates[0].graph);
-      }
-    }
-  }, [algoId, activeMode]);
+  const sortingAlgos = sortingCategory?.algorithms.filter((a) => a.available) || [];
+  const searchingAlgos = searchingCategory?.algorithms.filter((a) => a.available) || [];
+  const graphAlgos = graphCategory?.algorithms.filter((a) => a.available) || [];
 
-  const handleRunGraphAlgo = async () => {
-    if (!currentGraph) {
-      setStatus('[ERROR] Choose or select a graph variation first');
-      return;
-    }
-    if (!algoId) return;
 
-    setRunning(true);
-    setStatus(`Running ${algoId}…`);
 
-    try {
-      const trace = await globalWorkerPool.run(algoId, currentGraph);
-
-      globalEngine.loadTrace(trace);
-      globalEngine.setSpeed(1.0);
-      setIsAnimating(true);
-      globalEngine.play();
-
-      setStatus(`[DONE] Trace generated: ${trace.events.length} events`);
-    } catch (err) {
-      setStatus(`[ERROR] ${String(err)}`);
-    } finally {
-      setRunning(false);
-      setTimeout(() => setIsAnimating(false), 3000);
+  /**
+   * Helper to map a TreeType to its corresponding Lucide Icon component.
+   */
+  const getTreeIcon = (type: TreeType) => {
+    switch (type) {
+      case 'binary':
+        return <GitMerge size={18} strokeWidth={2} className="text-amber-400" />;
+      case 'bst':
+        return <GitFork size={18} strokeWidth={2} className="text-cyan-400" />;
+      case 'avl':
+        return <Scale size={18} strokeWidth={2} className="text-emerald-400" />;
+      case 'rbt':
+        return <Layers size={18} strokeWidth={2} className="text-rose-400" />;
+      case 'trie':
+        return <Type size={18} strokeWidth={2} className="text-violet-400" />;
     }
   };
 
   return (
-    <div className="w-72 glass-panel flex flex-col gap-5 p-4 overflow-y-auto">
-
+    <motion.div
+      initial={{ x: -60, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: -60, opacity: 0 }}
+      transition={{ type: 'spring', stiffness: 240, damping: 24 }}
+      className="w-72 h-[calc(100vh-140px)] glass-panel flex flex-col gap-5 p-4 overflow-y-auto border border-white/10 shadow-xl"
+    >
       {/* ── Mode Tabs ── */}
-      <div className="flex rounded-lg overflow-hidden border border-ice-blue/20 flex-wrap">
-        {(['sorting', 'searching', 'graph'] as const).map(mode => (
+      <div className="flex rounded-xl overflow-hidden border border-white/[0.06] bg-slate-950/40 p-1">
+        {(['sorting', 'searching', 'graph', 'tree'] as const).map((mode) => (
           <button
             key={mode}
             onClick={() => {
@@ -77,10 +95,11 @@ export default function Sidebar() {
               if (mode === 'sorting') navigate('/algo/sorting/merge-sort');
               if (mode === 'searching') navigate('/algo/searching/binary-search');
               if (mode === 'graph') navigate('/algo/graphs/dijkstra');
+              if (mode === 'tree') navigate('/algo/trees/bst');
             }}
-            className={`flex-1 py-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wide transition-colors ${
+            className={`flex-1 py-2 text-[10px] font-semibold uppercase tracking-wider transition-all rounded-lg ${
               activeMode === mode
-                ? 'bg-ice-blue/20 text-ice-blue'
+                ? 'bg-cyan-500/15 text-cyan-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
             }`}
           >
@@ -92,98 +111,117 @@ export default function Sidebar() {
       {/* ── Sorting Section ── */}
       {activeMode === 'sorting' && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Sorting Algorithms</h2>
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp size={16} className="text-cyan-400" />
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Sorting Algorithms
+            </h2>
+          </div>
           <ul className="space-y-1.5">
-            {sortingAlgos.map(algo => {
-               const isActive = activeSortingAlgorithm === algo.name;
-               return (
-                 <li
-                   key={algo.id}
-                   onClick={() => navigate(`/algo/sorting/${algo.id}`)}
-                   className={`px-3 py-2 rounded-lg cursor-pointer transition border ${isActive ? 'bg-ice-blue/10 border-ice-blue/30 text-ice-blue' : 'hover:bg-white/5 border-transparent text-slate-300'} text-sm`}
-                 >
-                   {algo.name}
-                 </li>
-               );
+            {sortingAlgos.map((algo) => {
+              const isActive = activeSortingAlgorithm === algo.name;
+              return (
+                <motion.li
+                  key={algo.id}
+                  onClick={() => navigate(`/algo/sorting/${algo.id}`)}
+                  whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
+                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all border text-xs font-medium flex items-center justify-between ${
+                    isActive
+                      ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400 shadow-md shadow-cyan-950/20'
+                      : 'border-transparent text-slate-300'
+                  }`}
+                >
+                  <span>{algo.name}</span>
+                  {isActive && <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />}
+                </motion.li>
+              );
             })}
           </ul>
-
-          <div className="text-xs text-slate-500 px-2 py-2 bg-slate-900/30 rounded">
-            Run the code in the editor to start sorting
-          </div>
         </section>
       )}
 
       {/* ── Searching Section ── */}
       {activeMode === 'searching' && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Searching Algorithms</h2>
+          <div className="flex items-center gap-2 mb-1">
+            <Search size={16} className="text-violet-400" />
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Searching Algorithms
+            </h2>
+          </div>
           <ul className="space-y-1.5">
-            {searchingAlgos.map(algo => {
-               const isActive = activeSearchingAlgorithm === algo.name;
-               return (
-                 <li
-                   key={algo.id}
-                   onClick={() => navigate(`/algo/searching/${algo.id}`)}
-                   className={`px-3 py-2 rounded-lg cursor-pointer transition border ${isActive ? 'bg-ice-blue/10 border-ice-blue/30 text-ice-blue' : 'hover:bg-white/5 border-transparent text-slate-300'} text-sm`}
-                 >
-                   {algo.name}
-                 </li>
-               );
+            {searchingAlgos.map((algo) => {
+              const isActive = activeSearchingAlgorithm === algo.name;
+              return (
+                <motion.li
+                  key={algo.id}
+                  onClick={() => navigate(`/algo/searching/${algo.id}`)}
+                  whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
+                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all border text-xs font-medium flex items-center justify-between ${
+                    isActive
+                      ? 'bg-violet-500/10 border-violet-500/20 text-violet-400 shadow-md'
+                      : 'border-transparent text-slate-300'
+                  }`}
+                >
+                  <span>{algo.name}</span>
+                  {isActive && <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />}
+                </motion.li>
+              );
             })}
           </ul>
-
-          <div className="text-xs text-slate-500 px-2 py-2 bg-slate-900/30 rounded">
-            Run the code in the editor to start searching
-          </div>
         </section>
       )}
 
       {/* ── Graph Section ── */}
       {activeMode === 'graph' && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Graph Algorithms</h2>
-
-          {/* Algorithm picker as a list of buttons */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-slate-400">Algorithm</label>
-            <div className="flex flex-col gap-1.5">
-              {graphAlgos.map(algo => {
-                const isActive = algoId === algo.id;
-                return (
-                  <button
-                    key={algo.id}
-                    onClick={() => navigate(`/algo/graphs/${algo.id}`)}
-                    className={`px-3 py-2 rounded-lg text-left text-xs transition border ${
-                      isActive
-                        ? 'bg-ice-blue/15 border-ice-blue/40 text-ice-blue font-bold shadow-[0_0_10px_rgba(6,182,212,0.1)]'
-                        : 'bg-white/5 border-transparent text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    {algo.name}
-                  </button>
-                );
-              })}
-            </div>
+          <div className="flex items-center gap-2 mb-1">
+            <Activity size={16} className="text-emerald-400" />
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Graph Algorithms
+            </h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            {graphAlgos.map((algo) => {
+              const isActive = algoId === algo.id;
+              return (
+                <motion.button
+                  key={algo.id}
+                  onClick={() => navigate(`/algo/graphs/${algo.id}`)}
+                  whileHover={{ x: 4 }}
+                  className={`px-3 py-2 rounded-xl text-left text-xs transition border font-medium flex items-center justify-between ${
+                    isActive
+                      ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 shadow-md'
+                      : 'bg-white/5 border-transparent text-slate-300 hover:bg-white/10'
+                  }`}
+                >
+                  <span>{algo.name}</span>
+                  {isActive && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                </motion.button>
+              );
+            })}
           </div>
 
-
-          {/* Preset Graph Variations */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-slate-400">Variations (Preset Graphs)</label>
+          {/* Preset Variations */}
+          <div className="flex flex-col gap-2 mt-2">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+              <Database size={12} />
+              <span>Presets</span>
+            </label>
             {algoId && GRAPH_TEMPLATES[algoId] ? (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5">
                 {GRAPH_TEMPLATES[algoId].map((template) => {
-                  const isSelected = currentGraph?.nodes.length === template.graph.nodes.length &&
-                                   currentGraph?.edges.length === template.graph.edges.length;
+                  const isSelected =
+                    currentGraph?.nodes.length === template.graph.nodes.length &&
+                    currentGraph?.edges.length === template.graph.edges.length;
                   return (
                     <button
                       key={template.id}
                       onClick={() => setCurrentGraph(template.graph)}
-                      className={`px-3 py-2 rounded-lg text-left text-xs transition border ${
+                      className={`px-2.5 py-1.5 rounded-lg text-left text-[11px] transition border font-medium ${
                         isSelected
-                          ? 'bg-ice-blue/15 border-ice-blue/40 text-ice-blue font-bold shadow-[0_0_10px_rgba(6,182,212,0.1)]'
-                          : 'bg-white/5 border-transparent text-slate-300 hover:bg-white/10'
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                          : 'bg-white/5 border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/10'
                       }`}
                     >
                       {template.name}
@@ -192,23 +230,52 @@ export default function Sidebar() {
                 })}
               </div>
             ) : (
-              <p className="text-xs text-slate-500 italic">No variations available</p>
+              <p className="text-[11px] text-slate-500 italic">No presets available</p>
             )}
           </div>
-
-          {/* Run button */}
-          <div className="flex gap-2 mt-2">
-            <button
-              onClick={handleRunGraphAlgo}
-              disabled={running || !currentGraph}
-              className="flex-1 py-2 rounded-lg text-xs font-semibold bg-emerald-600/30 border border-emerald-600/40 text-emerald-300 hover:bg-emerald-600/40 transition-all"
-            >
-              Run Algorithm
-            </button>
-          </div>
-          {status && <p className="text-xs text-slate-400 text-center">{status}</p>}
         </section>
       )}
-    </div>
+
+      {/* ── Trees Section ── */}
+      {activeMode === 'tree' && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 mb-1">
+            <GitMerge size={16} className="text-amber-400" />
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Tree Data Structures
+            </h2>
+          </div>
+          <ul className="space-y-1.5">
+            {([
+              { id: 'binary', name: 'Binary Tree' },
+              { id: 'bst', name: 'Binary Search Tree (BST)' },
+              { id: 'avl', name: 'AVL Tree' },
+              { id: 'rbt', name: 'Red-Black Tree' },
+              { id: 'trie', name: 'Trie Prefix Tree' },
+            ] as const).map((tree) => {
+              const isActive = activeTreeType === tree.id;
+              return (
+                <motion.li
+                  key={tree.id}
+                  onClick={() => {
+                    setTreeType(tree.id);
+                    navigate(`/algo/trees/${tree.id}`);
+                  }}
+                  whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
+                  className={`px-3 py-2.5 rounded-xl cursor-pointer transition-all border text-xs font-semibold flex items-center gap-3 ${
+                    isActive
+                      ? 'bg-amber-500/10 border-amber-500/25 text-amber-400 shadow-md shadow-amber-950/20'
+                      : 'border-transparent text-slate-300'
+                  }`}
+                >
+                  <div className="shrink-0">{getTreeIcon(tree.id)}</div>
+                  <span className="truncate">{tree.name}</span>
+                </motion.li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+    </motion.div>
   );
 }

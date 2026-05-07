@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { VisualizationData, GraphInput } from '../types';
 
-type ActiveMode = 'sorting' | 'searching' | 'graph' | 'grid' | 'dp';
+type ActiveMode = 'sorting' | 'searching' | 'graph' | 'grid' | 'dp' | 'tree';
 
 interface UIState {
   theme: 'glacier';

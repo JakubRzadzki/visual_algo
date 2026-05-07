@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -33,6 +35,7 @@ type Snapshot struct {
 }
 
 var db *gorm.DB
+var inMemorySnapshots = make(map[string][]byte)
 
 func initDB() {
 	dsn := os.Getenv("DATABASE_URL")
@@ -41,16 +44,12 @@ func initDB() {
 	}
 	
 	var err error
-	for i := 0; i < 5; i++ {
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-		if err == nil {
-			break
-		}
-		log.Println("Waiting for DB...")
-		time.Sleep(2 * time.Second)
-	}
+	// Attempt to connect to postgres once to avoid hanging
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		log.Println("Postgres DB not available. Falling back to in-memory snapshots storage.")
+		db = nil
+		return
 	}
 
 	db.AutoMigrate(&Snapshot{})
@@ -101,33 +100,45 @@ func createSnapshot(c *gin.Context) {
 
 	// Generate a short 8-character UUID
 	id := uuid.New().String()[:8]
-	snapshot := Snapshot{
-		ID:        id,
-		Data:      datatypes.JSON(jsonData),
-		CreatedAt: time.Now(),
+	
+	if db != nil {
+		snapshot := Snapshot{
+			ID:        id,
+			Data:      datatypes.JSON(jsonData),
+			CreatedAt: time.Now(),
+		}
+		if err := db.Create(&snapshot).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save snapshot to database"})
+			return
+		}
+	} else {
+		inMemorySnapshots[id] = jsonData
 	}
 
-	if err := db.Create(&snapshot).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save snapshot to database"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"id": snapshot.ID})
+	c.JSON(http.StatusOK, gin.H{"id": id})
 }
 
 func getSnapshot(c *gin.Context) {
 	id := c.Param("id")
-	var snapshot Snapshot
-	if err := db.First(&snapshot, "id = ?", id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Snapshot not found"})
+	
+	if db != nil {
+		var snapshot Snapshot
+		if err := db.First(&snapshot, "id = ?", id).Error; err == nil {
+			var data map[string]interface{}
+			json.Unmarshal(snapshot.Data, &data)
+			c.JSON(http.StatusOK, data)
+			return
+		}
+	}
+
+	if jsonData, exists := inMemorySnapshots[id]; exists {
+		var data map[string]interface{}
+		json.Unmarshal(jsonData, &data)
+		c.JSON(http.StatusOK, data)
 		return
 	}
 
-	// Unwrap JSON string into real JSON object to return
-	var data map[string]interface{}
-	json.Unmarshal(snapshot.Data, &data)
-
-	c.JSON(http.StatusOK, data)
+	c.JSON(http.StatusNotFound, gin.H{"error": "Snapshot not found"})
 }
 
 // --- Remote Code Execution (RCE) Sandbox Subsystem (Step 5) ---
@@ -143,6 +154,62 @@ type RunResponse struct {
 	Output string                   `json:"output,omitempty"`
 }
 
+func executeLocally(code string, language string) (string, string, error) {
+	if language == "python" {
+		cmd := exec.Command("python", "-c", code)
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		err := cmd.Run()
+		if err != nil {
+			// Try 'python3' fallback if 'python' is not mapped
+			if strings.Contains(err.Error(), "executable file not found") {
+				cmd3 := exec.Command("python3", "-c", code)
+				stdout.Reset()
+				stderr.Reset()
+				cmd3.Stdout = &stdout
+				cmd3.Stderr = &stderr
+				err3 := cmd3.Run()
+				return stdout.String(), stderr.String(), err3
+			}
+		}
+		return stdout.String(), stderr.String(), err
+	} else if language == "cpp" {
+		tempDir, err := os.MkdirTemp("", "visual_algo_cpp_local")
+		if err != nil {
+			return "", "", fmt.Errorf("failed to create temp dir: %w", err)
+		}
+		defer os.RemoveAll(tempDir)
+
+		cppFile := filepath.Join(tempDir, "main.cpp")
+		err = os.WriteFile(cppFile, []byte(code), 0644)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to write main.cpp: %w", err)
+		}
+
+		outFile := filepath.Join(tempDir, "main.exe")
+		if os.PathSeparator == '/' {
+			outFile = filepath.Join(tempDir, "main")
+		}
+
+		compileCmd := exec.Command("g++", "-O3", cppFile, "-o", outFile)
+		var compileStderr bytes.Buffer
+		compileCmd.Stderr = &compileStderr
+		err = compileCmd.Run()
+		if err != nil {
+			return "", compileStderr.String(), fmt.Errorf("g++ compilation failed: %w", err)
+		}
+
+		runCmd := exec.Command(outFile)
+		var stdout, stderr bytes.Buffer
+		runCmd.Stdout = &stdout
+		runCmd.Stderr = &stderr
+		err = runCmd.Run()
+		return stdout.String(), stderr.String(), err
+	}
+	return "", "", fmt.Errorf("unsupported language")
+}
+
 func executeCode(c *gin.Context) {
 	var req RunRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -155,96 +222,106 @@ func executeCode(c *gin.Context) {
 		return
 	}
 
+	// ── DOCKER CONNECTION & HEALTHY CHECK ──
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.44"))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to connect to Docker daemon: " + err.Error()})
-		return
-	}
-
-	ctx := context.Background()
-	imageName := "python:3.10-slim"
-	cmd := []string{"python", "-c", req.Code}
-
-	if req.Language == "cpp" {
-		imageName = "gcc:13"
-		// Securely inject code via temp file in bash
-		script := fmt.Sprintf(`echo '%s' > main.cpp && g++ -O3 main.cpp && ./a.out`, strings.ReplaceAll(req.Code, "'", "'\\''"))
-		cmd = []string{"sh", "-c", script}
-	}
-
-	// Pull image if not exists
-	_, _, err = cli.ImageInspectWithRaw(ctx, imageName)
-	if err != nil {
-		log.Printf("Pulling image %s...\n", imageName)
-		reader, pullErr := cli.ImagePull(ctx, imageName, types.ImagePullOptions{})
-		if pullErr == nil {
-			io.Copy(os.Stdout, reader)
+	var dockerRunning = false
+	if err == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 800*time.Millisecond)
+		_, pingErr := cli.Ping(ctx)
+		cancel()
+		if pingErr == nil {
+			dockerRunning = true
 		}
 	}
 
-	// Create ephemeral container
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image:           imageName,
-		Cmd:             cmd,
-		NetworkDisabled: true, // Crucial for security
-	}, &container.HostConfig{
-		AutoRemove: false,
-		Resources: container.Resources{
-			Memory:   256 * 1024 * 1024, // 256 MB RAM limit
-			NanoCPUs: 500000000,         // 0.5 CPU limit
-		},
-	}, nil, nil, "")
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create sandbox container: " + err.Error()})
-		return
-	}
-
-	// Ensure container is wiped after execution
-	defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{Force: true})
-
-	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start sandbox container"})
-		return
-	}
-
-	// Wait with timeout
-	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
-	select {
-	case err := <-errCh:
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Sandbox execution error: " + err.Error()})
-			return
-		}
-	case <-statusCh:
-		// Completed successfully
-	case <-time.After(10 * time.Second):
-		// Timeout
-		c.JSON(http.StatusRequestTimeout, gin.H{"error": "Execution timed out (limit: 10s)"})
-		return
-	}
-
-	logs, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read container logs"})
-		return
-	}
-
-	var stdout, stderr bytes.Buffer
-	stdcopy.StdCopy(&stdout, &stderr, logs)
-
-	rawOutput := stdout.String()
-	lines := strings.Split(rawOutput, "\n")
-	
-	// Collect any JSON lines that match the Trace Protocol
+	var rawOutput string
+	var stderrStr string
 	var trace []map[string]interface{}
+
+	if dockerRunning {
+		ctx := context.Background()
+		imageName := "python:3.10-slim"
+		cmd := []string{"python", "-c", req.Code}
+
+		if req.Language == "cpp" {
+			imageName = "gcc:13"
+			script := fmt.Sprintf(`echo '%s' > main.cpp && g++ -O3 main.cpp && ./a.out`, strings.ReplaceAll(req.Code, "'", "'\\''"))
+			cmd = []string{"sh", "-c", script}
+		}
+
+		_, _, err = cli.ImageInspectWithRaw(ctx, imageName)
+		if err != nil {
+			log.Printf("Pulling image %s...\n", imageName)
+			reader, pullErr := cli.ImagePull(ctx, imageName, types.ImagePullOptions{})
+			if pullErr == nil {
+				io.Copy(os.Stdout, reader)
+			}
+		}
+
+		resp, err := cli.ContainerCreate(ctx, &container.Config{
+			Image:           imageName,
+			Cmd:             cmd,
+			NetworkDisabled: true,
+		}, &container.HostConfig{
+			AutoRemove: false,
+			Resources: container.Resources{
+				Memory:   256 * 1024 * 1024,
+				NanoCPUs: 500000000,
+			},
+		}, nil, nil, "")
+
+		if err != nil {
+			log.Println("Failed to create container, falling back to local: ", err)
+			rawOutput, stderrStr, _ = executeLocally(req.Code, req.Language)
+		} else {
+			defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{Force: true})
+
+			if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start sandbox container"})
+				return
+			}
+
+			statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+			select {
+			case err := <-errCh:
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Sandbox execution error: " + err.Error()})
+					return
+				}
+			case <-statusCh:
+			case <-time.After(10 * time.Second):
+				c.JSON(http.StatusRequestTimeout, gin.H{"error": "Execution timed out (limit: 10s)"})
+				return
+			}
+
+			logs, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read container logs"})
+				return
+			}
+
+			var stdoutBuf, stderrBuf bytes.Buffer
+			stdcopy.StdCopy(&stdoutBuf, &stderrBuf, logs)
+			rawOutput = stdoutBuf.String()
+			stderrStr = stderrBuf.String()
+		}
+	} else {
+		log.Println("Docker daemon not running. Falling back to host local execution.")
+		var localErr error
+		rawOutput, stderrStr, localErr = executeLocally(req.Code, req.Language)
+		if localErr != nil && stderrStr == "" {
+			stderrStr = localErr.Error()
+		}
+	}
+
+	// ── PARSE TRACE PROTOCOL FROM OUTPUT ──
+	lines := strings.Split(rawOutput, "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
 		var event map[string]interface{}
-		// If the line is valid JSON and has a "type" field, it's a trace event
 		if err := json.Unmarshal([]byte(line), &event); err == nil {
 			if _, hasType := event["type"]; hasType {
 				trace = append(trace, event)
@@ -255,6 +332,6 @@ func executeCode(c *gin.Context) {
 	c.JSON(http.StatusOK, RunResponse{
 		Trace:  trace,
 		Output: rawOutput,
-		Error:  stderr.String(),
+		Error:  stderrStr,
 	})
 }

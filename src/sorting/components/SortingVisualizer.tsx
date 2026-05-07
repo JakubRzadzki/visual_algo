@@ -46,9 +46,15 @@ interface SortingVisualizerProps {
  * @returns Array of random integers.
  */
 function generateRandomArray(size: number): number[] {
-  return Array.from({ length: size }, () =>
-    Math.floor(Math.random() * (MAX_VALUE - MIN_VALUE + 1)) + MIN_VALUE
-  );
+  const set = new Set<number>();
+  const maxPossible = MAX_VALUE - MIN_VALUE + 1;
+  const actualSize = Math.min(size, maxPossible);
+  
+  while (set.size < actualSize) {
+    set.add(Math.floor(Math.random() * maxPossible) + MIN_VALUE);
+  }
+  
+  return Array.from(set);
 }
 
 export default function SortingVisualizer({ algorithmName }: SortingVisualizerProps) {

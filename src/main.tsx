@@ -1,22 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import './index.css'
-import Dashboard from './components/dashboard/Dashboard'
-import VisualizerPage from './pages/VisualizerPage'
-import { ToastProvider } from './components/hud/Toast'
-import ShareLoader from './pages/ShareLoader'
+import App from './App'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <ToastProvider>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/algo/:category/:algoId" element={<VisualizerPage />} />
-          <Route path="/share/:snapshotId" element={<ShareLoader />} />
-        </Routes>
-      </ToastProvider>
+      <App />
     </BrowserRouter>
   </StrictMode>,
 )

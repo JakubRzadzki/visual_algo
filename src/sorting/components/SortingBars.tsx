@@ -93,7 +93,7 @@ export default function SortingBars({ frame }: SortingBarsProps) {
         if (useLayoutAnim) {
           return (
             <motion.div
-              key={`bar-${value}-${index}`}
+              key={`bar-${value}`}
               layout
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               className="flex flex-col items-center justify-end h-full"

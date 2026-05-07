@@ -19,6 +19,9 @@ export type EventPayload =
   | { type: "SEARCH_FOUND"; index: number; value: number }
   | { type: "SEARCH_NOT_FOUND"; target: number }
   | { type: "SEARCH_NARROW"; left: number; right: number; mid: number }
+  | { type: "VISIT"; nodeIds: string[] }
+  | { type: "COMPARE"; nodeIds: string[] }
+  | { type: "INSERT"; nodeIds: string[] }
   | { type: "SYSTEM_LOG"; message: string; level: "INFO" | "WARN" | "ERROR" }
   | { type: "SYSTEM_PLAYBACK_STATE"; isPlaying: boolean; currentStep: number; totalSteps: number; speed: number; deltaTime?: number }
   | { type: "TRACE_LOADED"; metadata: TraceMetadata }

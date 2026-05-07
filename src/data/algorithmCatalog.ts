@@ -74,10 +74,11 @@ export const ALGORITHM_CATALOG: CategoryEntry[] = [
     borderColor: 'border-amber-500/30',
     glowColor: 'shadow-amber-500/10',
     algorithms: [
+      { id: 'binary',     name: 'Binary Tree',        shortName: 'Binary',    description: 'Hierarchical node structure with up to two children', timeComplexity: 'O(n)', spaceComplexity: 'O(n)', available: true },
       { id: 'bst',        name: 'Binary Search Tree', shortName: 'BST',       description: 'Ordered insertion & search tree',       timeComplexity: 'O(log n)', spaceComplexity: 'O(n)', available: true },
       { id: 'avl',        name: 'AVL Tree',           shortName: 'AVL',       description: 'Self-balancing BST with rotations',     timeComplexity: 'O(log n)', spaceComplexity: 'O(n)', available: true },
-      { id: 'max-heap',   name: 'Max Heap',           shortName: 'MaxHeap',   description: 'Complete binary tree max-heap property', timeComplexity: 'O(log n)', spaceComplexity: 'O(n)', available: true },
-      { id: 'union-find', name: 'Union-Find',         shortName: 'UnionFind', description: 'Disjoint set with path compression',    timeComplexity: 'O(α(n))',  spaceComplexity: 'O(n)', available: true },
+      { id: 'rbt',        name: 'Red-Black Tree',     shortName: 'RBT',       description: 'Self-balancing BST with node coloring', timeComplexity: 'O(log n)', spaceComplexity: 'O(n)', available: true },
+      { id: 'trie',       name: 'Trie Prefix Tree',   shortName: 'Trie',      description: 'Prefix tree for search and autocomplete', timeComplexity: 'O(L)', spaceComplexity: 'O(AL)', available: true },
     ],
   },
   {

@@ -1,22 +1,31 @@
 // Binary Search Tree Insertion
 #include <iostream>
 #include <vector>
+#include <string>
+
+#define EMIT(type, id) std::cout << "{\"type\": \"" << type << "\", \"nodeIds\": [\"" << id << "\"]}\n"
 
 using namespace std;
 
 struct Node {
     int key;
+    std::string id;
     Node* left;
     Node* right;
     Node(int item) {
         key = item;
+        id = "node-" + std::to_string(item);
         left = right = nullptr;
     }
 };
 
 Node* insert(Node* node, int key) {
-    if (node == nullptr) return new Node(key);
+    if (node == nullptr) {
+        EMIT("INSERT", "node-" + std::to_string(key));
+        return new Node(key);
+    }
     
+    EMIT("COMPARE", node->id);
     if (key < node->key)
         node->left = insert(node->left, key);
     else if (key > node->key)

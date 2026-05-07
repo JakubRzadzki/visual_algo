@@ -5,6 +5,8 @@ import { globalEventBus } from '../../core/EventBus';
 import { globalEngine } from '../../core/AnimationEngine';
 import { useUIStore } from '../../store/uiStore';
 
+import { useTreeStore } from '../../store/treeStore';
+
 import { executeInSandbox, buildExecutionTrace, saveSnapshot } from '../../services/sandboxApi';
 import { useToast } from './Toast';
 import { Copy, Download, Check, Save, ChevronDown, Play, Loader2, Share2 } from 'lucide-react';
@@ -109,16 +111,30 @@ function defineGlacierDark(monaco: Monaco) {
 
 export default function MonacoCodeEditor() {
   const activeMode = useUIStore(state => state.activeMode);
+  const activeTreeType = useTreeStore(state => state.activeTreeType);
+  
   const globalAlgo = useUIStore(state => {
     if (state.activeMode === 'sorting') return state.activeSortingAlgorithm;
     if (state.activeMode === 'searching') return state.activeSearchingAlgorithm;
     if (state.activeMode === 'graph') return state.activeGraphAlgorithm;
     return state.activeSortingAlgorithm;
   });
+
+  const getAlgoName = (): string => {
+    if (activeMode === 'tree') {
+      if (activeTreeType === 'binary') return 'Binary Tree';
+      if (activeTreeType === 'bst') return 'Binary Search Tree';
+      if (activeTreeType === 'avl') return 'AVL Tree';
+      if (activeTreeType === 'rbt') return 'Red-Black Tree';
+      if (activeTreeType === 'trie') return 'Trie Prefix Tree';
+    }
+    return globalAlgo;
+  };
+
   const setIsAnimating = useUIStore(state => state.setIsAnimating);
   const currentGraph = useUIStore(state => state.currentGraph);
 
-  const [algoName, setAlgoName] = useState<string>(globalAlgo);
+  const [algoName, setAlgoName] = useState<string>(getAlgoName());
   const [language, setLanguage] = useState<Language>('python');
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -135,9 +151,9 @@ export default function MonacoCodeEditor() {
 
   // Sync algorithm name from global state and event bus
   useEffect(() => {
-    setAlgoName(globalAlgo);
+    setAlgoName(getAlgoName());
     useUIStore.getState().setIsAnimating(false);
-  }, [globalAlgo]);
+  }, [globalAlgo, activeTreeType, activeMode]);
 
   useEffect(() => {
     const unsubscribe = globalEventBus.subscribe((e) => {
@@ -223,8 +239,11 @@ export default function MonacoCodeEditor() {
       'Depth-First Search': 'dfs',
       "Prim's MST": 'prim',
       'Topological Sort': 'topo-sort',
+      'Binary Tree': 'binary',
       'Binary Search Tree': 'bst',
       'AVL Tree': 'avl',
+      'Red-Black Tree': 'rbt',
+      'Trie Prefix Tree': 'trie',
       'Max Heap': 'max-heap',
       'Union-Find': 'union-find',
     };
@@ -243,22 +262,13 @@ export default function MonacoCodeEditor() {
     const graphId = currentGraph ? `${currentGraph.nodes.length}-${currentGraph.edges.length}-${currentGraph.edges.map(e => e.id).join('')}` : 'default';
     const storageKey = `monaco-editor-${algoName}-${language}-${graphId}`;
     const savedCode = localStorage.getItem(storageKey);
-    let code = savedCode || getSourceCode();
+    let code = (savedCode || getSourceCode()).replace(/\r\n/g, '\n');
 
     if (activeMode === 'graph' && currentGraph && language === 'python') {
-      const isEdgeList = /^ {4}edges\s*=\s*\[[\s\S]*?^ {4}\]/m.test(code);
-      const isAdjList = /^ {4}graph\s*=\s*\[[\s\S]*?^ {4}\]/m.test(code);
+      const isAdjList = /^([ \t]*)graph\s*=\s*\[[\s\S]*?^\1\]/m.test(code);
+      const isEdgeList = /^([ \t]*)edges\s*=\s*\[[\s\S]*?^\1\]/m.test(code);
 
-      if (isEdgeList) {
-        const edgeStrings = currentGraph.edges.map(e => {
-          const u = e.from.replace('n','');
-          const v = e.to.replace('n','');
-          return `        (${u}, ${v}, "${e.id}", ${e.weight})`;
-        });
-        const block = `    edges = [\n${edgeStrings.join(',\n')}\n    ]`;
-        code = code.replace(/^ {4}edges\s*=\s*\[[\s\S]*?^ {4}\]/m, block);
-        code = code.replace(/^ {4}nodes\s*=\s*\d+/m, `    nodes = ${currentGraph.nodes.length}`);
-      } else if (isAdjList) {
+      if (isAdjList) {
         const numNodes = currentGraph.nodes.length;
         const adj: [number, number, string][][] = Array.from({ length: numNodes }, () => []);
         currentGraph.edges.forEach(e => {
@@ -268,13 +278,60 @@ export default function MonacoCodeEditor() {
             adj[u].push([v, e.weight, e.id]);
           }
         });
-        let block = `    graph = [\n`;
+        const match = code.match(/^([ \t]*)graph\s*=\s*\[[\s\S]*?^\1\]/m);
+        const indent = match ? match[1] : '    ';
+        let block = `${indent}graph = [\n`;
         adj.forEach(neighbors => {
           const neighborStrs = neighbors.map(n => `(${n[0]}, ${n[1]}, "${n[2]}")`);
-          block += `        [${neighborStrs.join(', ')}],\n`;
+          block += `${indent}    [${neighborStrs.join(', ')}],\n`;
         });
-        block += `    ]`;
-        code = code.replace(/^ {4}graph\s*=\s*\[[\s\S]*?^ {4}\]/m, block);
+        block += `${indent}]`;
+        code = code.replace(/^([ \t]*)graph\s*=\s*\[[\s\S]*?^\1\]/m, block);
+      } else if (isEdgeList) {
+        const edgeStrings = currentGraph.edges.map(e => {
+          const u = e.from.replace('n','');
+          const v = e.to.replace('n','');
+          return `(${u}, ${v}, "${e.id}", ${e.weight})`;
+        });
+        const match = code.match(/^([ \t]*)edges\s*=\s*\[[\s\S]*?^\1\]/m);
+        const indent = match ? match[1] : '    ';
+        const block = `${indent}edges = [\n${edgeStrings.map(str => indent + '    ' + str).join(',\n')}\n${indent}]`;
+        code = code.replace(/^([ \t]*)edges\s*=\s*\[[\s\S]*?^\1\]/m, block);
+        code = code.replace(/^([ \t]*)nodes\s*=\s*\d+/m, `${indent}nodes = ${currentGraph.nodes.length}`);
+      }
+    } else if (activeMode === 'graph' && currentGraph && language === 'cpp') {
+      const isAdjList = /^([ \t]*)vector<vector<Edge>>\s+graph\(\d+\);/m.test(code);
+      const isEdgeList = /^([ \t]*)vector<Edge>\s+edges\s*=\s*\{[\s\S]*?^\1\};/m.test(code);
+
+      if (isAdjList) {
+        const numNodes = currentGraph.nodes.length;
+        const adj: [number, number, string][][] = Array.from({ length: numNodes }, () => []);
+        currentGraph.edges.forEach(e => {
+          const u = parseInt(e.from.replace('n', ''), 10);
+          const v = parseInt(e.to.replace('n', ''), 10);
+          if (!isNaN(u) && !isNaN(v)) {
+            adj[u].push([v, e.weight, e.id]);
+          }
+        });
+        const match = code.match(/^([ \t]*)vector<vector<Edge>>\s+graph\(\d+\);[\s\S]*?^\1graph\[\d+\]\s*=\s*\{[^}]*\};/m);
+        const indent = match ? match[1] : '    ';
+        let block = `${indent}vector<vector<Edge>> graph(${numNodes});\n`;
+        adj.forEach((neighbors, u) => {
+          const neighborStrs = neighbors.map(n => `{${n[0]}, ${n[1]}, "${n[2]}"}`);
+          block += `${indent}graph[${u}] = {${neighborStrs.join(', ')}};${u < numNodes - 1 ? '\n' : ''}`;
+        });
+        code = code.replace(/^([ \t]*)vector<vector<Edge>>\s+graph\(\d+\);[\s\S]*?^\1graph\[\d+\]\s*=\s*\{[^}]*\};/m, block);
+      } else if (isEdgeList) {
+        const edgeStrings = currentGraph.edges.map(e => {
+          const u = e.from.replace('n','');
+          const v = e.to.replace('n','');
+          return `{${u}, ${v}, ${e.weight}, "${e.id}"}`;
+        });
+        const match = code.match(/^([ \t]*)vector<Edge>\s+edges\s*=\s*\{[\s\S]*?^\1\};/m);
+        const indent = match ? match[1] : '    ';
+        const block = `${indent}vector<Edge> edges = {\n${edgeStrings.map(str => indent + '    ' + str).join(',\n')}\n${indent}};`;
+        code = code.replace(/^([ \t]*)vector<Edge>\s+edges\s*=\s*\{[\s\S]*?^\1\};/m, block);
+        code = code.replace(/^([ \t]*)int\s+nodes\s*=\s*\d+;/m, `${indent}int nodes = ${currentGraph.nodes.length};`);
       }
     }
 
@@ -577,9 +634,14 @@ export default function MonacoCodeEditor() {
             id="reset-code-btn"
             onClick={() => {
               if (confirm('Are you sure you want to reset the code to the default template? This will erase your changes.')) {
-                const storageKey = `monaco-editor-${algoName}-${language}`;
-                localStorage.removeItem(storageKey);
-                setEditorContent(getSourceCode());
+                const graphId = currentGraph ? `${currentGraph.nodes.length}-${currentGraph.edges.length}-${currentGraph.edges.map(e => e.id).join('')}` : 'default';
+                localStorage.removeItem(`monaco-editor-${algoName}-${language}-${graphId}`);
+                localStorage.removeItem(`monaco-editor-${algoName}-${language}`);
+                const defaultCode = getSourceCode();
+                setEditorContent(defaultCode);
+                if (editorRef.current) {
+                  editorRef.current.setValue(defaultCode);
+                }
                 showToast('Code reset', 'info', 'Restored default algorithm template.');
               }
             }}
@@ -655,7 +717,7 @@ export default function MonacoCodeEditor() {
             </div>
           }
           options={{
-            fontSize: 14,
+            fontSize: 12,
             fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
             fontLigatures: true,
             lineHeight: 22,
