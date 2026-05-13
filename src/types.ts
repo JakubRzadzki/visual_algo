@@ -22,6 +22,7 @@ export type EventPayload =
   | { type: "VISIT"; nodeIds: string[] }
   | { type: "COMPARE"; nodeIds: string[] }
   | { type: "INSERT"; nodeIds: string[] }
+  | { type: "KNAPSACK_FINAL_SELECTION"; indices: number[]; items: any[]; totalValue: number; totalWeight: number }
   | { type: "SYSTEM_LOG"; message: string; level: "INFO" | "WARN" | "ERROR" }
   | { type: "SYSTEM_PLAYBACK_STATE"; isPlaying: boolean; currentStep: number; totalSteps: number; speed: number; deltaTime?: number }
   | { type: "TRACE_LOADED"; metadata: TraceMetadata }
@@ -29,7 +30,19 @@ export type EventPayload =
 
 export type VisualizationEvent = BaseEvent & EventPayload;
 
-export type TraceMetadata = { timeComplexity: string; spaceComplexity: string; executionTimeMs: number; nodeCount: number; algorithmName: string; initialState?: number[]; initialGraph?: GraphInput };
+export type TraceMetadata = { 
+  timeComplexity: string; 
+  spaceComplexity: string; 
+  executionTimeMs: number; 
+  nodeCount: number; 
+  algorithmName: string; 
+  initialState?: number[]; 
+  initialGraph?: GraphInput; 
+  rowHeaders?: string[]; 
+  colHeaders?: string[];
+  items?: any[];
+  lcsResult?: string;
+};
 
 // ─── Graph Domain Types ───────────────────────────────────────────────────────
 
@@ -85,7 +98,23 @@ export interface MatrixInput {
   values: number[][];
 }
 
-export type VisualizationData = GraphInput | ArrayInput | GridInput | MatrixInput;
+export interface KnapsackItem {
+  weight: number;
+  value: number;
+}
+
+export interface KnapsackInput {
+  items: KnapsackItem[];
+  capacity: number;
+}
+
+export interface LCSInput {
+  text1: string;
+  text2: string;
+}
+
+export type VisualizationData = GraphInput | ArrayInput | GridInput | MatrixInput | KnapsackInput | LCSInput;
+
 
 export interface ExecutionTrace { events: VisualizationEvent[]; metadata: TraceMetadata; }
 

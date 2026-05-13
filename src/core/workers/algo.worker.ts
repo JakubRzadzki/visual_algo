@@ -29,6 +29,9 @@ import { AVLTreePlugin } from '../plugins/trees/AVLTreePlugin';
 import { MaxHeapPlugin } from '../plugins/trees/MaxHeapPlugin';
 import { UnionFindPlugin } from '../plugins/trees/UnionFindPlugin';
 
+import { KnapsackDPPlugin } from '../plugins/dp/KnapsackDPPlugin';
+import { LCSPlugin } from '../plugins/dp/LCSPlugin';
+
 // Registry: algorithm id → plugin instance
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
@@ -51,6 +54,9 @@ const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
   'avl':           new AVLTreePlugin(),
   'max-heap':      new MaxHeapPlugin(),
   'union-find':    new UnionFindPlugin(),
+
+  'knapsack':      new KnapsackDPPlugin(),
+  'lcs':           new LCSPlugin(),
 };
 
 // Listen for tasks from the WorkerPool

@@ -89,8 +89,8 @@ export const ALGORITHM_CATALOG: CategoryEntry[] = [
     borderColor: 'border-rose-500/30',
     glowColor: 'shadow-rose-500/10',
     algorithms: [
-      { id: 'knapsack', name: '0/1 Knapsack', shortName: 'Knapsack', description: 'Optimal value under weight constraint', timeComplexity: 'O(nW)', spaceComplexity: 'O(nW)', available: false },
-      { id: 'lcs',      name: 'Longest Common Subsequence', shortName: 'LCS', description: 'Longest shared subsequence of two strings', timeComplexity: 'O(mn)', spaceComplexity: 'O(mn)', available: false },
+      { id: 'knapsack', name: '0/1 Knapsack', shortName: 'Knapsack', description: 'Optimal value under weight constraint', timeComplexity: 'O(nW)', spaceComplexity: 'O(nW)', available: true },
+      { id: 'lcs',      name: 'Longest Common Subsequence', shortName: 'LCS', description: 'Longest shared subsequence of two strings', timeComplexity: 'O(mn)', spaceComplexity: 'O(mn)', available: true },
     ],
   },
   {

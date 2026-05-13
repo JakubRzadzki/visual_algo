@@ -14,6 +14,7 @@ interface UIState {
   activeSearchingAlgorithm: string;
   activeGraphAlgorithm: string;
   activeGridAlgorithm: string;
+  activeDPAlgorithm: string;
   activeMode: ActiveMode;   // which visualisation stage is shown
   isAnimating: boolean;     // true while engine is playing back a trace
   
@@ -34,6 +35,7 @@ interface UIState {
   setActiveSearchingAlgorithm: (algo: string) => void;
   setActiveGraphAlgorithm: (algo: string) => void;
   setActiveGridAlgorithm: (algo: string) => void;
+  setActiveDPAlgorithm: (algo: string) => void;
   setActiveMode: (mode: ActiveMode) => void;
   setIsAnimating: (v: boolean) => void;
   
@@ -56,6 +58,7 @@ export const useUIStore = create<UIState>((set) => ({
   activeSearchingAlgorithm: 'Binary Search',
   activeGraphAlgorithm: "Dijkstra's Shortest Path",
   activeGridAlgorithm: "A* Pathfinding",
+  activeDPAlgorithm: "0/1 Knapsack",
   activeMode: 'sorting',
   isAnimating: false,
   
@@ -75,6 +78,7 @@ export const useUIStore = create<UIState>((set) => ({
   setActiveSearchingAlgorithm: (algo) => set({ activeSearchingAlgorithm: algo }),
   setActiveGraphAlgorithm: (algo) => set({ activeGraphAlgorithm: algo }),
   setActiveGridAlgorithm: (algo) => set({ activeGridAlgorithm: algo }),
+  setActiveDPAlgorithm: (algo) => set({ activeDPAlgorithm: algo }),
   setActiveMode: (mode) => set({ activeMode: mode }),
   setIsAnimating: (v) => set({ isAnimating: v }),
   
