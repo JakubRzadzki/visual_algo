@@ -42,6 +42,8 @@ export default function Sidebar(): React.ReactElement {
     setActiveMode,
     activeSortingAlgorithm,
     activeSearchingAlgorithm,
+    setActiveDPAlgorithm,
+    activeGridAlgorithm,
     setCurrentGraph,
     currentGraph,
   } = useUIStore();
@@ -52,10 +54,14 @@ export default function Sidebar(): React.ReactElement {
   const sortingCategory = ALGORITHM_CATALOG.find((c) => c.id === 'sorting');
   const searchingCategory = ALGORITHM_CATALOG.find((c) => c.id === 'searching');
   const graphCategory = ALGORITHM_CATALOG.find((c) => c.id === 'graphs');
+  const dpCategory = ALGORITHM_CATALOG.find((c) => c.id === 'dp');
+  const gridCategory = ALGORITHM_CATALOG.find((c) => c.id === 'grid');
 
   const sortingAlgos = sortingCategory?.algorithms.filter((a) => a.available) || [];
   const searchingAlgos = searchingCategory?.algorithms.filter((a) => a.available) || [];
   const graphAlgos = graphCategory?.algorithms.filter((a) => a.available) || [];
+  const dpAlgos = dpCategory?.algorithms.filter((a) => a.available) || [];
+  const gridAlgos = gridCategory?.algorithms.filter((a) => a.available) || [];
 
 
 
@@ -86,8 +92,8 @@ export default function Sidebar(): React.ReactElement {
       className="w-72 h-[calc(100vh-140px)] glass-panel flex flex-col gap-5 p-4 overflow-y-auto border border-white/10 shadow-xl"
     >
       {/* ── Mode Tabs ── */}
-      <div className="flex rounded-xl overflow-hidden border border-white/[0.06] bg-slate-950/40 p-1">
-        {(['sorting', 'searching', 'graph', 'tree'] as const).map((mode) => (
+      <div className="flex flex-wrap rounded-xl overflow-hidden border border-white/[0.06] bg-slate-950/40 p-1 gap-0.5 justify-center">
+        {(['sorting', 'searching', 'graph', 'tree', 'dp', 'grid'] as const).map((mode) => (
           <button
             key={mode}
             onClick={() => {
@@ -96,14 +102,16 @@ export default function Sidebar(): React.ReactElement {
               if (mode === 'searching') navigate('/algo/searching/binary-search');
               if (mode === 'graph') navigate('/algo/graphs/dijkstra');
               if (mode === 'tree') navigate('/algo/trees/bst');
+              if (mode === 'dp') navigate('/algo/dp/knapsack');
+              if (mode === 'grid') navigate('/algo/grid/astar');
             }}
-            className={`flex-1 py-2 text-[10px] font-semibold uppercase tracking-wider transition-all rounded-lg ${
+            className={`px-2 py-1.5 text-[8px] xl:text-[9px] font-bold uppercase tracking-wider transition-all rounded-lg shrink-0 ${
               activeMode === mode
                 ? 'bg-cyan-500/15 text-cyan-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
             }`}
           >
-            {mode}
+            {mode === 'dp' ? 'Dynamic Programming' : mode === 'grid' ? 'Grid / Mazes' : mode}
           </button>
         ))}
       </div>
@@ -270,6 +278,73 @@ export default function Sidebar(): React.ReactElement {
                 >
                   <div className="shrink-0">{getTreeIcon(tree.id)}</div>
                   <span className="truncate">{tree.name}</span>
+                </motion.li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {/* ── Dynamic Programming Section ── */}
+      {activeMode === 'dp' && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Layers size={16} className="text-pink-400" />
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Dynamic Programming
+            </h2>
+          </div>
+          <ul className="space-y-1.5">
+            {dpAlgos.map((algo) => {
+              const isActive = algoId === algo.id;
+              return (
+                <motion.li
+                  key={algo.id}
+                  onClick={() => {
+                    setActiveDPAlgorithm(algo.name);
+                    navigate(`/algo/dp/${algo.id}`);
+                  }}
+                  whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
+                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all border text-xs font-medium flex items-center justify-between ${
+                    isActive
+                      ? 'bg-pink-500/10 border-pink-500/20 text-pink-400 shadow-md shadow-pink-950/20'
+                      : 'border-transparent text-slate-300'
+                  }`}
+                >
+                  <span>{algo.name}</span>
+                  {isActive && <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" />}
+                </motion.li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {/* ── Grid / Mazes Section ── */}
+      {activeMode === 'grid' && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Database size={16} className="text-sky-400" />
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Grid / Mazes
+            </h2>
+          </div>
+          <ul className="space-y-1.5">
+            {gridAlgos.map((algo) => {
+              const isActive = activeGridAlgorithm === algo.name || algoId === algo.id;
+              return (
+                <motion.li
+                  key={algo.id}
+                  onClick={() => navigate(`/algo/grid/${algo.id}`)}
+                  whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
+                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all border text-xs font-medium flex items-center justify-between ${
+                    isActive
+                      ? 'bg-sky-500/10 border-sky-500/20 text-sky-400 shadow-md'
+                      : 'border-transparent text-slate-300'
+                  }`}
+                >
+                  <span>{algo.name}</span>
+                  {isActive && <div className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />}
                 </motion.li>
               );
             })}

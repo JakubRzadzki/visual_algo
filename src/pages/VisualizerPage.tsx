@@ -4,6 +4,7 @@ import { useUIStore } from '../store/uiStore';
 import { findAlgorithm } from '../data/algorithmCatalog';
 import { globalEventBus } from '../core/EventBus';
 import { globalEngine } from '../core/AnimationEngine';
+import { globalWorkerPool } from '../core/WorkerPool';
 import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
 
@@ -40,7 +41,7 @@ export default function VisualizerPage() {
   const navigate = useNavigate();
   const { 
     isSidebarOpen, activeMode, currentGraph, 
-    setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm, setActiveGridAlgorithm 
+    setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm, setActiveGridAlgorithm, setActiveDPAlgorithm
   } = useUIStore();
   const graphToDisplay = currentGraph || DEMO_GRAPH;
 
@@ -72,8 +73,21 @@ export default function VisualizerPage() {
       setActiveGridAlgorithm(found.algorithm.name);
     } else if (category === 'dp') {
       setActiveMode('dp');
+      setActiveDPAlgorithm(found.algorithm.name);
     }
-  }, [category, algoId, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm, setActiveGridAlgorithm]);
+
+    // Preload demonstration trace client-side via worker if available
+    if (['knapsack', 'lcs', 'dijkstra', 'kruskal', 'bfs', 'dfs', 'prim', 'topo-sort', 'bst', 'avl', 'max-heap', 'union-find'].includes(found.algorithm.id)) {
+      // Pass a safe empty object or dummy graph payload
+      const dummyPayload = { nodes: [], edges: [], values: [] };
+      globalWorkerPool.run(found.algorithm.id, dummyPayload as any).then(trace => {
+        globalEngine.loadTrace(trace);
+        globalEngine.setSpeed(1.0);
+        useUIStore.getState().setIsAnimating(true);
+        globalEngine.play();
+      }).catch(err => console.error('Auto-simulation preload failed:', err));
+    }
+  }, [category, algoId, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm, setActiveGridAlgorithm, setActiveDPAlgorithm]);
 
 
 
