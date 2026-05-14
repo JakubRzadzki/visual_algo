@@ -118,6 +118,7 @@ export default function MonacoCodeEditor() {
     if (state.activeMode === 'searching') return state.activeSearchingAlgorithm;
     if (state.activeMode === 'graph') return state.activeGraphAlgorithm;
     if (state.activeMode === 'dp') return state.activeDPAlgorithm;
+    if (state.activeMode === 'grid') return state.activeGridAlgorithm;
     return state.activeSortingAlgorithm;
   });
 
@@ -249,6 +250,8 @@ export default function MonacoCodeEditor() {
       'Union-Find': 'union-find',
       '0/1 Knapsack': 'knapsack',
       'Longest Common Subsequence': 'lcs',
+      'A* Search': 'a-star',
+      'Flood Fill': 'flood-fill',
     };
     const filename = algoIdToFilename[algoName] || 'merge-sort';
 
