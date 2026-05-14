@@ -103,7 +103,7 @@ export default function Sidebar(): React.ReactElement {
               if (mode === 'graph') navigate('/algo/graphs/dijkstra');
               if (mode === 'tree') navigate('/algo/trees/bst');
               if (mode === 'dp') navigate('/algo/dp/knapsack');
-              if (mode === 'grid') navigate('/algo/grid/astar');
+              if (mode === 'grid') navigate('/algo/grid/a-star');
             }}
             className={`px-2 py-1.5 text-[8px] xl:text-[9px] font-bold uppercase tracking-wider transition-all rounded-lg shrink-0 ${
               activeMode === mode
