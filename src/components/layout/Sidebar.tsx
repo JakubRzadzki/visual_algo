@@ -132,11 +132,11 @@ export default function Sidebar(): React.ReactElement {
                 <motion.li
                   key={algo.id}
                   onClick={() => navigate(`/algo/sorting/${algo.id}`)}
-                  whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
-                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all border text-xs font-medium flex items-center justify-between ${
+                  whileHover={{ x: 4 }}
+                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 border text-xs font-medium flex items-center justify-between ${
                     isActive
                       ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400 shadow-md shadow-cyan-950/20'
-                      : 'border-transparent text-slate-300'
+                      : 'border-transparent text-slate-300 hover:bg-cyan-500/5 hover:border-cyan-500/10 hover:text-cyan-300'
                   }`}
                 >
                   <span>{algo.name}</span>
@@ -164,11 +164,11 @@ export default function Sidebar(): React.ReactElement {
                 <motion.li
                   key={algo.id}
                   onClick={() => navigate(`/algo/searching/${algo.id}`)}
-                  whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
-                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all border text-xs font-medium flex items-center justify-between ${
+                  whileHover={{ x: 4 }}
+                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 border text-xs font-medium flex items-center justify-between ${
                     isActive
                       ? 'bg-violet-500/10 border-violet-500/20 text-violet-400 shadow-md'
-                      : 'border-transparent text-slate-300'
+                      : 'border-transparent text-slate-300 hover:bg-violet-500/5 hover:border-violet-500/10 hover:text-violet-300'
                   }`}
                 >
                   <span>{algo.name}</span>
@@ -197,10 +197,10 @@ export default function Sidebar(): React.ReactElement {
                   key={algo.id}
                   onClick={() => navigate(`/algo/graphs/${algo.id}`)}
                   whileHover={{ x: 4 }}
-                  className={`px-3 py-2 rounded-xl text-left text-xs transition border font-medium flex items-center justify-between ${
+                  className={`px-3 py-2 rounded-xl text-left text-xs transition-all duration-200 border font-medium flex items-center justify-between cursor-pointer ${
                     isActive
                       ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 shadow-md'
-                      : 'bg-white/5 border-transparent text-slate-300 hover:bg-white/10'
+                      : 'border-transparent text-slate-300 hover:bg-emerald-500/5 hover:border-emerald-500/10 hover:text-emerald-300'
                   }`}
                 >
                   <span>{algo.name}</span>
@@ -226,10 +226,10 @@ export default function Sidebar(): React.ReactElement {
                     <button
                       key={template.id}
                       onClick={() => setCurrentGraph(template.graph)}
-                      className={`px-2.5 py-1.5 rounded-lg text-left text-[11px] transition border font-medium ${
+                      className={`px-2.5 py-1.5 rounded-lg text-left text-[11px] transition-all duration-200 border font-medium cursor-pointer ${
                         isSelected
                           ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                          : 'bg-white/5 border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/10'
+                          : 'border-transparent text-slate-400 hover:bg-emerald-500/5 hover:border-emerald-500/10 hover:text-emerald-300'
                       }`}
                     >
                       {template.name}
@@ -269,11 +269,11 @@ export default function Sidebar(): React.ReactElement {
                     setTreeType(tree.id);
                     navigate(`/algo/trees/${tree.id}`);
                   }}
-                  whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
-                  className={`px-3 py-2.5 rounded-xl cursor-pointer transition-all border text-xs font-semibold flex items-center gap-3 ${
+                  whileHover={{ x: 4 }}
+                  className={`px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 border text-xs font-semibold flex items-center gap-3 ${
                     isActive
                       ? 'bg-amber-500/10 border-amber-500/25 text-amber-400 shadow-md shadow-amber-950/20'
-                      : 'border-transparent text-slate-300'
+                      : 'border-transparent text-slate-300 hover:bg-amber-500/5 hover:border-amber-500/10 hover:text-amber-300'
                   }`}
                 >
                   <div className="shrink-0">{getTreeIcon(tree.id)}</div>
@@ -304,11 +304,11 @@ export default function Sidebar(): React.ReactElement {
                     setActiveDPAlgorithm(algo.name);
                     navigate(`/algo/dp/${algo.id}`);
                   }}
-                  whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
-                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all border text-xs font-medium flex items-center justify-between ${
+                  whileHover={{ x: 4 }}
+                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 border text-xs font-medium flex items-center justify-between ${
                     isActive
                       ? 'bg-pink-500/10 border-pink-500/20 text-pink-400 shadow-md shadow-pink-950/20'
-                      : 'border-transparent text-slate-300'
+                      : 'border-transparent text-slate-300 hover:bg-pink-500/5 hover:border-pink-500/10 hover:text-pink-300'
                   }`}
                 >
                   <span>{algo.name}</span>
@@ -336,11 +336,11 @@ export default function Sidebar(): React.ReactElement {
                 <motion.li
                   key={algo.id}
                   onClick={() => navigate(`/algo/grid/${algo.id}`)}
-                  whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
-                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all border text-xs font-medium flex items-center justify-between ${
+                  whileHover={{ x: 4 }}
+                  className={`px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 border text-xs font-medium flex items-center justify-between ${
                     isActive
                       ? 'bg-sky-500/10 border-sky-500/20 text-sky-400 shadow-md'
-                      : 'border-transparent text-slate-300'
+                      : 'border-transparent text-slate-300 hover:bg-sky-500/5 hover:border-sky-500/10 hover:text-sky-300'
                   }`}
                 >
                   <span>{algo.name}</span>

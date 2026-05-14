@@ -101,8 +101,8 @@ export const ALGORITHM_CATALOG: CategoryEntry[] = [
     borderColor: 'border-indigo-500/30',
     glowColor: 'shadow-indigo-500/10',
     algorithms: [
-      { id: 'a-star',     name: 'A* Search',  shortName: 'A*',    description: 'Heuristic best-first pathfinding', timeComplexity: 'O(E)',  spaceComplexity: 'O(V)', available: false },
-      { id: 'flood-fill', name: 'Flood Fill', shortName: 'Flood', description: 'Region-filling flood algorithm',   timeComplexity: 'O(mn)', spaceComplexity: 'O(mn)', available: false },
+      { id: 'a-star',     name: 'A* Search',  shortName: 'A*',    description: 'Heuristic best-first pathfinding', timeComplexity: 'O(E)',  spaceComplexity: 'O(V)', available: true },
+      { id: 'flood-fill', name: 'Flood Fill', shortName: 'Flood', description: 'Region-filling flood algorithm',   timeComplexity: 'O(mn)', spaceComplexity: 'O(mn)', available: true },
     ],
   },
 ];

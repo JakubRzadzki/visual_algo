@@ -30,15 +30,15 @@ export type EventPayload =
 
 export type VisualizationEvent = BaseEvent & EventPayload;
 
-export type TraceMetadata = { 
-  timeComplexity: string; 
-  spaceComplexity: string; 
-  executionTimeMs: number; 
-  nodeCount: number; 
-  algorithmName: string; 
-  initialState?: number[]; 
-  initialGraph?: GraphInput; 
-  rowHeaders?: string[]; 
+export type TraceMetadata = {
+  timeComplexity: string;
+  spaceComplexity: string;
+  executionTimeMs: number;
+  nodeCount: number;
+  algorithmName: string;
+  initialState?: number[];
+  initialGraph?: GraphInput;
+  rowHeaders?: string[];
   colHeaders?: string[];
   items?: any[];
   lcsResult?: string;
@@ -89,7 +89,9 @@ export interface ArrayInput {
 export interface GridInput {
   width: number;
   height: number;
-  walls: {x: number, y: number}[];
+  walls: { x: number, y: number }[];
+  start?: { x: number; y: number };
+  target?: { x: number; y: number };
 }
 
 export interface MatrixInput {
@@ -122,7 +124,7 @@ export interface ExecutionTrace { events: VisualizationEvent[]; metadata: TraceM
 export interface AlgorithmPlugin<InputShape = unknown> {
   id: string; // e.g., 'merge-sort'
   name: string; // e.g., 'Merge Sort'
-  category: 'sorting' | 'searching' | 'graph' | 'tree' | 'dp';
+  category: 'sorting' | 'searching' | 'graph' | 'tree' | 'dp' | 'grid';
   execute(data: InputShape): ExecutionTrace;
 }
 

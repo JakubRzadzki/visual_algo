@@ -32,6 +32,9 @@ import { UnionFindPlugin } from '../plugins/trees/UnionFindPlugin';
 import { KnapsackDPPlugin } from '../plugins/dp/KnapsackDPPlugin';
 import { LCSPlugin } from '../plugins/dp/LCSPlugin';
 
+import { AStarPlugin } from '../plugins/grid/AStarPlugin';
+import { FloodFillPlugin } from '../plugins/grid/FloodFillPlugin';
+
 // Registry: algorithm id → plugin instance
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
@@ -57,6 +60,9 @@ const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
 
   'knapsack':      new KnapsackDPPlugin(),
   'lcs':           new LCSPlugin(),
+
+  'a-star':        new AStarPlugin(),
+  'flood-fill':    new FloodFillPlugin(),
 };
 
 // Listen for tasks from the WorkerPool

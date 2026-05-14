@@ -11,6 +11,7 @@ import SortingStage from '../visualizer/SortingStage';
 import SearchingStage from '../visualizer/SearchingStage';
 import MatrixStage from '../visualizer/MatrixStage';
 import TreeVisualizer from '../visualizer/TreeVisualizer';
+import GridStage from '../visualizer/GridStage';
 import MonacoCodeEditor from '../hud/MonacoCodeEditor';
 import EventLog from '../hud/EventLog';
 import PlaybackDeck from '../controls/PlaybackDeck';
@@ -55,7 +56,8 @@ export default function AlgorithmViewer(): React.ReactElement {
     setActiveMode,
     setActiveSortingAlgorithm,
     setActiveSearchingAlgorithm,
-    setActiveGraphAlgorithm
+    setActiveGraphAlgorithm,
+    setActiveGridAlgorithm
   } = useUIStore();
 
   const graphToDisplay = currentGraph || DEMO_GRAPH;
@@ -117,6 +119,7 @@ export default function AlgorithmViewer(): React.ReactElement {
       setActiveMode('dp');
     } else {
       setActiveMode('grid');
+      setActiveGridAlgorithm(match?.algorithm.name || '');
     }
   }, [category, id, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm]);
 
@@ -182,6 +185,8 @@ export default function AlgorithmViewer(): React.ReactElement {
         return <MatrixStage key={id} />;
       case 'tree':
         return <TreeVisualizer key={id} />;
+      case 'grid':
+        return <GridStage key={id} />;
       default:
         return <div className="flex-1 flex items-center justify-center text-slate-500 italic">Select an algorithm to begin</div>;
     }
