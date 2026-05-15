@@ -27,6 +27,8 @@ import {
   Layers,
   Grid,
 } from 'lucide-react';
+import { useUIStore } from '../../store/uiStore';
+import { getTranslation } from '../../data/translations';
 import { ALGORITHM_CATALOG } from '../../data/algorithmCatalog';
 import type { CategoryEntry, AlgorithmEntry } from '../../data/algorithmCatalog';
 
@@ -47,6 +49,9 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredAlgo, setHoveredAlgo] = useState<string | null>(null);
 
+  const language = useUIStore(state => state.language);
+  const t = getTranslation(language);
+
   // Filter categories & algorithms based on search
   const filteredCatalog = useMemo(() => {
     if (!searchQuery.trim()) return ALGORITHM_CATALOG;
@@ -57,9 +62,12 @@ export default function Dashboard() {
         algorithms: cat.algorithms.filter(
           algo =>
             algo.name.toLowerCase().includes(q) ||
+            algo.name_pl.toLowerCase().includes(q) ||
             algo.shortName.toLowerCase().includes(q) ||
             algo.description.toLowerCase().includes(q) ||
-            cat.label.toLowerCase().includes(q)
+            algo.description_pl.toLowerCase().includes(q) ||
+            cat.label.toLowerCase().includes(q) ||
+            cat.label_pl.toLowerCase().includes(q)
         ),
       }))
       .filter(cat => cat.algorithms.length > 0);
@@ -144,8 +152,13 @@ export default function Dashboard() {
           />
 
           <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            Explore {totalAlgorithms} algorithms across {ALGORITHM_CATALOG.length} categories.{' '}
-            <span className="text-cyan-400 font-semibold">{availableCount} ready to visualize</span>, more coming soon.
+            {language === 'en' ? (
+              <>Explore {totalAlgorithms} algorithms across {ALGORITHM_CATALOG.length} categories.</>
+            ) : (
+              <>Odkryj {totalAlgorithms} algorytmów w {ALGORITHM_CATALOG.length} kategoriach.</>
+            )}
+            {' '}
+            <span className="text-cyan-400 font-semibold">{availableCount} {language === 'en' ? 'ready to visualize' : 'gotowych do wizualizacji'}</span>, {t.comingSoon}.
           </p>
         </motion.header>
 
@@ -169,7 +182,7 @@ export default function Dashboard() {
             <input
               id="dashboard-search"
               type="text"
-              placeholder="Search algorithms… (e.g. Dijkstra, Quick Sort, A*)"
+              placeholder={language === 'en' ? "Search algorithms… (e.g. Dijkstra, Quick Sort, A*)" : "Szukaj algorytmów… (np. Dijkstra, Sortowanie, A*)"}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="relative w-full pl-14 pr-6 py-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-white/[0.08] text-slate-200 text-base placeholder:text-slate-500 focus:outline-none focus:border-cyan-400/30 focus:shadow-[0_0_40px_rgba(34,211,238,0.08)] transition-all duration-300 z-10"
@@ -179,7 +192,7 @@ export default function Dashboard() {
                 onClick={() => setSearchQuery('')}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors text-sm z-10"
               >
-                Clear
+                {language === 'en' ? 'Clear' : 'Wyczyść'}
               </button>
             )}
           </div>
@@ -195,9 +208,13 @@ export default function Dashboard() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="text-center py-20"
             >
-              <p className="text-slate-500 text-lg">No algorithms found for &quot;{searchQuery}&quot;</p>
+              <p className="text-slate-500 text-lg">
+                {language === 'en' 
+                  ? `No algorithms found for "${searchQuery}"` 
+                  : `Nie znaleziono algorytmów dla frazy "${searchQuery}"`}
+              </p>
               <button onClick={() => setSearchQuery('')} className="mt-4 text-cyan-400 hover:underline text-sm">
-                Clear search
+                {language === 'en' ? 'Clear search' : 'Wyczyść wyszukiwanie'}
               </button>
             </motion.div>
           ) : (
@@ -391,10 +408,10 @@ function AnimatedCategoryCard({
             {getCategoryIcon(cat.id)}
           </div>
           <h2 className="text-base sm:text-lg font-bold text-slate-200 tracking-wide">
-            {cat.label}
+            {useUIStore.getState().language === 'en' ? cat.label : cat.label_pl}
           </h2>
           <span className="ml-auto text-[10px] text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
-            {cat.algorithms.length} algo{cat.algorithms.length !== 1 ? 's' : ''}
+            {cat.algorithms.length} {useUIStore.getState().language === 'en' ? 'algo' : 'algorytm'}{cat.algorithms.length !== 1 ? (useUIStore.getState().language === 'en' ? 's' : 'ów') : ''}
           </span>
         </div>
 
@@ -439,8 +456,12 @@ function AnimatedCategoryCard({
                       transition={{ duration: 0.15 }}
                       className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-cyan-400/15 shadow-2xl shadow-black/50 pointer-events-none"
                     >
-                      <p className="font-bold text-slate-200 text-sm mb-1">{algo.name}</p>
-                      <p className="text-slate-400 text-xs mb-3">{algo.description}</p>
+                      <p className="font-bold text-slate-200 text-sm mb-1">
+                        {useUIStore.getState().language === 'en' ? algo.name : algo.name_pl}
+                      </p>
+                      <p className="text-slate-400 text-xs mb-3">
+                        {useUIStore.getState().language === 'en' ? algo.description : algo.description_pl}
+                      </p>
                       <div className="flex gap-4 text-[11px]">
                         <span className="flex items-center gap-1 text-cyan-400">
                           <Clock className="w-3 h-3" /> {algo.timeComplexity}
