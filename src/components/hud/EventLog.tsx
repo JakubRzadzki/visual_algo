@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { globalEventBus } from '../../core/EventBus';
 import type { VisualizationEvent } from '../../types';
+import { useUIStore } from '../../store/uiStore';
+import { getTranslation } from '../../data/translations';
 import { Terminal as TerminalIcon, Trash2 } from 'lucide-react';
 
 interface LogEntry {
@@ -9,9 +11,12 @@ interface LogEntry {
 }
 
 export default function EventLog() {
+  const language = useUIStore(state => state.language);
+  const t = getTranslation(language);
+
   const [logs, setLogs] = useState<LogEntry[]>([
-    { id: 'init', message: <span className="text-emerald-400 font-medium">[SYSTEM] Visualizer Engine initialized.</span> },
-    { id: 'wait', message: <span className="text-slate-500 font-medium">[ACTION] Waiting for algorithm execution trace...</span> }
+    { id: 'init', message: <span className="text-emerald-400 font-medium">{t.terminal.initialized}</span> },
+    { id: 'wait', message: <span className="text-slate-500 font-medium">{t.terminal.waiting}</span> }
   ]);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +76,7 @@ export default function EventLog() {
 
   const clearLogs = () => {
     setLogs([
-      { id: 'cleared', message: <span className="text-slate-500 italic">Logs cleared.</span> }
+      { id: 'cleared', message: <span className="text-slate-500 italic">{t.terminal.cleared}</span> }
     ]);
   };
 
@@ -82,7 +87,7 @@ export default function EventLog() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-slate-300">
             <TerminalIcon className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-[11px] font-sans font-medium text-slate-400 select-none">Command Prompt - Visualizer Engine</span>
+            <span className="text-[11px] font-sans font-medium text-slate-400 select-none">{t.terminal.header}</span>
           </div>
         </div>
 
@@ -108,4 +113,3 @@ export default function EventLog() {
     </div>
   );
 }
-

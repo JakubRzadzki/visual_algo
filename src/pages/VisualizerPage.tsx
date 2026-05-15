@@ -42,11 +42,11 @@ export default function VisualizerPage() {
   const { category, algoId } = useParams<{ category: string; algoId: string }>();
   const navigate = useNavigate();
   const { 
-    isSidebarOpen, activeMode, currentGraph, 
+    isSidebarOpen, activeMode, currentGraph, language,
     setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm, setActiveGridAlgorithm, setActiveDPAlgorithm
   } = useUIStore();
   const graphToDisplay = currentGraph || DEMO_GRAPH;
-  const educationData = getAlgorithmEducation(algoId || '');
+  const educationData = getAlgorithmEducation(algoId || '', language);
 
   // Sync the UI store with the route params
   useEffect(() => {
