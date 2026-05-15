@@ -1,0 +1,133 @@
+/**
+ * General UI Translations — Centralized strings for English and Polish.
+ */
+
+export const TRANSLATIONS = {
+  en: {
+    catalog: 'Catalog',
+    backToCatalog: 'Back to Catalog',
+    sourceCode: 'Source Code',
+    commandPrompt: 'Command Prompt',
+    theory: 'Theory',
+    forDummies: 'For Dummies 🦧',
+    pseudocode: 'Pseudocode',
+    formalDescription: 'Formal Description',
+    originsHistory: 'Origins & History',
+    theAnalogy: 'The Analogy',
+    logicBlueprint: 'Logic Blueprint',
+    comparisons: 'Comparisons',
+    arrayAccesses: 'Array Accesses',
+    executionTime: 'Execution Time',
+    step: 'Step',
+    speed: 'Speed',
+    play: 'Play',
+    pause: 'Pause',
+    reset: 'Reset',
+    next: 'Next',
+    prev: 'Prev',
+    selectAlgorithm: 'Select an algorithm to begin',
+    comingSoon: 'Coming soon',
+    run: 'Run',
+    running: 'Running...',
+    format: 'Format',
+    save: 'Save',
+    saved: 'Saved',
+    copy: 'Copy',
+    copied: 'Copied',
+    share: 'Share',
+    clear: 'Clear',
+    executingInSandbox: 'Executing in sandbox...',
+    loadingEditor: 'Loading editor...',
+    categories: {
+      sorting: 'Sorting',
+      searching: 'Searching',
+      graphs: 'Graphs',
+      trees: 'Trees',
+      dp: 'Dynamic Programming',
+      grid: 'Grid / Mazes'
+    },
+    sidebar: {
+      sorting: 'Sorting Algorithms',
+      searching: 'Searching Algorithms',
+      graphs: 'Graph Algorithms',
+      trees: 'Tree Data Structures',
+      dp: 'Dynamic Programming',
+      grid: 'Grid / Mazes',
+      presets: 'Presets',
+      noPresets: 'No presets available'
+    },
+    terminal: {
+      header: 'Command Prompt - Visualizer Engine',
+      initialized: '[SYSTEM] Visualizer Engine initialized.',
+      waiting: '[ACTION] Waiting for algorithm execution trace...',
+      cleared: 'Logs cleared.'
+    }
+  },
+  pl: {
+    catalog: 'Katalog',
+    backToCatalog: 'Powrót do katalogu',
+    sourceCode: 'Kod Źródłowy',
+    commandPrompt: 'Konsola / Terminal',
+    theory: 'Teoria',
+    forDummies: 'Dla Opornych 🦧',
+    pseudocode: 'Pseudokod',
+    formalDescription: 'Opis Formalny',
+    originsHistory: 'Geneza i Historia',
+    theAnalogy: 'Analogia',
+    logicBlueprint: 'Schemat Logiczny',
+    comparisons: 'Porównania',
+    arrayAccesses: 'Dostępy do tablicy',
+    executionTime: 'Czas wykonania',
+    step: 'Krok',
+    speed: 'Prędkość',
+    play: 'Uruchom',
+    pause: 'Pauza',
+    reset: 'Resetuj',
+    next: 'Następny',
+    prev: 'Poprzedni',
+    selectAlgorithm: 'Wybierz algorytm, aby rozpocząć',
+    comingSoon: 'Wkrótce dostępne',
+    run: 'Uruchom',
+    running: 'Uruchamianie...',
+    format: 'Formatuj',
+    save: 'Zapisz',
+    saved: 'Zapisano',
+    copy: 'Kopiuj',
+    copied: 'Skopiowano',
+    share: 'Udostępnij',
+    clear: 'Wyczyść',
+    executingInSandbox: 'Wykonywanie w piaskownicy...',
+    loadingEditor: 'Ładowanie edytora...',
+    categories: {
+      sorting: 'Sortowanie',
+      searching: 'Wyszukiwanie',
+      graphs: 'Grafy',
+      trees: 'Drzewa',
+      dp: 'Programowanie Dynamiczne',
+      grid: 'Siatka / Labirynty'
+    },
+    sidebar: {
+      sorting: 'Algorytmy Sortowania',
+      searching: 'Algorytmy Wyszukiwania',
+      graphs: 'Algorytmy Grafowe',
+      trees: 'Struktury Drzewiaste',
+      dp: 'Programowanie Dynamiczne',
+      grid: 'Siatka / Labirynty',
+      presets: 'Szablony',
+      noPresets: 'Brak szablonów'
+    },
+    terminal: {
+      header: 'Konsola - Silnik Wizualizacji',
+      initialized: '[SYSTEM] Silnik wizualizacji zainicjowany.',
+      waiting: '[AKCJA] Oczekiwanie na ślad wykonania algorytmu...',
+      cleared: 'Konsola wyczyszczona.'
+    }
+  }
+};
+
+/**
+ * Hook-like helper to get translated strings.
+ */
+export function getTranslation(lang: 'en' | 'pl') {
+  return TRANSLATIONS[lang];
+}

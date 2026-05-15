@@ -24,11 +24,13 @@ interface UIState {
   isLoading: boolean;       // for backend requests
   shareLink: string;        // UUID of saved snapshot
   isCodePanelOpen: boolean; // toggle right aside code & terminal pane
+  language: 'en' | 'pl';
 
   setAnimationSpeed: (speed: number) => void;
   toggleSidebar: () => void;
   toggleDebug: () => void;
   toggleCodePanel: () => void;
+  setLanguage: (lang: 'en' | 'pl') => void;
   
   setActiveCategory: (cat: string) => void;
   setActiveSortingAlgorithm: (algo: string) => void;
@@ -67,6 +69,7 @@ export const useUIStore = create<UIState>((set) => ({
   
   isLoading: false,
   shareLink: '',
+  language: 'en',
 
   setAnimationSpeed: (speed) => set({ animationSpeed: Math.max(0.25, Math.min(speed, 4.0)) }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
@@ -87,4 +90,5 @@ export const useUIStore = create<UIState>((set) => ({
   
   setIsLoading: (v) => set({ isLoading: v }),
   setShareLink: (link) => set({ shareLink: link }),
+  setLanguage: (lang) => set({ language: lang }),
 }));

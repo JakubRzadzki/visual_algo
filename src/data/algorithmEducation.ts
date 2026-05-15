@@ -1,271 +1,295 @@
 /**
  * Algorithm Education Data — Educational content for each algorithm.
  * Contains theory, historical origins, analogies ("For Dummies"), and pseudocode.
+ * Supports English and Polish languages.
  */
 
 export interface AlgorithmEducation {
-  /** Formal academic description of the algorithm's mechanics. */
+  /** Formal academic description. */
   theory: string;
-  /** Historical context: inventors, year of creation, and original purpose. */
+  theory_pl: string;
+  /** Historical context. */
   history: string;
-  /** Real-world analogy to simplify complex concepts. */
+  history_pl: string;
+  /** Real-world analogy. */
   forDummies: string;
-  /** High-level pseudocode representation. */
+  forDummies_pl: string;
+  /** High-level pseudocode (language-agnostic). */
+  pseudocode: string;
+}
+
+export interface TranslatedEducation {
+  theory: string;
+  history: string;
+  forDummies: string;
   pseudocode: string;
 }
 
 export const ALGORITHM_EDUCATION: Record<string, AlgorithmEducation> = {
   'merge-sort': {
-    theory: 'Merge Sort is a stable, comparison-based sorting algorithm that uses a divide-and-conquer strategy. It recursively divides the input into two halves, sorts them, and merges the sorted halves back together.',
-    history: 'Invented by John von Neumann in 1945. It was developed while he was working on early computer systems like the EDVAC, aiming for a highly efficient method to handle large-scale data processing that simplified hardware requirements.',
-    forDummies: 'Imagine sorting a huge deck of cards. You split it between two friends, they split it again, until everyone has just one card. Then, pairs of friends merge their sorted piles back together until the whole deck is sorted.',
-    pseudocode: `procedure mergeSort(A, p, r):
-    if p < r:
-        q = floor((p + r) / 2)
-        mergeSort(A, p, q)
-        mergeSort(A, q + 1, r)
-        merge(A, p, q, r)`
+    theory: "Merge Sort is a stable, divide-and-conquer sorting algorithm. It divides the array into halves, sorts them recursively, and merges the results.",
+    theory_pl: 'Sortowanie przez scalanie (Merge Sort) to stabilny algorytm typu "dziel i zwyciężaj". Dzieli tablicę na połowy, sortuje je rekurencyjnie, a następnie scala wyniki.',
+    history: "Invented by John von Neumann in 1945 as part of early computing research.",
+    history_pl: 'Wynaleziony przez Johna von Neumanna w 1945 roku w ramach wczesnych badań nad komputeryzacją.',
+    forDummies: "Sorting a deck of cards by splitting it into smaller and smaller piles, then combining them in order.",
+    forDummies_pl: 'To jak sortowanie talii kart poprzez dzielenie jej na coraz mniejsze stosy, a następnie łączenie ich w odpowiedniej kolejności.',
+    pseudocode: `procedure mergeSort(arr):
+    if length > 1:
+        left = mergeSort(firstHalf)
+        right = mergeSort(secondHalf)
+        return merge(left, right)`
   },
   'quick-sort': {
-    theory: 'Quick Sort is a divide-and-conquer algorithm that selects a "pivot" element and partitions the array into two sub-arrays: elements smaller than the pivot and elements larger than the pivot. These sub-arrays are then sorted recursively.',
-    history: 'Developed by British computer scientist Tony Hoare in 1959 while he was a visiting student at Moscow State University. He needed a fast way to sort words alphabetically for a Russian-to-English translation project.',
-    forDummies: 'Think of a line of people of different heights. Pick one person as the "referee". Everyone shorter than the referee moves to their left, and everyone taller moves to their right. Now the referee is in their final spot. Repeat for the left and right groups!',
-    pseudocode: `procedure quickSort(A, low, high):
+    theory: "Quick Sort is an efficient, comparison-based algorithm using a pivot element to partition the array.",
+    theory_pl: 'Sortowanie szybkie (Quick Sort) to wydajny algorytm oparty na porównaniach, wykorzystujący element osiowy (pivot) do podziału tablicy.',
+    history: "Developed by Tony Hoare in 1959 at Moscow State University.",
+    history_pl: 'Opracowany przez Tony\'ego Hoare\'a w 1959 roku na Moskiewskim Uniwersytecie Państwowym.',
+    forDummies: "Picking a leader in a crowd and making shorter people stand on the left and taller on the right.",
+    forDummies_pl: 'Wybierasz "lidera" z tłumu. Niższe osoby stają po lewej stronie, a wyższe po prawej. Powtarzasz to dla obu grup.',
+    pseudocode: `procedure quickSort(arr, low, high):
     if low < high:
-        p = partition(A, low, high)
-        quickSort(A, low, p - 1)
-        quickSort(A, p + 1, high)`
+        p = partition(arr, low, high)
+        quickSort(arr, low, p-1)
+        quickSort(arr, p+1, high)`
   },
   'bubble-sort': {
-    theory: 'Bubble Sort is a simple comparison-based algorithm that repeatedly steps through the list, compares adjacent elements, and swaps them if they are in the wrong order. This pass is repeated until the list is sorted.',
-    history: 'First described in 1956 by Edward Harry Friend as a "sorting exchange algorithm." It was later popularized and given its evocative name by Kenneth E. Iverson in his work on APL programming language.',
-    forDummies: 'Imagine bubbles in a soda. The biggest bubbles are the lightest and they float to the top. In this algorithm, the largest numbers "bubble up" to the end of the array one by one.',
-    pseudocode: `procedure bubbleSort(A):
-    for i from 0 to n-1:
-        for j from 0 to n-i-2:
-            if A[j] > A[j+1]:
-                swap(A[j], A[j+1])`
+    theory: "Bubble Sort is a simple comparison algorithm that repeatedly steps through the list, swaps adjacent elements if they are in the wrong order.",
+    theory_pl: 'Sortowanie bąbelkowe (Bubble Sort) to prosty algorytm, który wielokrotnie przechodzi przez listę, zamieniając sąsiednie elementy, jeśli są w złej kolejności.',
+    history: "One of the oldest algorithms; documented by 1956 but possibly used earlier in mechanical sorting.",
+    history_pl: 'Jeden z najstarszych algorytmów; udokumentowany w 1956 roku, ale prawdopodobnie używany wcześniej w sortowaniu mechanicznym.',
+    forDummies: "Heavier bubbles in a carbonated drink sink to the bottom while lighter ones rise to the top.",
+    forDummies_pl: 'Największe liczby "wypływają" na koniec tablicy jak bąbelki w napoju gazowanym.',
+    pseudocode: `for i from 0 to n:
+    for j from 0 to n-i-1:
+        if arr[j] > arr[j+1]: swap(j, j+1)`
   },
   'heap-sort': {
-    theory: "Heap Sort is a comparison-based sorting technique based on a Binary Heap data structure. It is similar to selection sort where we first find the maximum element and place the maximum element at the end. We repeat the same process for the remaining elements.",
-    history: "Invented by J. W. J. Williams in 1964, who also described the heap data structure. Robert W. Floyd later refined it in the same year with an in-place version of the algorithm.",
-    forDummies: "Imagine building a pyramid of blocks where the largest block must always be at the top. You take the top block, put it in your 'sorted' pile, and rearrange the pyramid so the next largest block moves to the top. Repeat until all blocks are sorted!",
-    pseudocode: `procedure heapSort(A):
-    buildMaxHeap(A)
-    for i from n-1 down to 1:
-        swap(A[0], A[i])
-        maxHeapify(A, 0, i)`
+    theory: "Heap Sort uses a binary heap data structure to find the maximum element and move it to the end of the array.",
+    theory_pl: 'Sortowanie przez kopcowanie (Heap Sort) wykorzystuje strukturę kopca binarnego do znajdowania największego elementu i przenoszenia go na koniec tablicy.',
+    history: "Proposed by J. W. J. Williams in 1964, who also described the heap data structure.",
+    history_pl: 'Zaproponowany przez J. W. J. Williamsa w 1964 roku, który opisał również samą strukturę kopca.',
+    forDummies: "Organizing people into a pyramid where the oldest is always at the top, then taking them away one by one.",
+    forDummies_pl: 'Układasz ludzi w piramidę, gdzie najstarszy jest na szczycie. Zabierasz szefa, a piramidę układasz od nowa z pozostałych osób.',
+    pseudocode: `procedure heapSort(arr):
+    buildMaxHeap(arr)
+    for i from n-1 to 1:
+        swap(arr[0], arr[i])
+        heapify(arr, 0, i)`
   },
   'binary-search': {
-    theory: 'Binary search is an efficient algorithm for finding an item from a sorted list of items. It works by repeatedly dividing in half the portion of the list that could contain the item, until you\'ve narrowed down the possible locations to just one.',
-    history: 'The concept was first formally mentioned by John Mauchly in 1946. However, it took until 1960 for Derrick Henry Lehmer to publish an implementation that worked correctly for arrays of any size, as early versions often failed on specific edge cases.',
-    forDummies: 'Imagine finding a name in a physical phone book. You open it to the exact middle. If the name is alphabetically later, you ignore the first half and repeat the process with the second half. You reach your target in just a few flips!',
-    pseudocode: `procedure binarySearch(A, target):
-    low = 0, high = n-1
-    while low <= high:
-        mid = floor((low + high) / 2)
-        if A[mid] == target: return mid
-        if A[mid] < target: low = mid + 1
-        else: high = mid - 1`
+    theory: "Binary Search efficiently finds a target value within a sorted array by repeatedly halving the search interval.",
+    theory_pl: 'Wyszukiwanie binarne (Binary Search) efektywnie znajduje wartość w posortowanej tablicy poprzez wielokrotne dzielenie przedziału poszukiwań na pół.',
+    history: "A very old concept; binary search on a sorted list was first formally described by John Mauchly in 1946.",
+    history_pl: 'Bardzo stara koncepcja; wyszukiwanie binarne na posortowanej liście zostało po raz pierwszy opisane przez Johna Mauchly\'ego w 1946 roku.',
+    forDummies: "Opening a dictionary in the middle to find a word—deciding if the word is in the left or right half.",
+    forDummies_pl: 'Szukasz słowa w papierowym słowniku. Otwierasz na środku i decydujesz: "moje słowo jest wcześniej czy później?". Połówkę, która Cię nie interesuje, odrzucasz.',
+    pseudocode: `while low <= high:
+    mid = (low + high) / 2
+    if arr[mid] == target: return mid
+    else if arr[mid] < target: low = mid + 1
+    else: high = mid - 1`
   },
   'linear-search': {
-    theory: "Linear search is a very simple search algorithm. In this type of search, a sequential search is made over all items one by one. Every item is checked and if a match is found then that particular item is returned, otherwise the search continues till the end of the data collection.",
-    history: "The most basic form of searching, dating back to antiquity. It is the intuitive way humans search through unordered lists. Its formalization in computer science happened in the earliest days of electronic computing as the simplest baseline for search performance.",
-    forDummies: "Imagine you're looking for your keys in a row of pockets. You check the first one, then the second, then the third... until you either find them or you've checked every single pocket.",
-    pseudocode: `procedure linearSearch(A, target):
-    for each element x in A:
-        if x == target: return index`
+    theory: "Linear Search checks every element of the list sequentially until the target is found or the list ends.",
+    theory_pl: 'Wyszukiwanie liniowe (Linear Search) sprawdza każdy element listy po kolei, aż znajdzie cel lub dojdzie do końca listy.',
+    history: "The most basic search method, used since the dawn of manual record keeping.",
+    history_pl: 'Najprostsza metoda wyszukiwania, używana od początków prowadzenia rejestrów.',
+    forDummies: "Looking for a specific sock in a messy pile by checking every single sock one by one.",
+    forDummies_pl: 'Szukasz konkretnej skarpetki w stercie prania, sprawdzając każdą po kolei, dopóki nie znajdziesz tej właściwej.',
+    pseudocode: `for i from 0 to n-1:
+    if arr[i] == target: return i
+return -1`
   },
   'dijkstra': {
-    theory: "Dijkstra's algorithm finds the shortest path between nodes in a graph. It uses a greedy approach, maintaining a set of 'visited' nodes and their current minimum distance from the source.",
-    history: "Invented by Edsger W. Dijkstra in 1956 and published in 1959. He famously designed it in about 20 minutes while sitting at a café in Amsterdam with his fiancée, wanting to demonstrate the power of the new ARMAC computer.",
-    forDummies: "Imagine you're trying to find the fastest way to get to different cities. You start at home and look at all the nearest cities. You always pick the closest one you haven't visited yet, and update the travel times to its neighbors. Keep doing this until you've mapped out the quickest routes to everywhere!",
-    pseudocode: `procedure dijkstra(G, start):
-    dist[start] = 0
-    pq.push(start, 0)
-    while pq is not empty:
-        u = pq.pop()
-        for each neighbor v of u:
-            newDist = dist[u] + weight(u, v)
-            if newDist < dist[v]:
-                dist[v] = newDist
-                pq.push(v, newDist)`
-  },
-  'kruskal': {
-    theory: "Kruskal's algorithm is a greedy algorithm that finds a Minimum Spanning Tree (MST) for a weighted undirected graph. it finds a subset of the edges that forms a tree that includes every vertex, where the total weight of all the edges in the tree is minimized.",
-    history: "Published by Joseph Kruskal in 1956. He developed it as a simple, direct way to solve the MST problem, which was becoming increasingly important for designing efficient power and communication networks.",
-    forDummies: "Imagine you're connecting a series of islands with the cheapest possible bridges. You list all possible bridges from cheapest to most expensive. You build each bridge in order, but only if it doesn't create a loop between islands already connected!",
-    pseudocode: `procedure kruskal(G):
-    sort edges by weight
-    for each edge (u, v):
-        if find(u) != find(v):
-            add (u, v) to MST
-            union(u, v)`
-  },
-  'prim': {
-    theory: "Prim's algorithm finds the Minimum Spanning Tree by starting from an arbitrary node and repeatedly adding the cheapest edge that connects a node in the tree to a node outside of it.",
-    history: "Originally discovered by Czech mathematician Vojtěch Jarník in 1930. It was later independently rediscovered and published by Robert C. Prim in 1957, and again by Edsger Dijkstra in 1959.",
-    forDummies: "Imagine building a network of cables starting from a single office. You look at all the buildings you could connect to next. You always pick the closest building that isn't yet connected. Your network grows like a tree until everyone is linked!",
-    pseudocode: `procedure prim(G, start):
-    MST = {start}
-    while MST does not include all vertices:
-        find cheapest edge (u, v) where u in MST, v not in MST
-        add v to MST`
+    theory: "Dijkstra's algorithm finds the shortest path between nodes in a weighted graph with non-negative edge weights.",
+    theory_pl: 'Algorytm Dijkstry znajduje najkrótszą ścieżkę między węzłami w grafie ważonym o nieujemnych wagach krawędzi.',
+    history: "Conceived by computer scientist Edsger W. Dijkstra in 1956 and published in 1959.",
+    history_pl: 'Opracowany przez informatyka Edsgera W. Dijkstrę w 1956 roku i opublikowany w 1959.',
+    forDummies: "Finding the fastest driving route between two cities by exploring all possible roads systematically.",
+    forDummies_pl: 'Szukasz najszybszej drogi do celu. Sprawdzasz wszystkie możliwe skrzyżowania, zaczynając od tych położonych najbliżej Ciebie.',
+    pseudocode: `while priority_queue is not empty:
+    u = priority_queue.pop()
+    for neighbor v of u:
+        relax(u, v, weight)`
   },
   'bfs': {
-    theory: "Breadth-First Search (BFS) is a graph traversal algorithm that explores all neighbor nodes at the current depth before moving to the next level. it uses a queue to keep track of nodes to visit.",
-    history: "Invented by Konrad Zuse in 1945 for his Z3 computer (published in 1972). It was later independently rediscovered by Edward F. Moore in 1959 for finding the shortest path through mazes.",
-    forDummies: "Imagine you're looking for someone in a large building. You check every room on the first floor first. Only after you've checked them all do you move to the second floor. You explore layer by layer!",
-    pseudocode: `procedure BFS(G, root):
-    Q.enqueue(root)
-    while Q is not empty:
-        v = Q.dequeue()
-        for each neighbor w of v:
-            if w is not visited:
-                Q.enqueue(w)`
+    theory: "Breadth-First Search (BFS) explores all neighbors of a node before moving to the next level of neighbors.",
+    theory_pl: 'Przeszukiwanie wszerz (BFS) odwiedza wszystkich sąsiadów danego węzła, zanim przejdzie do kolejnego poziomu.',
+    history: "Invented by Konrad Zuse in 1945 (unpublished) and independently by E. F. Moore in 1959.",
+    history_pl: 'Wynaleziony przez Konrada Zuse w 1945 r. i niezależnie przez E. F. Moore\'a w 1959 r.',
+    forDummies: "A rumor spreading in a small town—everyone tells all their friends, then those friends tell all their friends.",
+    forDummies_pl: 'To jak fala rozchodząca się po wodzie. Najpierw sprawdzasz wszystko, co jest tuż obok, a potem idziesz coraz dalej.',
+    pseudocode: `queue.push(root)
+while queue:
+    u = queue.pop()
+    for v in neighbors(u): queue.push(v)`
   },
   'dfs': {
-    theory: "Depth-First Search (DFS) is a graph traversal algorithm that explores as far as possible along each branch before backtracking. It uses a stack or recursion to manage the traversal.",
-    history: "A version was first investigated in the 19th century by French mathematician Charles Pierre Trémaux as a strategy for solving mazes. It was formalized for computer science by John Hopcroft and Robert Tarjan in the 1970s.",
-    forDummies: "Imagine you're exploring a cave system. You pick a tunnel and keep going deeper and deeper until you hit a dead end. Then you backtrack just far enough to find a new tunnel you haven't tried yet. You go deep before you go wide!",
-    pseudocode: `procedure DFS(v):
-    visited[v] = true
-    for each neighbor w of v:
-        if w is not visited:
-            DFS(w)`
-  },
-  'topo-sort': {
-    theory: "Topological Sort for a Directed Acyclic Graph (DAG) is a linear ordering of vertices such that for every directed edge uv, vertex u comes before v in the ordering.",
-    history: "First described by Arthur Kahn in 1962. It is widely used in scheduling problems and build systems (like Make or Gradle) to determine the order of task execution based on dependencies.",
-    forDummies: "Imagine getting dressed in the morning. You have to put on your socks before your shoes, and your shirt before your jacket. Topological sort helps you find the right order to do everything so you never break any of those 'before' rules!",
-    pseudocode: `procedure topoSort(G):
-    L = Empty list
-    S = Nodes with no incoming edges
-    while S is not empty:
-        remove n from S, add to L
-        for each neighbor m of n:
-            remove edge (n, m)
-            if m has no other incoming edges: add m to S`
-  },
-  'binary': {
-    theory: "A Binary Tree is a hierarchical data structure in which each node has at most two children, referred to as the left child and the right child.",
-    history: "The concept of binary trees dates back to the work of early mathematicians like Gottfried Wilhelm Leibniz in the 17th century. In computer science, they were formalized in the 1950s for efficient data storage and retrieval.",
-    forDummies: "Think of a family tree where every person can have a maximum of two children. It starts with one 'root' person at the top and branches downwards.",
-    pseudocode: `struct Node:
-    data, left, right`
-  },
-  'bst': {
-    theory: "A Binary Search Tree (BST) is a binary tree where for each node, the left subtree contains only nodes with keys lesser than the node's key, and the right subtree contains only nodes with keys greater than the node's key.",
-    history: "Invented in 1960 by several researchers independently, including P.F. Windley, A.D. Booth, and A.J. Colin. It became the foundation for many complex data structures used in databases and file systems.",
-    forDummies: "Imagine a library shelf. You pick a book in the middle. Everything to its left comes earlier in the alphabet, and everything to its right comes later. This makes finding a specific book incredibly fast!",
-    pseudocode: `procedure insert(node, key):
-    if key < node.key:
-        if node.left: insert(node.left, key)
-        else: node.left = new Node(key)
-    else: ...`
-  },
-  'avl': {
-    theory: "An AVL tree (named after inventors Adelson-Velsky and Landis) is a self-balancing binary search tree. In an AVL tree, the heights of the two child subtrees of any node differ by at most one.",
-    history: "The first self-balancing binary search tree, invented in 1962 by Georgy Adelson-Velsky and Evgenii Landis. It was a major breakthrough in ensuring O(log n) performance for dynamic data sets.",
-    forDummies: "Imagine a balance scale that automatically moves weights around. If one side gets too heavy, the scale 'rotates' the weights to make sure both sides stay perfectly level and balanced.",
-    pseudocode: `procedure rotate(node):
-    // Perform tree rotations to restore balance`
-  },
-  'rbt': {
-    theory: "A Red-Black Tree is a kind of self-balancing binary search tree. Each node stores an extra bit for 'color' (red or black), used to ensure that the tree remains approximately balanced during insertions and deletions.",
-    history: "Originally invented in 1972 by Rudolf Bayer, who called them 'symmetric binary B-trees.' The name 'Red-Black Tree' was coined by Leo J. Guibas and Robert Sedgewick in 1978.",
-    forDummies: "Think of a map with specific rules about colors. By making sure no path has too many red nodes in a row, the tree guarantees it will never get too lopsided, keeping search times fast and predictable.",
-    pseudocode: `procedure fixViolation(node):
-    // Recolor and rotate to maintain RBT properties`
-  },
-  'trie': {
-    theory: "A Trie (from 'retrieval') is an ordered tree data structure used to store a dynamic set or associative array where the keys are usually strings.",
-    history: "First described by René de la Briandais in 1959. The term 'Trie' was coined shortly after by Edward Fredkin, who pronounced it 'tree' (though many now say 'try' to distinguish it).",
-    forDummies: "Imagine a dictionary where you find words by following a path of letters. To find 'CAT', you go to 'C', then follow the 'O' branch, then the 'T' branch. It's how your phone's autocomplete works so fast!",
-    pseudocode: `procedure insert(word):
-    current = root
-    for char in word:
-        current = current.children[char]`
-  },
-  'knapsack': {
-    theory: "The 0/1 Knapsack problem is a combinatorial optimization problem. Given a set of items, each with a weight and a value, determine the items to include in a collection so that the total weight is less than or equal to a given limit and the total value is as large as possible.",
-    history: "The term 'knapsack' has been used for over a century, but the formal optimization problem was pioneered by George Dantzig in the mid-20th century. Richard Bellman later applied dynamic programming to solve the 0/1 version efficiently in the 1950s.",
-    forDummies: "Imagine you're a burglar with a bag that can only hold 20kg. You see a gold bar, a heavy TV, and a diamond. You have to decide which combination of items gives you the most money without breaking your bag!",
-    pseudocode: `procedure knapsack(W, weights, values):
-    dp[n+1][W+1]
-    for i from 1 to n:
-        for w from 1 to W:
-            if weights[i] <= w:
-                dp[i][w] = max(values[i] + dp[i-1][w-weights[i]], dp[i-1][w])
-            else:
-                dp[i][w] = dp[i-1][w]`
-  },
-  'lcs': {
-    theory: "The Longest Common Subsequence (LCS) problem is finding the longest subsequence common to all sequences in a set of sequences (usually two). Unlike substrings, subsequences are not required to occupy consecutive positions.",
-    history: "The standard dynamic programming approach was published by Robert A. Wagner and Michael J. Fischer in 1974. It was created to solve the 'string-to-string correction problem,' foundational for tools like the Unix 'diff' utility.",
-    forDummies: "Imagine you and a friend both have a favorite list of movies. You want to see which movies appear in both lists in the same relative order. You don't care if there are other movies in between, just the longest shared sequence!",
-    pseudocode: `procedure LCS(X, Y):
-    m = length(X), n = length(Y)
-    for i from 1 to m:
-        for j from 1 to n:
-            if X[i] == Y[j]: dp[i][j] = dp[i-1][j-1] + 1
-            else: dp[i][j] = max(dp[i-1][j], dp[i][j-1])`
+    theory: "Depth-First Search (DFS) explores as far as possible along each branch before backtracking.",
+    theory_pl: 'Przeszukiwanie w głąb (DFS) idzie tak daleko, jak to możliwe wzdłuż każdej gałęzi, zanim zacznie się cofać.',
+    history: "A version was investigated by French mathematician Charles Pierre Trémaux in the 19th century.",
+    history_pl: 'Wersja tego algorytmu była badana przez francuskiego matematyka Charlesa Pierre\'a Trémaux już w XIX wieku.',
+    forDummies: "Exploring a maze by following one path until you hit a wall, then turning back to the last split.",
+    forDummies_pl: 'Idziesz przez labirynt tak długo, aż uderzysz w ścianę, a potem wracasz do ostatniego rozwidlenia i sprawdzasz inną drogę.',
+    pseudocode: `procedure DFS(u):
+    visit(u)
+    for v in neighbors(u): DFS(v)`
   },
   'a-star': {
-    theory: "A* Search extends Dijkstra's by incorporating heuristics. It uses the function f(n) = g(n) + h(n), where g(n) is the actual cost from start and h(n) is the heuristic estimate to the goal.",
-    history: "Developed by Peter Hart, Nils Nilsson, and Bertram Raphael in 1968 at the Stanford Research Institute. It was created as the navigation brain for 'Shakey the Robot,' the first mobile robot with reasoning capabilities.",
-    forDummies: "Imagine you're lost in a forest trying to get to a lighthouse. Dijkstra would walk in every direction equally. A* is smarter—it looks at how far it's walked *and* keeps an eye on the lighthouse, prioritizing paths that seem to lead directly towards it.",
-    pseudocode: `procedure AStar(start, goal):
-    openSet = {start}
-    gScore[start] = 0
-    fScore[start] = heuristic(start, goal)
-    while openSet is not empty:
-        current = node in openSet with lowest fScore
-        if current == goal: return reconstructPath()
-        for each neighbor:
-            tentative_gScore = gScore[current] + d(current, neighbor)
-            if tentative_gScore < gScore[neighbor]:
-                gScore[neighbor] = tentative_gScore
-                fScore[neighbor] = gScore[neighbor] + h(neighbor, goal)
-                openSet.add(neighbor)`
+    theory: "A* Search is a pathfinding algorithm that uses heuristics to guide the search towards the goal more efficiently.",
+    theory_pl: 'Algorytm A* to metoda wyszukiwania ścieżki, która używa heurystyki (inteligentnego zgadywania), aby szybciej dotrzeć do celu.',
+    history: "Developed at Stanford Research Institute in 1968 by Hart, Nilsson, and Raphael.",
+    history_pl: 'Opracowany w Stanford Research Institute w 1968 roku przez Harta, Nilssona i Raphaela.',
+    forDummies: "Using a compass to always head generally toward the destination while avoiding obstacles.",
+    forDummies_pl: 'To jak szukanie drogi z kompasem. Nie sprawdzasz wszystkiego na oślep, tylko idziesz tam, gdzie wydaje się, że jest najbliżej do celu.',
+    pseudocode: `f(n) = g(n) + h(n)
+while openList:
+    n = best node in openList
+    expand(n)`
+  },
+  'kruskal': {
+    theory: "Kruskal's algorithm finds the Minimum Spanning Tree by sorting all edges and adding them if they don't form a cycle.",
+    theory_pl: 'Algorytm Kruskala znajduje Minimalne Drzewo Rozpinające, sortując wszystkie krawędzie i dodając te najtańsze, które nie tworzą cyklu.',
+    history: "First published by Joseph Kruskal in 1956.",
+    history_pl: 'Po raz pierwszy opublikowany przez Josepha Kruskala w 1956 roku.',
+    forDummies: "Connecting a group of islands with the cheapest possible bridges without creating unnecessary loops.",
+    forDummies_pl: 'Chcesz połączyć wyspy mostami jak najtaniej. Wybierasz najtańsze możliwe połączenia, uważając, by nie budować mostów tam, gdzie już można dojechać inną drogą.',
+    pseudocode: `sort edges by weight
+for edge(u, v):
+    if find(u) != find(v): union(u, v)`
+  },
+  'prim': {
+    theory: "Prim's algorithm finds the Minimum Spanning Tree by growing a single tree from an arbitrary starting node.",
+    theory_pl: 'Algorytm Prima znajduje Minimalne Drzewo Rozpinające, "rozrastając" jedno drzewo od wybranego wierzchołka startowego.',
+    history: "Developed in 1930 by Jarník and later independently by Prim (1957) and Dijkstra (1959).",
+    history_pl: 'Opracowany w 1930 roku przez Jarníka, a później niezależnie przez Prima (1957) i Dijkstrę (1959).',
+    forDummies: "Building a power grid starting from one house and always adding the closest neighbor to the network.",
+    forDummies_pl: 'Budujesz sieć energetyczną. Zaczynasz od jednego domu i zawsze podłączasz ten, który jest najbliżej już istniejącej sieci.',
+    pseudocode: `while nodes_not_in_mst:
+    u = min_edge_to_mst()
+    add u to mst`
+  },
+  'topo-sort': {
+    theory: "Topological Sort linearly orders vertices of a directed acyclic graph (DAG) based on their dependencies.",
+    theory_pl: 'Sortowanie topologiczne to liniowe układanie wierzchołków grafu skierowanego bez cykli (DAG) zgodnie z ich zależnościami.',
+    history: "First described by Kahn in 1962 and later implemented using DFS by Tarjan.",
+    history_pl: 'Po raz pierwszy opisane przez Kahna w 1962 roku; później zaimplementowane przy użyciu DFS przez Tarjana.',
+    forDummies: "Creating a to-do list where some tasks must be finished before others can start (like getting dressed).",
+    forDummies_pl: 'To jak robienie listy zadań, gdzie niektóre rzeczy muszą być zrobione przed innymi (np. musisz założyć skarpetki przed butami).',
+    pseudocode: `for each node:
+    if not visited: DFS_visit(node)
+push to stack after visiting neighbors`
+  },
+  'binary': {
+    theory: "A Binary Tree is a tree where each node has at most two children, referred to as the left and right child.",
+    theory_pl: 'Drzewo binarne to struktura danych, w której każdy węzeł ma co najwyżej dwoje dzieci: lewe i prawe.',
+    history: "Fundamental to CS; the concept evolved with early linked list implementations in the 1950s.",
+    history_pl: 'Podstawa informatyki; koncepcja ewoluowała wraz z wczesnymi implementacjami list powiązanych w latach 50.',
+    forDummies: "A family tree where every couple has exactly zero, one, or two children.",
+    forDummies_pl: 'To drzewo genealogiczne, w którym każda osoba może mieć maksymalnie dwoje dzieci.',
+    pseudocode: `node = { value, left, right }`
+  },
+  'bst': {
+    theory: "A Binary Search Tree (BST) maintains sorted data, with smaller values in the left subtree and larger in the right.",
+    theory_pl: 'Binarne drzewo poszukiwań (BST) przechowuje dane w porządku: mniejsze wartości idą na lewo, większe na prawo.',
+    history: "Independent development by researchers like Windley and Booth in the 1960s.",
+    history_pl: 'Opracowane niezależnie przez badaczy takich jak Windley i Booth w latach 60.',
+    forDummies: "A filing cabinet where everything to the left is smaller and everything to the right is bigger.",
+    forDummies_pl: 'To szafka z dokumentami. Jeśli szukasz numeru 50, a na środku jest 100, wiesz, że musisz szukać tylko po lewej stronie.',
+    pseudocode: `if val < node.val: insert(left)
+else: insert(right)`
+  },
+  'avl': {
+    theory: "An AVL Tree is a self-balancing BST where the heights of subtrees differ by at most one.",
+    theory_pl: 'Drzewo AVL to samobalansujące się drzewo BST, w którym różnica wysokości poddrzew wynosi maksymalnie jeden.',
+    history: "Named after Adelson-Velsky and Landis, who published it in 1962.",
+    history_pl: 'Nazwa pochodzi od nazwisk Adelson-Velsky i Landis, którzy opublikowali algorytm w 1962 roku.',
+    forDummies: "A balanced mobile that automatically adjusts itself so it doesn't tilt too far to one side.",
+    forDummies_pl: 'To drzewo, które samo dba o to, by nie być zbyt "krzywym". Jeśli jedna strona robi się za długa, drzewo wykonuje "obrót", żeby się wyrównać.',
+    pseudocode: `if balanceFactor > 1: rotate()`
+  },
+  'rbt': {
+    theory: "A Red-Black Tree is a self-balancing BST that uses an extra bit per node to ensure the tree remains approximately balanced.",
+    theory_pl: 'Drzewo czerwono-czarne to samobalansujące się drzewo BST, które używa "kolorów" węzłów, aby utrzymać równowagę.',
+    history: "Invented by Rudolf Bayer in 1972 (as symmetric binary B-trees); named 'Red-Black' by Guibas and Sedgewick in 1978.",
+    history_pl: 'Wynalezione przez Rudolfa Bayera w 1972 roku; nazwane "czerwono-czarnym" przez Guibasa i Sedgewicka w 1978.',
+    forDummies: "A traffic light system for a tree to prevent any one path from getting twice as long as any other.",
+    forDummies_pl: 'To drzewo z regułami jak w sygnalizacji świetlnej. Kolory pomagają pilnować, żeby żadna ścieżka nie była zbyt długa.',
+    pseudocode: `recolor and rotate to maintain RBT properties`
+  },
+  'trie': {
+    theory: "A Trie (Prefix Tree) is an ordered tree used to store a dynamic set of strings, where keys are usually strings.",
+    theory_pl: 'Drzewo Trie (prefiksowe) to struktura służąca do przechowywania tekstów, gdzie wspólne początki słów (prefiksy) są współdzielone.',
+    history: "First described by René de la Briandais in 1959; the term 'Trie' was coined by Edward Fredkin in 1960.",
+    history_pl: 'Opisane po raz pierwszy przez René de la Briandais w 1959 r.; termin "Trie" wprowadził Edward Fredkin w 1960 r.',
+    forDummies: "Follow a path of letters to build words—like finding a word in a dictionary letter by letter.",
+    forDummies_pl: 'To jak autouzupełnianie w telefonie. Słowa są ułożone literka po literce na gałęziach. Żeby znaleźć "KOT", idziesz gałęzią K, potem O, potem T.',
+    pseudocode: `procedure insert(word):
+    for char in word: node = node.child(char)`
+  },
+  'knapsack': {
+    theory: "The 0/1 Knapsack problem finds the highest value of items that fit in a weight limit using dynamic programming.",
+    theory_pl: 'Problem plecakowy 0/1 znajduje najwyższą wartość przedmiotów mieszczących się w limicie wagowym przy użyciu programowania dynamicznego.',
+    history: "Formally pioneered by George Dantzig; solved using DP by Richard Bellman in the 1950s.",
+    history_pl: 'Sformalizowany przez George\'a Dantziga; rozwiązany przy użyciu programowania dynamicznego przez Richarda Bellmana w latach 50.',
+    forDummies: "A burglar choosing the most expensive items to put in a bag without exceeding the weight limit.",
+    forDummies_pl: 'Jesteś włamywaczem z torbą o limicie 20 kg. Musisz zdecydować, co zabrać, aby łup był jak najdroższy, nie rozrywając przy tym torby.',
+    pseudocode: `dp[i][w] = max(val[i] + dp[i-1][w-wt[i]], dp[i-1][w])`
+  },
+  'lcs': {
+    theory: "Longest Common Subsequence (LCS) finds the longest sequence present in two strings in the same relative order.",
+    theory_pl: 'Najdłuższy wspólny podciąg (LCS) znajduje najdłuższy ciąg znaków występujący w obu tekstach w tej samej względnej kolejności.',
+    history: "Published in 1974 by Wagner and Fischer for string correction and foundational to the 'diff' utility.",
+    history_pl: 'Opublikowany w 1974 roku przez Wagnera i Fischera na potrzeby korekty tekstów; fundament działania narzędzia "diff".',
+    forDummies: "Finding the longest shared list of favorite movies between two friends' collections.",
+    forDummies_pl: 'Porównujesz listy filmów z kolegą i sprawdzasz, jaka jest najdłuższa seria tytułów, która pojawia się w obu listach w tej samej kolejności.',
+    pseudocode: `if X[i] == Y[j]: dp[i][j] = dp[i-1][j-1] + 1`
   },
   'flood-fill': {
-    theory: "Flood fill is an algorithm that determines the area connected to a given node in a multi-dimensional array. It is used in the 'bucket' fill tool of paint programs to fill connected, similarly-colored areas with a different color.",
-    history: "Derived from graph traversal algorithms like BFS and DFS. It became widely known through early computer graphics and the development of the first digital painting software in the late 1970s.",
-    forDummies: "Imagine you spill a bucket of blue paint on a white tiled floor. The paint flows into every white tile it can reach, but stops as soon as it hits a wall or a tile that was already painted red.",
-    pseudocode: `procedure floodFill(x, y, targetColor, replacementColor):
-    if color(x, y) == targetColor:
-        color(x, y) = replacementColor
-        floodFill(x+1, y, ...)
-        floodFill(x-1, y, ...)`
+    theory: "Flood Fill determines connected areas in a grid, used for bucket-fill tools in graphics editors.",
+    theory_pl: 'Algorytm Flood Fill wyznacza spójne obszary w siatce; używany w narzędziach typu "wiadro z farbą" w edytorach graficznych.',
+    history: "Derived from graph traversals; became famous through early digital painting software in the 1970s.",
+    history_pl: 'Wywodzi się z przeszukiwania grafów; stał się sławny dzięki wczesnym programom do malowania cyfrowego w latach 70.',
+    forDummies: "Spilling paint on a canvas and watching it fill a closed shape until it hits a border.",
+    forDummies_pl: 'To jak rozlanie farby w programie Paint. Klikasz w jedno miejsce, a farba rozlewa się, dopóki nie napotka granicy innego koloru.',
+    pseudocode: `procedure floodFill(node): if color == target: fill(node); floodFill(neighbors)`
   },
   'max-heap': {
-    theory: "A Max Heap is a specialized tree-based data structure that satisfies the heap property: in a max heap, for any given node I, the value of I is greater than or equal to the values of its children.",
-    history: "The heap data structure was invented by J. W. J. Williams in 1964 for the heap sort algorithm. It has since become a standard way to implement priority queues.",
-    forDummies: "Think of a competitive leaderboard. The person at the very top is the absolute best. Every person on the level below is slightly worse than their boss above them, and so on down the line.",
-    pseudocode: `procedure heapifyUp(index):
-    while A[index] > A[parent(index)]:
-        swap(A[index], A[parent(index)])`
+    theory: "A Max Heap is a tree where every parent is greater than or equal to its children, ensuring the max is at the root.",
+    theory_pl: 'Kopiec typu Max to drzewo, w którym każdy rodzic jest większy lub równy swoim dzieciom, co gwarantuje, że maksimum jest w korzeniu.',
+    history: "Incented by Williams in 1964 as part of the Heap Sort algorithm for efficient priority management.",
+    history_pl: 'Wynaleziony przez Williamsa w 1964 roku jako część algorytmu sortowania przez kopcowanie.',
+    forDummies: "A corporate ladder where the boss is always at the top and every manager is above their subordinates.",
+    forDummies_pl: 'To drabina korporacyjna. Szef jest na samej górze, a każdy kierownik jest "ważniejszy" od swoich bezpośrednich podwładnych.',
+    pseudocode: `while child > parent: swap(child, parent)`
   },
   'union-find': {
-    theory: "A Union-Find data structure (also called a Disjoint-Set Union) keeps track of elements which are split into one or more disjoint sets. It supports two main operations: Find (find which set an element belongs to) and Union (join two sets into one).",
-    history: "The concept was first described by Bernard A. Galler and Michael J. Fischer in 1964. It is famous for its nearly-constant time complexity when using optimizations like path compression.",
-    forDummies: "Imagine tracking different groups of friends at a party. Union-find lets you quickly check if two people belong to the same circle, or 'union' two different circles into one big group when people start talking to each other.",
-    pseudocode: `procedure find(i):
-    if parent[i] == i: return i
-    return parent[i] = find(parent[i])`
+    theory: "Union-Find tracks disjoint sets and supports near-constant time merging and membership checks.",
+    theory_pl: 'Struktura zbiorów rozłącznych (Union-Find) śledzi grupy elementów i pozwala na ich błyskawiczne łączenie oraz sprawdzanie przynależności.',
+    history: "First described by Galler and Fischer in 1964; famous for its incredibly efficient path compression.",
+    history_pl: 'Opisana przez Gallera i Fischera w 1964 roku; znana z niesamowicie wydajnej optymalizacji (kompresja ścieżek).',
+    forDummies: "Tracking friendship circles at a party and quickly checking if two people belong to the same group.",
+    forDummies_pl: 'To śledzenie grup znajomych na imprezie. Możesz błyskawicznie sprawdzić, czy dwie osoby należą do tej samej paczki.',
+    pseudocode: `procedure find(i): return root of i; procedure union(i, j): join roots`
   }
 };
 
 /**
  * Helper to get education data for an algorithm ID.
- * Returns default data if the specific ID is not found.
  */
-export function getAlgorithmEducation(id: string): AlgorithmEducation {
-  return ALGORITHM_EDUCATION[id] || {
-    theory: "Theory for this algorithm is coming soon.",
-    history: "Historical context is being researched.",
-    forDummies: "A real-world analogy for this algorithm is coming soon.",
-    pseudocode: "// Pseudocode coming soon"
+export function getAlgorithmEducation(id: string, lang: 'en' | 'pl' = 'en'): TranslatedEducation {
+  const data = ALGORITHM_EDUCATION[id];
+  if (!data) return {
+    theory: lang === 'en' ? "Coming soon" : "Wkrótce dostępne",
+    history: lang === 'en' ? "Coming soon" : "Wkrótce dostępne",
+    forDummies: lang === 'en' ? "Coming soon" : "Wkrótce dostępne",
+    pseudocode: "// Coming soon"
+  };
+
+  return {
+    theory: lang === 'en' ? data.theory : data.theory_pl,
+    history: lang === 'en' ? data.history : data.history_pl,
+    forDummies: lang === 'en' ? data.forDummies : data.forDummies_pl,
+    pseudocode: data.pseudocode
   };
 }
