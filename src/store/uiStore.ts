@@ -4,12 +4,12 @@ import type { VisualizationData, GraphInput } from '../types';
 type ActiveMode = 'sorting' | 'searching' | 'graph' | 'grid' | 'dp' | 'tree';
 
 interface UIState {
-  theme: 'glacier';
+  theme: 'dark' | 'light';
   animationSpeed: number;   // 0.25 to 4.0
   isSidebarOpen: boolean;
   isDebugVisible: boolean;
   
-  activeCategory: string; // 'A' through 'F' or catalog id
+  activeCategory: string; // 'sorting', 'searching', etc.
   activeSortingAlgorithm: string;
   activeSearchingAlgorithm: string;
   activeGraphAlgorithm: string;
@@ -31,6 +31,7 @@ interface UIState {
   toggleDebug: () => void;
   toggleCodePanel: () => void;
   setLanguage: (lang: 'en' | 'pl') => void;
+  toggleTheme: () => void;
   
   setActiveCategory: (cat: string) => void;
   setActiveSortingAlgorithm: (algo: string) => void;
@@ -49,7 +50,7 @@ interface UIState {
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  theme: 'glacier',
+  theme: (localStorage.getItem('visual-algo-theme') as 'dark' | 'light') || 'dark',
   animationSpeed: 1.0,
   isSidebarOpen: true,
   isDebugVisible: false,
@@ -69,7 +70,7 @@ export const useUIStore = create<UIState>((set) => ({
   
   isLoading: false,
   shareLink: '',
-  language: 'en',
+  language: (localStorage.getItem('visual-algo-lang') as 'en' | 'pl') || 'en',
 
   setAnimationSpeed: (speed) => set({ animationSpeed: Math.max(0.25, Math.min(speed, 4.0)) }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
@@ -90,5 +91,21 @@ export const useUIStore = create<UIState>((set) => ({
   
   setIsLoading: (v) => set({ isLoading: v }),
   setShareLink: (link) => set({ shareLink: link }),
-  setLanguage: (lang) => set({ language: lang }),
+  setLanguage: (lang) => {
+    localStorage.setItem('visual-algo-lang', lang);
+    set({ language: lang });
+  },
+  toggleTheme: () => set((state) => {
+    const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('visual-algo-theme', newTheme);
+    
+    // Apply class to body for global CSS targeting
+    if (newTheme === 'light') {
+      document.body.classList.add('light-mode');
+    } else {
+      document.body.classList.remove('light-mode');
+    }
+    
+    return { theme: newTheme };
+  }),
 }));

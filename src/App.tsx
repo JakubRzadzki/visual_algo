@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { useUIStore } from './store/uiStore';
 import Navbar from './components/layout/Navbar';
 import AmbientGraph from './components/background/AmbientGraph';
 import AriaLiveRegion from './components/a11y/AriaLiveRegion';
@@ -8,6 +10,16 @@ import { ToastProvider } from './components/hud/Toast';
 import ShareLoader from './pages/ShareLoader';
 
 export default function App() {
+  const theme = useUIStore(state => state.theme);
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.body.classList.add('light-mode');
+    } else {
+      document.body.classList.remove('light-mode');
+    }
+  }, [theme]);
+
   return (
     <ToastProvider>
       <div className="relative min-h-screen bg-glacier-bg text-slate-200 selection:bg-ice-blue/30 selection:text-ice-blue cursor-default">

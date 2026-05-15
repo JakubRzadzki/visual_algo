@@ -1,34 +1,63 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ice-blue: #7dd3fc;
+  --color-ice-blue: var(--ice-blue);
   --color-ice-lavender: #c8a0f0;
-  --color-glacier-bg: #020617;
-  --color-glacier-surface: rgba(15, 21, 36, 0.6);
-  --color-glacier-surface-elevated: rgba(15, 21, 36, 0.75);
-  --color-glacier-border: rgba(125, 211, 252, 0.1);
-  --color-glacier-border-bright: rgba(125, 211, 252, 0.2);
+  --color-glacier-bg: var(--glacier-bg);
+  --color-glacier-surface: var(--glacier-surface);
+  --color-glacier-surface-elevated: var(--glacier-surface-elevated);
+  --color-glacier-border: var(--glacier-border);
+  --color-glacier-border-bright: var(--glacier-border-bright);
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  --ice-blue: #7dd3fc;
+  --glacier-bg: #020617;
+  --glacier-surface: rgba(15, 21, 36, 0.6);
+  --glacier-surface-elevated: rgba(15, 21, 36, 0.75);
+  --glacier-border: rgba(125, 211, 252, 0.1);
+  --glacier-border-bright: rgba(125, 211, 252, 0.2);
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+}
+
+.light-mode {
+  --ice-blue: #0ea5e9;
+  --glacier-bg: #f8fafc;
+  --glacier-surface: rgba(255, 255, 255, 0.7);
+  --glacier-surface-elevated: rgba(255, 255, 255, 0.9);
+  --glacier-border: rgba(14, 165, 233, 0.1);
+  --glacier-border-bright: rgba(14, 165, 233, 0.2);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
 }
 
 @layer base {
   body {
-    @apply bg-glacier-bg text-slate-200 antialiased selection:bg-ice-blue/30 selection:text-ice-blue;
+    @apply bg-glacier-bg text-slate-200 antialiased selection:bg-ice-blue/30 selection:text-ice-blue transition-colors duration-500;
+  }
+  
+  .light-mode body {
+    @apply text-slate-900;
   }
 }
 
 @layer components {
   .glass-panel {
-    @apply bg-glacier-surface backdrop-blur-lg border border-glacier-border rounded-xl;
+    @apply bg-glacier-surface backdrop-blur-lg border border-glacier-border rounded-xl transition-all duration-500;
   }
   .glass-panel-elevated {
-    @apply bg-glacier-surface-elevated backdrop-blur-xl border border-glacier-border-bright rounded-2xl;
+    @apply bg-glacier-surface-elevated backdrop-blur-xl border border-glacier-border-bright rounded-2xl transition-all duration-500;
   }
   .luminous-text {
-    @apply text-ice-blue drop-shadow-[0_0_8px_rgba(125,211,252,0.4)];
+    @apply text-ice-blue drop-shadow-[0_0_8px_rgba(125,211,252,0.4)] transition-all duration-500;
+  }
+  .light-mode .luminous-text {
+    @apply drop-shadow-[0_0_4px_rgba(14,165,233,0.2)];
   }
   .luminous-border {
-    @apply border-ice-blue/30 shadow-[0_0_15px_rgba(125,211,252,0.1)];
+    @apply border-ice-blue/30 shadow-[0_0_15px_rgba(125,211,252,0.1)] transition-all duration-500;
   }
 }
 
@@ -47,8 +76,6 @@
 
 /* ────────────────────────────────────────────────────
  * Category Card Hover Effects
- * Gated behind @media (hover: hover) to avoid sticky
- * hover states on touch devices.
  * ──────────────────────────────────────────────────── */
 @keyframes shine-sweep {
   0% { background-position: 200% 0; }
@@ -57,7 +84,7 @@
 
 @media (hover: hover) {
   .hover-card {
-    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.5s ease;
   }
 
   .hover-card:hover {
@@ -67,28 +94,15 @@
       0 0 30px rgba(34, 211, 238, 0.06),
       0 8px 32px rgba(0, 0, 0, 0.3);
   }
+  
+  .light-mode .hover-card:hover {
+    box-shadow:
+      0 0 30px rgba(34, 211, 238, 0.1),
+      0 8px 32px rgba(0, 0, 0, 0.1);
+  }
 
   .hover-card:hover .shine-sweep {
     animation: shine-sweep 1.2s ease-in-out;
-  }
-}
-
-/* ────────────────────────────────────────────────────
- * Reduced Motion: Disable or simplify all animations
- * ──────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .animate-gradient-shift {
-    animation: none;
-  }
-
-  .hover-card,
-  .hover-card:hover {
-    transition: none;
-    transform: none;
-  }
-
-  .hover-card:hover .shine-sweep {
-    animation: none;
   }
 }
 
@@ -104,15 +118,14 @@
 }
 
 /* ────────────────────────────────────────────────────
- * Cyber Range Slider — custom styled input[type=range]
- * for the sorting playback controls.
+ * Cyber Range Slider
  * ──────────────────────────────────────────────────── */
 .cyber-range {
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(125, 211, 252, 0.1);
   outline: none;
   cursor: pointer;
 }
@@ -123,8 +136,8 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #22d3ee;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: var(--ice-blue);
+  border: 2px solid white;
   box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
   cursor: pointer;
   transition: box-shadow 0.2s ease;
@@ -134,18 +147,10 @@
   box-shadow: 0 0 16px rgba(34, 211, 238, 0.6);
 }
 
-.cyber-range::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #22d3ee;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
-  cursor: pointer;
+.light-mode .cyber-range {
+  background: rgba(0, 0, 0, 0.05);
 }
 
-.cyber-range::-moz-range-track {
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.08);
+.light-mode .cyber-range::-webkit-slider-thumb {
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.2);
 }
