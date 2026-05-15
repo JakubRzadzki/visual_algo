@@ -14,7 +14,9 @@ import TreeVisualizer from '../visualizer/TreeVisualizer';
 import GridStage from '../visualizer/GridStage';
 import MonacoCodeEditor from '../hud/MonacoCodeEditor';
 import EventLog from '../hud/EventLog';
+import AlgorithmInfoPanel from '../hud/AlgorithmInfoPanel';
 import PlaybackDeck from '../controls/PlaybackDeck';
+import { getAlgorithmEducation } from '../../data/algorithmEducation';
 import type { GraphInput } from '../../types';
 
 // Demo graph nodes / edges — will be replaced when user generates a new graph
@@ -59,6 +61,7 @@ export default function AlgorithmViewer(): React.ReactElement {
     setActiveGraphAlgorithm,
     setActiveGridAlgorithm
   } = useUIStore();
+  const educationData = getAlgorithmEducation(id || '');
 
   const graphToDisplay = currentGraph || DEMO_GRAPH;
 
@@ -221,9 +224,10 @@ export default function AlgorithmViewer(): React.ReactElement {
 
       <aside
         style={{ width: `${editorWidth}px` }}
-        className="hidden lg:flex flex-col gap-4 h-full shrink-0"
+        className="hidden lg:flex flex-col gap-4 h-full shrink-0 overflow-hidden pb-4"
       >
         <MonacoCodeEditor />
+        <AlgorithmInfoPanel data={educationData} />
         <EventLog />
       </aside>
 

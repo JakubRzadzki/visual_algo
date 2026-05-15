@@ -19,7 +19,9 @@ import PlaybackDeck from '../components/controls/PlaybackDeck';
 
 import MonacoCodeEditor from '../components/hud/MonacoCodeEditor';
 import EventLog from '../components/hud/EventLog';
+import AlgorithmInfoPanel from '../components/hud/AlgorithmInfoPanel';
 import AriaLiveRegion from '../components/a11y/AriaLiveRegion';
+import { getAlgorithmEducation } from '../data/algorithmEducation';
 import { ArrowLeft } from 'lucide-react';
 import type { GraphNode, GraphInput } from '../types';
 
@@ -44,6 +46,7 @@ export default function VisualizerPage() {
     setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm, setActiveGridAlgorithm, setActiveDPAlgorithm
   } = useUIStore();
   const graphToDisplay = currentGraph || DEMO_GRAPH;
+  const educationData = getAlgorithmEducation(algoId || '');
 
   // Sync the UI store with the route params
   useEffect(() => {
@@ -165,8 +168,9 @@ export default function VisualizerPage() {
           {activeMode !== 'sorting' && <PlaybackDeck />}
         </div>
 
-        <aside className="w-[350px] lg:w-[400px] xl:w-[420px] 2xl:w-[450px] min-w-0 hidden lg:flex flex-col gap-4 h-full">
+        <aside className="w-[350px] lg:w-[400px] xl:w-[420px] 2xl:w-[450px] min-w-0 hidden lg:flex flex-col gap-4 h-[calc(100vh-6rem)] overflow-hidden pb-4">
            <MonacoCodeEditor />
+           <AlgorithmInfoPanel data={educationData} />
            <EventLog />
         </aside>
       </div>
