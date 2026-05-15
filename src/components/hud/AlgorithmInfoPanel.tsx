@@ -73,14 +73,34 @@ const AlgorithmInfoPanel: React.FC<AlgorithmInfoPanelProps> = ({ data }) => {
             className="h-full"
           >
             {activeTab === 'theory' && (
-              <div className="space-y-4">
-                <h4 className="text-ice-blue font-bold flex items-center gap-2">
-                  <BookOpen className="w-5 h-5" />
-                  Formal Description
-                </h4>
-                <p className="text-slate-300 leading-relaxed text-sm">
-                  {data.theory}
-                </p>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h4 className="text-ice-blue font-bold flex items-center gap-2 text-sm uppercase tracking-wider">
+                    <BookOpen className="w-4 h-4" />
+                    Formal Description
+                  </h4>
+                  <p className="text-slate-300 leading-relaxed text-sm">
+                    {data.theory}
+                  </p>
+                </div>
+
+                {data.history && (
+                  <div className="space-y-3 pt-4 border-t border-ice-blue/5">
+                    <h4 className="text-cyan-400/80 font-bold flex items-center gap-2 text-sm uppercase tracking-wider">
+                      <motion.span
+                        initial={{ rotate: -20 }}
+                        animate={{ rotate: 0 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        ⏳
+                      </motion.span>
+                      Origins & History
+                    </h4>
+                    <p className="text-slate-400 leading-relaxed text-xs italic bg-white/5 p-3 rounded-lg border border-white/5">
+                      {data.history}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

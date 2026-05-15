@@ -61,6 +61,7 @@ export default function AlgorithmViewer(): React.ReactElement {
     setActiveGraphAlgorithm,
     setActiveGridAlgorithm
   } = useUIStore();
+  console.log("[DEBUG] AlgorithmViewer rendering with id:", id);
   const educationData = getAlgorithmEducation(id || '');
 
   const graphToDisplay = currentGraph || DEMO_GRAPH;
