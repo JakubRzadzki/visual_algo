@@ -114,6 +114,7 @@ export default function MonacoCodeEditor() {
   const activeMode = useUIStore(state => state.activeMode);
   const activeTreeType = useTreeStore(state => state.activeTreeType);
   const uiLanguage = useUIStore(state => state.language);
+  const theme = useUIStore(state => state.theme);
   const t = getTranslation(uiLanguage);
   
   const globalAlgo = useUIStore(state => {
@@ -536,7 +537,7 @@ export default function MonacoCodeEditor() {
       }`}
     >
       {/* ── Toolbar ──────────────────────────────────────────────── */}
-      <div className="relative z-[100] flex justify-between items-center px-4 py-3 border-b border-ice-blue/10 bg-slate-950/60 backdrop-blur-sm">
+      <div className="relative z-[100] flex justify-between items-center px-4 py-3 border-b border-glacier-border-bright bg-glacier-surface backdrop-blur-sm">
         <div className="flex items-center gap-3">
           {/* IDE icon + title */}
           <div className="flex items-center gap-2">
@@ -592,7 +593,7 @@ export default function MonacoCodeEditor() {
             </button>
 
             {isLangDropdownOpen && (
-              <div className="absolute right-0 mt-1 py-1 w-36 rounded-lg bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 shadow-2xl shadow-black/40 z-50">
+              <div className="absolute right-0 mt-1 py-1 w-36 rounded-lg bg-glacier-surface-elevated backdrop-blur-xl border border-glacier-border-bright shadow-2xl shadow-black/40 z-50">
                 {(Object.keys(LANGUAGE_LABELS) as Language[]).map((lang) => (
                   <button
                     key={lang}
@@ -711,7 +712,7 @@ export default function MonacoCodeEditor() {
           height="100%"
           language={LANGUAGE_MONACO_IDS[language]}
           value={editorContent}
-          theme="GlacierDark"
+          theme={theme === 'dark' ? 'GlacierDark' : 'vs'}
           onChange={(value) => {
             setEditorContent(value || '');
             useUIStore.getState().setIsAnimating(false);

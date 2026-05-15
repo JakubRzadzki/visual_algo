@@ -81,9 +81,9 @@ export default function EventLog() {
   };
 
   return (
-    <div className="h-48 glass-panel-elevated p-0 flex flex-col font-mono text-sm border border-ice-blue/10 rounded-xl bg-[#0c0c0c] overflow-hidden select-none hover:border-ice-blue/25 transition-all duration-300 shadow-xl shadow-black/40">
+    <div className="h-48 glass-panel flex flex-col border border-glacier-border-bright rounded-2xl bg-glacier-bg overflow-hidden shadow-2xl shadow-black/50 group/panel">
       {/* Windows CMD Style Header */}
-      <div className="flex justify-between items-center px-4 py-2 bg-[#1e1e1e] border-b border-white/5 select-none">
+      <div className="flex justify-between items-center px-4 py-2 bg-glacier-surface border-b border-glacier-border-bright select-none">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-slate-300">
             <TerminalIcon className="w-3.5 h-3.5 text-slate-400" />

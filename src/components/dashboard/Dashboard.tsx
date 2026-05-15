@@ -85,7 +85,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#020617] text-slate-200 overflow-y-auto overflow-x-hidden">
+    <div className="relative min-h-screen bg-glacier-bg text-slate-200 overflow-y-auto overflow-x-hidden">
       {/* ──────── Background Layers (z-0 through z-2) ──────── */}
       <BackgroundGrid />
       <NeuralNetworkBackground />
@@ -366,7 +366,7 @@ function AnimatedCategoryCard({
         ease: [0.22, 1, 0.36, 1],
       }}
       layout
-      className={`hover-card group relative rounded-2xl border border-white/[0.06] bg-slate-900/40 backdrop-blur-xl p-4 sm:p-5 transition-all duration-300 overflow-visible h-full flex flex-col justify-between ${getCategoryHoverClasses(
+      className={`hover-card group relative rounded-2xl glacier-border glass-panel p-4 sm:p-5 transition-all duration-300 overflow-visible h-full flex flex-col justify-between ${getCategoryHoverClasses(
         cat.id
       )}`}
       style={{ willChange: 'transform, opacity' }}

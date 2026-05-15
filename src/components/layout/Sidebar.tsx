@@ -70,10 +70,10 @@ export default function Sidebar(): React.ReactElement {
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: -60, opacity: 0 }}
       transition={{ type: 'spring', stiffness: 240, damping: 24 }}
-      className="w-72 h-[calc(100vh-140px)] glass-panel flex flex-col gap-5 p-4 overflow-y-auto border border-white/10 shadow-xl"
+      className="w-72 h-[calc(100vh-140px)] glass-panel flex flex-col gap-5 p-4 overflow-y-auto shadow-xl"
     >
       {/* ── Mode Tabs ── */}
-      <div className="flex flex-wrap rounded-xl overflow-hidden border border-white/[0.06] bg-slate-950/40 p-1 gap-0.5 justify-center">
+      <div className="flex flex-wrap rounded-xl overflow-hidden border border-glacier-border-bright bg-glacier-surface p-1 gap-0.5 justify-center">
         {(['sorting', 'searching', 'graph', 'tree', 'dp', 'grid'] as const).map((mode) => (
           <button
             key={mode}

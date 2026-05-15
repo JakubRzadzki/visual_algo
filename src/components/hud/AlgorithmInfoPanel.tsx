@@ -25,9 +25,9 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
   const [activeTab, setActiveTab] = useState<'theory' | 'dummies' | 'pseudocode'>('theory');
 
   return (
-    <div className="flex-1 min-h-0 glass-panel-elevated flex flex-col border border-ice-blue/10 rounded-2xl overflow-hidden shadow-2xl shadow-black/50 group/panel">
+    <div className="flex-1 min-h-0 glass-panel flex flex-col border border-glacier-border-bright rounded-2xl overflow-hidden shadow-2xl shadow-black/50 group/panel">
       {/* Tab Navigation */}
-      <div className="flex bg-slate-950/60 p-1.5 border-b border-white/5 gap-1">
+      <div className="flex bg-glacier-surface p-1.5 border-b border-glacier-border-bright gap-1">
         {(['theory', 'dummies', 'pseudocode'] as const).map((tabId) => (
           <button
             key={tabId}
