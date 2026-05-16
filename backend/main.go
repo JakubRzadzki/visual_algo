@@ -155,7 +155,8 @@ type RunResponse struct {
 }
 
 func executeLocally(code string, language string) (string, string, error) {
-	if language == "python" {
+	switch language {
+	case "python":
 		cmd := exec.Command("python", "-c", code)
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout = &stdout
@@ -174,7 +175,7 @@ func executeLocally(code string, language string) (string, string, error) {
 			}
 		}
 		return stdout.String(), stderr.String(), err
-	} else if language == "cpp" {
+	case "cpp":
 		tempDir, err := os.MkdirTemp("", "visual_algo_cpp_local")
 		if err != nil {
 			return "", "", fmt.Errorf("failed to create temp dir: %w", err)
@@ -206,8 +207,9 @@ func executeLocally(code string, language string) (string, string, error) {
 		runCmd.Stderr = &stderr
 		err = runCmd.Run()
 		return stdout.String(), stderr.String(), err
+	default:
+		return "", "", fmt.Errorf("unsupported language")
 	}
-	return "", "", fmt.Errorf("unsupported language")
 }
 
 func executeCode(c *gin.Context) {

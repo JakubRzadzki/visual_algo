@@ -1,4 +1,4 @@
-import type { ExecutionTrace, VisualizationEvent, TraceMetadata } from '../types';
+import type { ExecutionTrace, VisualizationEvent, TraceMetadata, GraphInput } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,12 +79,12 @@ export function buildExecutionTrace(
 ): ExecutionTrace {
   const rawTrace = response.trace ?? [];
   let initialState: number[] | undefined;
-  let initialGraph: Record<string, unknown> | undefined;
+  let initialGraph: GraphInput | undefined;
 
   const filtered = rawTrace.filter((raw) => {
     if (raw.type === 'INIT') {
       if (Array.isArray(raw.array)) initialState = raw.array as number[];
-      if (raw.graph) initialGraph = raw.graph as Record<string, unknown>;
+      if (raw.graph) initialGraph = raw.graph as GraphInput;
       return false; // Don't include INIT in playback events
     }
     return true;
