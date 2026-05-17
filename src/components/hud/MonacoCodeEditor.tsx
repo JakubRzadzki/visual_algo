@@ -11,6 +11,8 @@ import { useTreeStore } from '../../store/treeStore';
 import { executeInSandbox, buildExecutionTrace, saveSnapshot } from '../../services/sandboxApi';
 import { useToast } from './Toast';
 import { Copy, Download, Check, Save, ChevronDown, Play, Loader2, Share2 } from 'lucide-react';
+import { globalWorkerPool } from '../../core/WorkerPool';
+import { findAlgorithmByName } from '../../data/algorithmCatalog';
 
 // ─── Vite raw imports for real algorithm source files ─────────────────────────
 const pyModules = import.meta.glob('../../algorithms/python/*.py', { query: '?raw', import: 'default', eager: true });
@@ -520,8 +522,33 @@ export default function MonacoCodeEditor() {
         );
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      showToast('Sandbox execution failed', 'error', message);
+      console.warn("Sandbox execution failed. Falling back to local offline worker.", err);
+      try {
+        const match = findAlgorithmByName(algoName);
+        if (!match) throw new Error(`Could not resolve algorithm: ${algoName}`);
+        
+        const payload = {
+          nodes: currentGraph?.nodes || [],
+          edges: currentGraph?.edges || [],
+          values: useUIStore.getState().visualizationData.values || [],
+          ...useUIStore.getState().visualizationData
+        };
+        
+        const trace = await globalWorkerPool.run(match.algorithm.id, payload as any);
+        globalEngine.loadTrace(trace);
+        globalEngine.setSpeed(1.0);
+        setIsAnimating(true);
+        globalEngine.play();
+        
+        showToast(
+          'Executed locally (Offline mode)',
+          'info',
+          'Sandbox is unreachable. Successfully generated trace using local fallback engine.'
+        );
+      } catch (fallbackErr) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        showToast('Sandbox execution failed', 'error', message + ' (Local fallback also failed)');
+      }
     } finally {
       setIsRunning(false);
     }
