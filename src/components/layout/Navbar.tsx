@@ -30,7 +30,7 @@ export default function Navbar() {
             <Menu className="w-5 h-5" />
           </button>
         )}
-        <Link to="/" className="font-bold text-lg luminous-text flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <Link to="/" data-tutorial-step="navbar-home" className="font-bold text-lg luminous-text flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Zap className="w-5 h-5 text-cyan-400 animate-pulse" /> 
           <span className="bg-gradient-to-r from-white via-slate-100 to-cyan-400 bg-clip-text text-transparent">
             {language === 'en' ? 'Algorithm Visualizer EDVR' : 'Wizualizator Algorytmów EDVR'}

@@ -66,6 +66,7 @@ export default function Sidebar(): React.ReactElement {
 
   return (
     <motion.div
+      data-tutorial-step="sidebar-algorithms"
       initial={{ x: -60, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: -60, opacity: 0 }}

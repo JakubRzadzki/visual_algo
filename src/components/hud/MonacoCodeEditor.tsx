@@ -530,6 +530,7 @@ export default function MonacoCodeEditor() {
   return (
     <div
       id="monaco-code-editor"
+      data-tutorial-step="code-editor"
       className={`flex-1 flex flex-col font-mono text-sm text-slate-300 rounded-lg border glass-panel transition-all duration-300 ${
         isRunning
           ? 'border-cyan-400/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]'

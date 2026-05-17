@@ -205,7 +205,7 @@ export default function AlgorithmViewer(): React.ReactElement {
 
       {isSidebarOpen && <Sidebar />}
 
-      <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated border border-white/10 shadow-2xl">
+      <div data-tutorial-step="algorithm-viewer" className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated border border-white/10 shadow-2xl">
         {renderStage()}
       </div>
 
