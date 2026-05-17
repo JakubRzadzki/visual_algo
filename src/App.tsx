@@ -14,6 +14,9 @@ import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { useTutorialStore } from './store/tutorialStore';
 import { tutorialSteps } from './data/tutorialSteps';
 
+// Presentation Mode imports
+import { PresentationOverlay } from './components/presentation/PresentationOverlay';
+
 export default function App() {
   const theme = useUIStore(state => state.theme);
   const location = useLocation();
@@ -57,6 +60,7 @@ export default function App() {
 
         <Navbar />
         <TutorialOverlay />
+        <PresentationOverlay />
 
         <Routes>
           {/* Landing page — Algorithm Catalog */}

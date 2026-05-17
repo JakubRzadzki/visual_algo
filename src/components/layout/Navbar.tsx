@@ -1,9 +1,10 @@
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
-import { Menu, Zap, Home, Sun, Moon, HelpCircle } from 'lucide-react';
+import { Menu, Zap, Home, Sun, Moon, HelpCircle, Monitor } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTutorialStore } from '../../store/tutorialStore';
 import { tutorialSteps } from '../../data/tutorialSteps';
+import { usePresentationStore } from '../../store/presentationStore';
 
 export default function Navbar() {
   const toggleSidebar = useUIStore(state => state.toggleSidebar);
@@ -12,6 +13,8 @@ export default function Navbar() {
   const toggleTheme = useUIStore(state => state.toggleTheme);
   const language = useUIStore(state => state.language);
   const startTutorial = useTutorialStore(state => state.startTutorial);
+  const startPresentation = usePresentationStore(state => state.startPresentation);
+  const isPresentationActive = usePresentationStore(state => state.isActive);
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -50,6 +53,21 @@ export default function Navbar() {
         >
           <HelpCircle className="w-3.5 h-3.5" />
           <span>{language === 'en' ? 'Quick Tour' : 'Przewodnik'}</span>
+        </button>
+
+        {/* Presentation Mode Trigger */}
+        <button
+          onClick={startPresentation}
+          disabled={isPresentationActive}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all active:scale-95 cursor-pointer mr-1 ${
+            isPresentationActive
+              ? 'text-emerald-300/60 bg-emerald-500/5 border-emerald-500/15 cursor-not-allowed'
+              : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border-emerald-500/20 hover:border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.15)]'
+          }`}
+          title={language === 'en' ? 'Start Presentation Mode — Auto-showcase all algorithms' : 'Tryb prezentacji — Automatyczny pokaz algorytmów'}
+        >
+          <Monitor className="w-3.5 h-3.5" />
+          <span>{language === 'en' ? 'Present' : 'Prezentacja'}</span>
         </button>
 
         {isVisualizer && (
