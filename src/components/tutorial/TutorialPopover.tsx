@@ -8,7 +8,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { useFloating, autoUpdate, offset, flip, shift, arrow } from '@floating-ui/react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useTutorialStore } from '../../store/tutorialStore';
@@ -30,6 +30,7 @@ export const TutorialPopover: React.FC = () => {
     stopTutorial,
   } = useTutorialStore();
 
+  const popoverRef = useRef<HTMLDivElement>(null);
   const arrowRef = useRef<HTMLDivElement>(null);
   const currentStep = steps[currentStepIndex];
 
@@ -46,6 +47,9 @@ export const TutorialPopover: React.FC = () => {
     ],
   });
 
+  // Hook into system preferences for reduced motion
+  const shouldReduceMotion = useReducedMotion();
+
   // Dynamically feed the highlighted bounding rect from Zustand into Floating UI as a virtual reference
   useEffect(() => {
     if (highlightRect) {
@@ -56,6 +60,57 @@ export const TutorialPopover: React.FC = () => {
       refs.setReference(null);
     }
   }, [highlightRect, refs]);
+
+  // Trap keyboard focus inside the popover dialog for accessibility (a11y)
+  useEffect(() => {
+    if (status !== 'running') return;
+
+    const handleFocusTrap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      const popoverElement = popoverRef.current;
+      if (!popoverElement) return;
+
+      // Select all standard focusable HTML elements
+      const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      const focusableElements = Array.from(popoverElement.querySelectorAll<HTMLElement>(focusableSelector));
+
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        // Shift + Tab: if on first element, wrap around to last
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        // Tab: if on last element, wrap around to first
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    // Auto-focus the primary interaction button (Next/Finish) when step changes
+    const focusTimer = setTimeout(() => {
+      const nextBtn = popoverRef.current?.querySelector<HTMLButtonElement>('button:last-of-type');
+      if (nextBtn) {
+        nextBtn.focus();
+      } else {
+        popoverRef.current?.focus();
+      }
+    }, 120);
+
+    window.addEventListener('keydown', handleFocusTrap);
+    return () => {
+      clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleFocusTrap);
+    };
+  }, [status, currentStepIndex]);
 
   if (status !== 'running' || !currentStep) return null;
 
@@ -100,17 +155,37 @@ export const TutorialPopover: React.FC = () => {
         transform: 'translate(-50%, -50%)',
       };
 
+  // Animate presence parameters updated to support reduced motion preference
+  const popoverAnimation = shouldReduceMotion
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.1 },
+      }
+    : {
+        initial: { opacity: 0, scale: 0.95, y: highlightRect ? 10 : 0 },
+        animate: { opacity: 1, scale: 1, y: 0 },
+        exit: { opacity: 0, scale: 0.95 },
+        transition: { type: 'spring', stiffness: 350, damping: 28 },
+      };
+
   return (
     <motion.div
-      ref={refs.setFloating}
+      ref={(node) => {
+        // Multi-ref assignment for both Floating UI ref and domestic element Ref
+        refs.setFloating(node);
+        (popoverRef as any).current = node;
+      }}
+      tabIndex={-1}
       style={popoverStyle}
-      className={`z-[9999] max-w-sm sm:max-w-md w-[calc(100vw-32px)] text-white pointer-events-auto
+      className={`z-[9999] max-w-sm sm:max-w-md w-[calc(100vw-32px)] text-white pointer-events-auto outline-none
         bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 shadow-[0_12px_40px_rgba(0,0,0,0.6)]
         rounded-2xl flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-[0_12px_50px_rgba(59,130,246,0.25)]`}
-      initial={{ opacity: 0, scale: 0.95, y: highlightRect ? 10 : 0 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+      initial={popoverAnimation.initial}
+      animate={popoverAnimation.animate}
+      exit={popoverAnimation.exit}
+      transition={popoverAnimation.transition}
       role="dialog"
       aria-modal="true"
       aria-labelledby="tutorial-popover-title"

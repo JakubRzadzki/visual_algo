@@ -7,9 +7,9 @@
  * and rendering components through a React Portal.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useTutorialStore } from '../../store/tutorialStore';
 import { useSpotlightPosition } from '../../hooks/useSpotlightPosition';
 import { TutorialPopover } from './TutorialPopover';
@@ -21,12 +21,62 @@ import { TutorialPopover } from './TutorialPopover';
  * surrounding the active element. Prevents background mouse interactions if `requiresInteraction` is false.
  */
 export const TutorialOverlay: React.FC = () => {
-  const { isActive, status, steps, currentStepIndex, highlightRect } = useTutorialStore();
+  const { isActive, status, steps, currentStepIndex, highlightRect, nextStep, prevStep, stopTutorial } = useTutorialStore();
 
   const currentStep = steps[currentStepIndex];
 
   // Custom hook tracks coordinates of the data-tutorial-step elements
   useSpotlightPosition(isActive && status === 'running' && currentStep ? currentStep.id : null);
+
+  // Hook into system preferences for reduced motion
+  const shouldReduceMotion = useReducedMotion();
+
+  // Listen to keyboard navigation events globally during active runs
+  useEffect(() => {
+    if (!isActive || status !== 'running') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'Right':
+          e.preventDefault();
+          nextStep();
+          break;
+        case 'ArrowLeft':
+        case 'Left':
+          e.preventDefault();
+          prevStep();
+          break;
+        case 'Escape':
+          e.preventDefault();
+          if (window.confirm('Are you sure you want to exit the visual guide?')) {
+            stopTutorial();
+          }
+          break;
+        case ' ': // Spacebar
+          // Prevent advancing if the user is typing in a terminal or Monaco editor
+          const activeTag = document.activeElement?.tagName.toLowerCase();
+          if (
+            activeTag === 'input' ||
+            activeTag === 'textarea' ||
+            document.activeElement?.classList.contains('monaco-editor') ||
+            document.activeElement?.closest('.monaco-editor')
+          ) {
+            return;
+          }
+          e.preventDefault();
+          nextStep();
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isActive, status, nextStep, prevStep, stopTutorial]);
 
   if (!isActive || status === 'idle') return null;
 
@@ -46,6 +96,17 @@ export const TutorialOverlay: React.FC = () => {
     : spotlightShape === 'rounded'
       ? 8
       : 0;
+
+  // Accessibility transitions bypass spring coordinates on reduced motion preference
+  const spotlightTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : {
+        type: 'spring',
+        stiffness: 300,
+        damping: 30,
+      };
+
+  const backdropTransition = shouldReduceMotion ? { duration: 0 } : { duration: 0.25 };
 
   const content = (
     <AnimatePresence>
@@ -74,11 +135,7 @@ export const TutorialOverlay: React.FC = () => {
                     rx,
                     ry: rx,
                   }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 300,
-                    damping: 30,
-                  }}
+                  transition={spotlightTransition}
                 />
               )}
             </mask>
@@ -94,7 +151,7 @@ export const TutorialOverlay: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={backdropTransition}
           />
 
           {/* Interactive Blocker
