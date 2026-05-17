@@ -1,7 +1,9 @@
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
-import { Menu, Zap, Home, Sun, Moon } from 'lucide-react';
+import { Menu, Zap, Home, Sun, Moon, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTutorialStore } from '../../store/tutorialStore';
+import { tutorialSteps } from '../../data/tutorialSteps';
 
 export default function Navbar() {
   const toggleSidebar = useUIStore(state => state.toggleSidebar);
@@ -9,6 +11,7 @@ export default function Navbar() {
   const theme = useUIStore(state => state.theme);
   const toggleTheme = useUIStore(state => state.toggleTheme);
   const language = useUIStore(state => state.language);
+  const startTutorial = useTutorialStore(state => state.startTutorial);
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -39,6 +42,16 @@ export default function Navbar() {
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Help & Tutorial Onboarding Trigger */}
+        <button
+          onClick={() => startTutorial(tutorialSteps)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-500/30 transition-all shadow-[0_0_10px_rgba(6,182,212,0.15)] active:scale-95 cursor-pointer mr-1"
+          title={language === 'en' ? 'Start Interactive Tour' : 'Uruchom interaktywny przewodnik'}
+        >
+          <HelpCircle className="w-3.5 h-3.5" />
+          <span>{language === 'en' ? 'Quick Tour' : 'Przewodnik'}</span>
+        </button>
+
         {isVisualizer && (
           <button
             onClick={() => navigate('/')}
