@@ -8,14 +8,14 @@
  * Respects `prefers-reduced-motion` by disabling animation entirely.
  */
 
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from "react";
 
 /** Color palette for neural nodes — each entry is an RGBA base string. */
 const NODE_COLORS = [
-  { r: 34, g: 211, b: 238 },   // cyan  #22d3ee
-  { r: 59, g: 130, b: 246 },   // blue  #3b82f6
-  { r: 99, g: 102, b: 241 },   // indigo #6366f1
-  { r: 139, g: 92, b: 246 },   // violet #8b5cf6
+  { r: 34, g: 211, b: 238 }, // cyan  #22d3ee
+  { r: 59, g: 130, b: 246 }, // blue  #3b82f6
+  { r: 99, g: 102, b: 241 }, // indigo #6366f1
+  { r: 139, g: 92, b: 246 }, // violet #8b5cf6
 ] as const;
 
 /** Maximum distance² between nodes for edge drawing (180px radius). */
@@ -42,8 +42,8 @@ export default function NeuralNetworkBackground() {
 
   /** Determine if reduced motion is preferred. Safe for SSR — guarded by window check. */
   const prefersReducedMotion = useCallback(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }, []);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function NeuralNetworkBackground() {
 
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     let width = window.innerWidth;
@@ -79,7 +79,8 @@ export default function NeuralNetworkBackground() {
       vx: (Math.random() - 0.5) * 0.35,
       vy: (Math.random() - 0.5) * 0.35,
       pulse: Math.random(),
-      pulseDir: (Math.random() > 0.5 ? 1 : -1) * (0.003 + Math.random() * 0.004),
+      pulseDir:
+        (Math.random() > 0.5 ? 1 : -1) * (0.003 + Math.random() * 0.004),
       colorIdx: Math.floor(Math.random() * NODE_COLORS.length),
     }));
 
@@ -150,11 +151,11 @@ export default function NeuralNetworkBackground() {
     draw();
 
     const handleResize = () => setCanvasSize();
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
       cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, [prefersReducedMotion]);
 
@@ -163,7 +164,7 @@ export default function NeuralNetworkBackground() {
       ref={canvasRef}
       aria-hidden="true"
       className="fixed inset-0 z-[1] pointer-events-none"
-      style={{ willChange: 'transform', opacity: 0.7 }}
+      style={{ willChange: "transform", opacity: 0.7 }}
     />
   );
 }

@@ -11,7 +11,7 @@
  * purely as ambient decoration. Responsive viewBox dimensions.
  */
 
-import { motion } from 'motion/react';
+import { motion } from "motion/react";
 
 export default function ChartDecorations() {
   return (
@@ -26,11 +26,25 @@ export default function ChartDecorations() {
         height="100"
         viewBox="0 0 200 100"
         fill="none"
-        style={{ opacity: 0.10 }}
+        style={{ opacity: 0.1 }}
       >
         {/* Axis lines */}
-        <line x1="20" y1="85" x2="190" y2="85" stroke="#3b82f6" strokeWidth="0.5" />
-        <line x1="20" y1="85" x2="20" y2="10" stroke="#3b82f6" strokeWidth="0.5" />
+        <line
+          x1="20"
+          y1="85"
+          x2="190"
+          y2="85"
+          stroke="#3b82f6"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="20"
+          y1="85"
+          x2="20"
+          y2="10"
+          stroke="#3b82f6"
+          strokeWidth="0.5"
+        />
 
         {/* O(n log n) curve */}
         <motion.path
@@ -42,7 +56,7 @@ export default function ChartDecorations() {
           strokeDasharray="200"
           initial={{ strokeDashoffset: 200 }}
           animate={{ strokeDashoffset: [200, 0, 200] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
 
         {/* O(n²) curve for comparison */}
@@ -55,14 +69,33 @@ export default function ChartDecorations() {
           strokeDasharray="200"
           initial={{ strokeDashoffset: 200 }}
           animate={{ strokeDashoffset: [200, 0, 200] }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
         />
 
         {/* Labels */}
-        <text x="175" y="20" fill="#10b981" fontSize="6" opacity="0.6" fontFamily="monospace">
+        <text
+          x="175"
+          y="20"
+          fill="#10b981"
+          fontSize="6"
+          opacity="0.6"
+          fontFamily="monospace"
+        >
           n log n
         </text>
-        <text x="178" y="8" fill="#22d3ee" fontSize="6" opacity="0.6" fontFamily="monospace">
+        <text
+          x="178"
+          y="8"
+          fill="#22d3ee"
+          fontSize="6"
+          opacity="0.6"
+          fontFamily="monospace"
+        >
           n²
         </text>
       </svg>
@@ -85,9 +118,16 @@ export default function ChartDecorations() {
           strokeDasharray="200"
           initial={{ strokeDashoffset: 200 }}
           animate={{ strokeDashoffset: [200, 0, 200] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
         />
-        <text x="140" y="60" fill="#8b5cf6" fontSize="6" opacity="0.5" fontFamily="monospace">
+        <text
+          x="140"
+          y="60"
+          fill="#8b5cf6"
+          fontSize="6"
+          opacity="0.5"
+          fontFamily="monospace"
+        >
           loss
         </text>
       </svg>
@@ -109,7 +149,7 @@ export default function ChartDecorations() {
             width="8"
             height={h}
             rx="1"
-            fill={i % 3 === 0 ? '#22d3ee' : i % 3 === 1 ? '#3b82f6' : '#10b981'}
+            fill={i % 3 === 0 ? "#22d3ee" : i % 3 === 1 ? "#3b82f6" : "#10b981"}
             initial={{ opacity: 0.4 }}
             animate={{
               opacity: [0.4, 0.8, 0.4],
@@ -119,7 +159,7 @@ export default function ChartDecorations() {
             transition={{
               duration: 3 + i * 0.3,
               repeat: Infinity,
-              ease: 'easeInOut',
+              ease: "easeInOut",
               delay: i * 0.15,
             }}
           />

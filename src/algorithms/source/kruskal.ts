@@ -9,7 +9,7 @@ export function kruskal(nodes: string[], edges: Edge[]) {
   edges.sort((a, b) => a.weight - b.weight);
 
   const parent: Record<string, string> = {};
-  
+
   // Initialize disjoint set
   for (const node of nodes) {
     parent[node] = node;

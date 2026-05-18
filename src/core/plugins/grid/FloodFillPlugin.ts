@@ -16,15 +16,15 @@ import type {
   VisualizationEvent,
   GridInput,
   EventPayload,
-} from '../../../types';
+} from "../../../types";
 
 /**
  * FloodFillPlugin — Generates deterministic simulation events for area expansion.
  */
 export class FloodFillPlugin implements AlgorithmPlugin<GridInput> {
-  id = 'flood-fill';
-  name = 'Flood Fill';
-  category = 'grid' as const;
+  id = "flood-fill";
+  name = "Flood Fill";
+  category = "grid" as const;
 
   /**
    * Helper to serialize node positions into unique look-up string keys.
@@ -53,8 +53,8 @@ export class FloodFillPlugin implements AlgorithmPlugin<GridInput> {
       return {
         events: [],
         metadata: {
-          timeComplexity: 'O(V)',
-          spaceComplexity: 'O(V)',
+          timeComplexity: "O(V)",
+          spaceComplexity: "O(V)",
           executionTimeMs: 0,
           nodeCount: width * height,
           algorithmName: this.name,
@@ -79,9 +79,9 @@ export class FloodFillPlugin implements AlgorithmPlugin<GridInput> {
 
     // Phase 1: Verify valid start parameters
     pushEvent({
-      type: 'SYSTEM_LOG',
+      type: "SYSTEM_LOG",
       message: `Initiating Flood Fill starting from cell (${start.x},${start.y}) on a ${width}x${height} matrix.`,
-      level: 'INFO',
+      level: "INFO",
     });
 
     const startKey = this.toKey(start.x, start.y);
@@ -89,15 +89,15 @@ export class FloodFillPlugin implements AlgorithmPlugin<GridInput> {
     // If starting directly inside a wall, abort fill early
     if (walls.has(startKey)) {
       pushEvent({
-        type: 'SYSTEM_LOG',
+        type: "SYSTEM_LOG",
         message: `Start coordinate (${start.x},${start.y}) is blocked by a wall boundary. Terminating fill expansion.`,
-        level: 'WARN',
+        level: "WARN",
       });
       return {
         events,
         metadata: {
-          timeComplexity: 'O(1)',
-          spaceComplexity: 'O(1)',
+          timeComplexity: "O(1)",
+          spaceComplexity: "O(1)",
           executionTimeMs: performance.now() - startTime,
           nodeCount: width * height,
           algorithmName: this.name,
@@ -112,10 +112,10 @@ export class FloodFillPlugin implements AlgorithmPlugin<GridInput> {
 
     // Highlight starting origin immediately
     pushEvent({
-      type: 'MATRIX_CELL_HIGHLIGHT',
+      type: "MATRIX_CELL_HIGHLIGHT",
       row: start.y,
       col: start.x,
-      color: '#3b82f6', // Rich oceanic blue for flood source
+      color: "#3b82f6", // Rich oceanic blue for flood source
     });
 
     // Phase 3: Iterative orthogonal traversal loop
@@ -124,8 +124,8 @@ export class FloodFillPlugin implements AlgorithmPlugin<GridInput> {
 
       const directions = [
         { x: 0, y: -1 }, // North
-        { x: 1, y: 0 },  // East
-        { x: 0, y: 1 },  // South
+        { x: 1, y: 0 }, // East
+        { x: 0, y: 1 }, // South
         { x: -1, y: 0 }, // West
       ];
 
@@ -136,27 +136,31 @@ export class FloodFillPlugin implements AlgorithmPlugin<GridInput> {
 
         // Filter standard enclosed boundary cells and previously filled components
         if (
-          nx >= 0 && nx < width && ny >= 0 && ny < height &&
-          !walls.has(nKey) && !visited.has(nKey)
+          nx >= 0 &&
+          nx < width &&
+          ny >= 0 &&
+          ny < height &&
+          !walls.has(nKey) &&
+          !visited.has(nKey)
         ) {
           visited.add(nKey);
           queue.push({ x: nx, y: ny });
 
           // Emits discrete step events driving individual visual color updates
           pushEvent({
-            type: 'MATRIX_CELL_HIGHLIGHT',
+            type: "MATRIX_CELL_HIGHLIGHT",
             row: ny,
             col: nx,
-            color: '#0ea5e9', // Vibrant sky blue water propagation accent
+            color: "#0ea5e9", // Vibrant sky blue water propagation accent
           });
         }
       }
     }
 
     pushEvent({
-      type: 'SYSTEM_LOG',
+      type: "SYSTEM_LOG",
       message: `Flood Fill completed successfully. Total flooded area span: ${visited.size} cells.`,
-      level: 'INFO',
+      level: "INFO",
     });
 
     const endTime = performance.now();
@@ -164,8 +168,8 @@ export class FloodFillPlugin implements AlgorithmPlugin<GridInput> {
     return {
       events,
       metadata: {
-        timeComplexity: 'O(V)',
-        spaceComplexity: 'O(V)',
+        timeComplexity: "O(V)",
+        spaceComplexity: "O(V)",
         executionTimeMs: endTime - startTime,
         nodeCount: width * height,
         algorithmName: this.name,

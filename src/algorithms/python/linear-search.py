@@ -1,9 +1,11 @@
 import json
 
+
 def emit(event_type, **kwargs):
     event = {"type": event_type}
     event.update(kwargs)
     print(json.dumps(event))
+
 
 def linear_search(arr, target):
     for i, val in enumerate(arr):
@@ -13,6 +15,7 @@ def linear_search(arr, target):
             return i
     emit("SEARCH_NOT_FOUND", target=target)
     return -1
+
 
 if __name__ == "__main__":
     arr = [10, 24, 32, 45, 50, 68, 71, 89]

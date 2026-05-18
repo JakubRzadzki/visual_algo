@@ -9,11 +9,11 @@
 
 /** Visual state assigned to each bar in a given frame. */
 export type BarStatus =
-  | 'default'
-  | 'comparing'
-  | 'swapping'
-  | 'sorted'
-  | 'pivot';
+  | "default"
+  | "comparing"
+  | "swapping"
+  | "sorted"
+  | "pivot";
 
 /**
  * A single immutable snapshot of the sorting algorithm's state.
@@ -85,10 +85,10 @@ export interface SortResult {
  * Used as keys in the algorithm registry.
  */
 export type SortAlgorithmId =
-  | 'bubble-sort'
-  | 'quick-sort'
-  | 'merge-sort'
-  | 'heap-sort';
+  | "bubble-sort"
+  | "quick-sort"
+  | "merge-sort"
+  | "heap-sort";
 
 /** Signature for a sorting frame generator function. */
 export type FrameGenerator = (input: number[]) => SortResult;

@@ -9,9 +9,9 @@
  * - Fully responsive: narrower bars and reduced gaps on mobile.
  */
 
-import { useMemo } from 'react';
-import { motion } from 'motion/react';
-import type { SortFrame, BarStatus } from '../types';
+import { useMemo } from "react";
+import { motion } from "motion/react";
+import type { SortFrame, BarStatus } from "../types";
 
 /** Performance threshold: disable Framer Motion layout animations above this count. */
 const LAYOUT_ANIM_THRESHOLD = 50;
@@ -29,39 +29,42 @@ interface SortingBarsProps {
  * @returns The BarStatus determining its color and glow.
  */
 function getBarStatus(frame: SortFrame, index: number): BarStatus {
-  if (frame.swapping.includes(index)) return 'swapping';
-  if (frame.comparing.includes(index)) return 'comparing';
-  if (frame.pivot === index) return 'pivot';
-  if (frame.sorted.includes(index)) return 'sorted';
-  return 'default';
+  if (frame.swapping.includes(index)) return "swapping";
+  if (frame.comparing.includes(index)) return "comparing";
+  if (frame.pivot === index) return "pivot";
+  if (frame.sorted.includes(index)) return "sorted";
+  return "default";
 }
 
 /** Color mappings for each bar status — gradient, glow shadow, and ring. */
-const BAR_STYLES: Record<BarStatus, { bg: string; shadow: string; ring: string }> = {
+const BAR_STYLES: Record<
+  BarStatus,
+  { bg: string; shadow: string; ring: string }
+> = {
   default: {
-    bg: 'bg-gradient-to-t from-slate-700 to-slate-500',
-    shadow: '',
-    ring: '',
+    bg: "bg-gradient-to-t from-slate-700 to-slate-500",
+    shadow: "",
+    ring: "",
   },
   comparing: {
-    bg: 'bg-gradient-to-t from-fuchsia-600 to-fuchsia-400',
-    shadow: 'shadow-[0_0_20px_rgba(217,70,239,0.6)]',
-    ring: 'ring-2 ring-fuchsia-400/60',
+    bg: "bg-gradient-to-t from-fuchsia-600 to-fuchsia-400",
+    shadow: "shadow-[0_0_20px_rgba(217,70,239,0.6)]",
+    ring: "ring-2 ring-fuchsia-400/60",
   },
   swapping: {
-    bg: 'bg-gradient-to-t from-cyan-500 to-cyan-300',
-    shadow: 'shadow-[0_0_25px_rgba(34,211,238,0.7)]',
-    ring: 'ring-2 ring-cyan-300/60',
+    bg: "bg-gradient-to-t from-cyan-500 to-cyan-300",
+    shadow: "shadow-[0_0_25px_rgba(34,211,238,0.7)]",
+    ring: "ring-2 ring-cyan-300/60",
   },
   sorted: {
-    bg: 'bg-gradient-to-t from-emerald-600 to-emerald-400',
-    shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.5)]',
-    ring: 'ring-1 ring-emerald-400/40',
+    bg: "bg-gradient-to-t from-emerald-600 to-emerald-400",
+    shadow: "shadow-[0_0_15px_rgba(16,185,129,0.5)]",
+    ring: "ring-1 ring-emerald-400/40",
   },
   pivot: {
-    bg: 'bg-gradient-to-t from-violet-600 to-violet-400',
-    shadow: 'shadow-[0_0_20px_rgba(139,92,246,0.6)]',
-    ring: 'ring-2 ring-violet-400/60',
+    bg: "bg-gradient-to-t from-violet-600 to-violet-400",
+    shadow: "shadow-[0_0_20px_rgba(139,92,246,0.6)]",
+    ring: "ring-2 ring-violet-400/60",
   },
 };
 
@@ -95,12 +98,12 @@ export default function SortingBars({ frame }: SortingBarsProps) {
             <motion.div
               key={`bar-${value}`}
               layout
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
               className="flex flex-col items-center justify-end h-full"
               style={{
                 flex: `1 1 0%`,
                 maxWidth: `${Math.max(100 / count, 2)}%`,
-                willChange: 'transform',
+                willChange: "transform",
               }}
             >
               {barContent}

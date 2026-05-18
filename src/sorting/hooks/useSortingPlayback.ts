@@ -12,8 +12,8 @@
  * - Speed changes take effect instantly without resetting playback.
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react';
-import type { SortFrame } from '../types';
+import { useState, useRef, useCallback, useEffect } from "react";
+import type { SortFrame } from "../types";
 
 /** Base interval between frames at 1x speed (milliseconds). */
 const BASE_TICK_MS = 400;
@@ -87,10 +87,18 @@ export function useSortingPlayback(): PlaybackControls {
   const mountedRef = useRef(true);
 
   // Keep refs in sync with state
-  useEffect(() => { framesRef.current = frames; }, [frames]);
-  useEffect(() => { indexRef.current = frameIndex; }, [frameIndex]);
-  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
-  useEffect(() => { speedRef.current = speed; }, [speed]);
+  useEffect(() => {
+    framesRef.current = frames;
+  }, [frames]);
+  useEffect(() => {
+    indexRef.current = frameIndex;
+  }, [frameIndex]);
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
 
   // Cleanup on unmount — cancel RAF and prevent state updates
   useEffect(() => {
@@ -105,7 +113,7 @@ export function useSortingPlayback(): PlaybackControls {
   }, []);
 
   /** RAF-based animation loop with deltaTime accumulation. */
-  const tick = useCallback((timestamp: number) => {
+  const tick = useCallback(function tick(timestamp: number) {
     if (!isPlayingRef.current || !mountedRef.current) return;
 
     const delta = lastTimeRef.current ? timestamp - lastTimeRef.current : 0;
@@ -204,15 +212,18 @@ export function useSortingPlayback(): PlaybackControls {
     setSpeedState(clamped);
   }, []);
 
-  const loadFrames = useCallback((newFrames: SortFrame[]) => {
-    pause();
-    framesRef.current = newFrames;
-    setFrames(newFrames);
-    indexRef.current = 0;
-    setFrameIndex(0);
-  }, [pause]);
+  const loadFrames = useCallback(
+    (newFrames: SortFrame[]) => {
+      pause();
+      framesRef.current = newFrames;
+      setFrames(newFrames);
+      indexRef.current = 0;
+      setFrameIndex(0);
+    },
+    [pause],
+  );
 
-  const currentFrame = frames.length > 0 ? frames[frameIndex] ?? null : null;
+  const currentFrame = frames.length > 0 ? (frames[frameIndex] ?? null) : null;
 
   return {
     currentFrame,

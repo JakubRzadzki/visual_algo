@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@floating-ui/react": "^0.27.19",
     "@monaco-editor/react": "^4.7.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/react-syntax-highlighter": "^15.5.13",
@@ -25,6 +26,7 @@
     "react": "^19.2.4",
     "react-cytoscapejs": "^2.0.0",
     "react-dom": "^19.2.4",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.14.2",
     "react-syntax-highlighter": "^16.1.1",
     "react-zoom-pan-pinch": "^4.0.3",
@@ -35,6 +37,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/cytoscape": "^3.21.9",
     "@types/d3": "^7.4.3",
     "@types/d3-hierarchy": "^3.1.7",

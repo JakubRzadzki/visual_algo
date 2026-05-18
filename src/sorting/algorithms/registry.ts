@@ -6,18 +6,18 @@
  * an algorithm name to its frame generation function.
  */
 
-import type { SortAlgorithmId, FrameGenerator } from '../types';
-import { generateBubbleSortFrames } from './bubbleSort';
-import { generateQuickSortFrames } from './quickSort';
-import { generateMergeSortFrames } from './mergeSortFrames';
-import { generateHeapSortFrames } from './heapSortFrames';
+import type { SortAlgorithmId, FrameGenerator } from "../types";
+import { generateBubbleSortFrames } from "./bubbleSort";
+import { generateQuickSortFrames } from "./quickSort";
+import { generateMergeSortFrames } from "./mergeSortFrames";
+import { generateHeapSortFrames } from "./heapSortFrames";
 
 /** Map of algorithm IDs to their frame generator functions. */
 export const ALGORITHM_REGISTRY: Record<SortAlgorithmId, FrameGenerator> = {
-  'bubble-sort': generateBubbleSortFrames,
-  'quick-sort': generateQuickSortFrames,
-  'merge-sort': generateMergeSortFrames,
-  'heap-sort': generateHeapSortFrames,
+  "bubble-sort": generateBubbleSortFrames,
+  "quick-sort": generateQuickSortFrames,
+  "merge-sort": generateMergeSortFrames,
+  "heap-sort": generateHeapSortFrames,
 };
 
 /**
@@ -28,10 +28,13 @@ export const ALGORITHM_REGISTRY: Record<SortAlgorithmId, FrameGenerator> = {
  * @returns The SortAlgorithmId, or null if not found.
  */
 export function resolveAlgorithmId(name: string): SortAlgorithmId | null {
-  const normalized = name.toLowerCase().replace(/\s+/g, '-');
+  const normalized = name.toLowerCase().replace(/\s+/g, "-");
   if (normalized in ALGORITHM_REGISTRY) return normalized as SortAlgorithmId;
 
   // Fuzzy match by substring
   const entries = Object.keys(ALGORITHM_REGISTRY) as SortAlgorithmId[];
-  return entries.find(id => normalized.includes(id) || id.includes(normalized)) ?? null;
+  return (
+    entries.find((id) => normalized.includes(id) || id.includes(normalized)) ??
+    null
+  );
 }

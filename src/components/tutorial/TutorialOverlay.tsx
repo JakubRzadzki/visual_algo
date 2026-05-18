@@ -7,12 +7,12 @@
  * and rendering components through a React Portal.
  */
 
-import React, { useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { useTutorialStore } from '../../store/tutorialStore';
-import { useSpotlightPosition } from '../../hooks/useSpotlightPosition';
-import { TutorialPopover } from './TutorialPopover';
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { useTutorialStore } from "../../store/tutorialStore";
+import { useSpotlightPosition } from "../../hooks/useSpotlightPosition";
+import { TutorialPopover } from "./TutorialPopover";
 
 /**
  * Renders the full-screen SVG spotlight overlay.
@@ -21,66 +21,81 @@ import { TutorialPopover } from './TutorialPopover';
  * surrounding the active element. Prevents background mouse interactions if `requiresInteraction` is false.
  */
 export const TutorialOverlay: React.FC = () => {
-  const { isActive, status, steps, currentStepIndex, highlightRect, nextStep, prevStep, stopTutorial } = useTutorialStore();
+  const {
+    isActive,
+    status,
+    steps,
+    currentStepIndex,
+    highlightRect,
+    nextStep,
+    prevStep,
+    stopTutorial,
+  } = useTutorialStore();
 
   const currentStep = steps[currentStepIndex];
 
   // Custom hook tracks coordinates of the data-tutorial-step elements
-  useSpotlightPosition(isActive && status === 'running' && currentStep ? currentStep.id : null);
+  useSpotlightPosition(
+    isActive && status === "running" && currentStep ? currentStep.id : null,
+  );
 
   // Hook into system preferences for reduced motion
   const shouldReduceMotion = useReducedMotion();
 
   // Listen to keyboard navigation events globally during active runs
   useEffect(() => {
-    if (!isActive || status !== 'running') return;
+    if (!isActive || status !== "running") return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
-        case 'ArrowRight':
-        case 'Right':
+        case "ArrowRight":
+        case "Right":
           e.preventDefault();
           nextStep();
           break;
-        case 'ArrowLeft':
-        case 'Left':
+        case "ArrowLeft":
+        case "Left":
           e.preventDefault();
           prevStep();
           break;
-        case 'Escape':
+        case "Escape":
           e.preventDefault();
-          if (window.confirm('Are you sure you want to exit the visual guide?')) {
+          if (
+            window.confirm("Are you sure you want to exit the visual guide?")
+          ) {
             stopTutorial();
           }
           break;
-        case ' ': // Spacebar
+        case " ": {
+          // Spacebar
           // Prevent advancing if the user is typing in a terminal or Monaco editor
           const activeTag = document.activeElement?.tagName.toLowerCase();
           if (
-            activeTag === 'input' ||
-            activeTag === 'textarea' ||
-            document.activeElement?.classList.contains('monaco-editor') ||
-            document.activeElement?.closest('.monaco-editor')
+            activeTag === "input" ||
+            activeTag === "textarea" ||
+            document.activeElement?.classList.contains("monaco-editor") ||
+            document.activeElement?.closest(".monaco-editor")
           ) {
             return;
           }
           e.preventDefault();
           nextStep();
           break;
+        }
         default:
           break;
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isActive, status, nextStep, prevStep, stopTutorial]);
 
-  if (!isActive || status === 'idle') return null;
+  if (!isActive || status === "idle") return null;
 
-  const spotlightShape = currentStep?.spotlightShape || 'rounded';
+  const spotlightShape = currentStep?.spotlightShape || "rounded";
   const padding = currentStep?.spotlightPadding ?? 8;
   const requiresInteraction = currentStep?.requiresInteraction ?? false;
 
@@ -91,22 +106,25 @@ export const TutorialOverlay: React.FC = () => {
   const height = highlightRect ? highlightRect.height + padding * 2 : 0;
 
   // Compute border-radius dynamically (circular cutouts use the radius equal to half of max side dimension)
-  const rx = spotlightShape === 'circle'
-    ? Math.max(width, height) / 2
-    : spotlightShape === 'rounded'
-      ? 8
-      : 0;
+  const rx =
+    spotlightShape === "circle"
+      ? Math.max(width, height) / 2
+      : spotlightShape === "rounded"
+        ? 8
+        : 0;
 
   // Accessibility transitions bypass spring coordinates on reduced motion preference
   const spotlightTransition = shouldReduceMotion
     ? { duration: 0 }
     : {
-        type: 'spring',
+        type: "spring" as const,
         stiffness: 300,
         damping: 30,
       };
 
-  const backdropTransition = shouldReduceMotion ? { duration: 0 } : { duration: 0.25 };
+  const backdropTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { duration: 0.25 };
 
   const content = (
     <AnimatePresence>
@@ -166,7 +184,7 @@ export const TutorialOverlay: React.FC = () => {
                 height="100%"
                 fill="transparent"
                 mask="url(#tutorial-spotlight-mask)"
-                style={{ pointerEvents: 'all' }}
+                style={{ pointerEvents: "all" }}
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -177,7 +195,7 @@ export const TutorialOverlay: React.FC = () => {
                 width="100%"
                 height="100%"
                 fill="transparent"
-                style={{ pointerEvents: 'all' }}
+                style={{ pointerEvents: "all" }}
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();

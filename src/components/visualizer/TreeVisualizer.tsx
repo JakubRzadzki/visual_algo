@@ -1,12 +1,13 @@
-import React, { useEffect } from 'react';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { useTreeStore } from '../../store/treeStore';
-import { TreeCanvas } from './TreeCanvas';
-import { TreeControlPanel } from './TreeControlPanel';
-import { Info } from 'lucide-react';
+import React, { useEffect } from "react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { useTreeStore } from "../../store/treeStore";
+import { TreeCanvas } from "./TreeCanvas";
+import { TreeControlPanel } from "./TreeControlPanel";
+import { Info } from "lucide-react";
 
 export default function TreeVisualizer(): React.ReactElement {
-  const { isPlaying, currentStepIndex, steps, nextStep, speed, pause } = useTreeStore();
+  const { isPlaying, currentStepIndex, steps, nextStep, speed, pause } =
+    useTreeStore();
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -33,7 +34,9 @@ export default function TreeVisualizer(): React.ReactElement {
             <h3 className="font-semibold text-sm text-slate-200">
               Tree Visualizer
             </h3>
-            <p className="text-[10px] text-slate-400">Drag to Pan • Scroll to Zoom</p>
+            <p className="text-[10px] text-slate-400">
+              Drag to Pan • Scroll to Zoom
+            </p>
           </div>
         </div>
       </div>

@@ -12,9 +12,9 @@
  * Respects prefers-reduced-motion for all entrance/hover animations.
  */
 
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
   Zap,
@@ -26,17 +26,20 @@ import {
   GitMerge,
   Layers,
   Grid,
-} from 'lucide-react';
-import { useUIStore } from '../../store/uiStore';
-import { getTranslation } from '../../data/translations';
-import { ALGORITHM_CATALOG } from '../../data/algorithmCatalog';
-import type { CategoryEntry, AlgorithmEntry } from '../../data/algorithmCatalog';
+} from "lucide-react";
+import { useUIStore } from "../../store/uiStore";
+import { getTranslation } from "../../data/translations";
+import { ALGORITHM_CATALOG } from "../../data/algorithmCatalog";
+import type {
+  CategoryEntry,
+  AlgorithmEntry,
+} from "../../data/algorithmCatalog";
 
-import NeuralNetworkBackground from '../background/NeuralNetworkBackground';
-import BackgroundGrid from '../background/BackgroundGrid';
-import GraphDecorations from '../background/GraphDecorations';
-import AlgorithmCodeLayer from '../background/AlgorithmCodeLayer';
-import ChartDecorations from '../background/ChartDecorations';
+import NeuralNetworkBackground from "../background/NeuralNetworkBackground";
+import BackgroundGrid from "../background/BackgroundGrid";
+import GraphDecorations from "../background/GraphDecorations";
+import AlgorithmCodeLayer from "../background/AlgorithmCodeLayer";
+import ChartDecorations from "../background/ChartDecorations";
 
 /**
  * Stagger timing for card entrance animations.
@@ -46,37 +49,38 @@ const STAGGER_DELAY = 0.08;
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [hoveredAlgo, setHoveredAlgo] = useState<string | null>(null);
 
-  const language = useUIStore(state => state.language);
+  const language = useUIStore((state) => state.language);
   const t = getTranslation(language);
 
   // Filter categories & algorithms based on search
   const filteredCatalog = useMemo(() => {
     if (!searchQuery.trim()) return ALGORITHM_CATALOG;
     const q = searchQuery.toLowerCase();
-    return ALGORITHM_CATALOG
-      .map(cat => ({
-        ...cat,
-        algorithms: cat.algorithms.filter(
-          algo =>
-            algo.name.toLowerCase().includes(q) ||
-            algo.name_pl.toLowerCase().includes(q) ||
-            algo.shortName.toLowerCase().includes(q) ||
-            algo.description.toLowerCase().includes(q) ||
-            algo.description_pl.toLowerCase().includes(q) ||
-            cat.label.toLowerCase().includes(q) ||
-            cat.label_pl.toLowerCase().includes(q)
-        ),
-      }))
-      .filter(cat => cat.algorithms.length > 0);
+    return ALGORITHM_CATALOG.map((cat) => ({
+      ...cat,
+      algorithms: cat.algorithms.filter(
+        (algo) =>
+          algo.name.toLowerCase().includes(q) ||
+          algo.name_pl.toLowerCase().includes(q) ||
+          algo.shortName.toLowerCase().includes(q) ||
+          algo.description.toLowerCase().includes(q) ||
+          algo.description_pl.toLowerCase().includes(q) ||
+          cat.label.toLowerCase().includes(q) ||
+          cat.label_pl.toLowerCase().includes(q),
+      ),
+    })).filter((cat) => cat.algorithms.length > 0);
   }, [searchQuery]);
 
-  const totalAlgorithms = ALGORITHM_CATALOG.reduce((sum, c) => sum + c.algorithms.length, 0);
+  const totalAlgorithms = ALGORITHM_CATALOG.reduce(
+    (sum, c) => sum + c.algorithms.length,
+    0,
+  );
   const availableCount = ALGORITHM_CATALOG.reduce(
-    (sum, c) => sum + c.algorithms.filter(a => a.available).length,
-    0
+    (sum, c) => sum + c.algorithms.filter((a) => a.available).length,
+    0,
   );
 
   const handleAlgoClick = (cat: CategoryEntry, algo: AlgorithmEntry) => {
@@ -98,7 +102,8 @@ export default function Dashboard() {
         className="fixed inset-0 z-[3] pointer-events-none"
         aria-hidden="true"
         style={{
-          background: 'linear-gradient(135deg, rgba(2,6,23,0.5) 0%, rgba(3,7,18,0.3) 50%, rgba(5,8,22,0.5) 100%)',
+          background:
+            "linear-gradient(135deg, rgba(2,6,23,0.5) 0%, rgba(3,7,18,0.3) 50%, rgba(5,8,22,0.5) 100%)",
         }}
       />
 
@@ -117,12 +122,12 @@ export default function Dashboard() {
               className="relative p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-cyan-500/15 to-violet-500/15 border border-cyan-400/20"
               animate={{
                 boxShadow: [
-                  '0 0 20px rgba(34,211,238,0.15), inset 0 0 20px rgba(34,211,238,0.05)',
-                  '0 0 35px rgba(34,211,238,0.25), inset 0 0 30px rgba(34,211,238,0.08)',
-                  '0 0 20px rgba(34,211,238,0.15), inset 0 0 20px rgba(34,211,238,0.05)',
+                  "0 0 20px rgba(34,211,238,0.15), inset 0 0 20px rgba(34,211,238,0.05)",
+                  "0 0 35px rgba(34,211,238,0.25), inset 0 0 30px rgba(34,211,238,0.08)",
+                  "0 0 20px rgba(34,211,238,0.15), inset 0 0 20px rgba(34,211,238,0.05)",
                 ],
               }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
               <Zap className="w-7 h-7 sm:w-8 sm:h-8 text-cyan-400" />
             </motion.div>
@@ -133,8 +138,9 @@ export default function Dashboard() {
             <span
               className="bg-clip-text text-transparent animate-gradient-shift"
               style={{
-                backgroundImage: 'linear-gradient(90deg, #22d3ee, #3b82f6, #8b5cf6, #6366f1, #22d3ee)',
-                backgroundSize: '300% 100%',
+                backgroundImage:
+                  "linear-gradient(90deg, #22d3ee, #3b82f6, #8b5cf6, #6366f1, #22d3ee)",
+                backgroundSize: "300% 100%",
               }}
             >
               Algorithm Visualizer
@@ -146,19 +152,31 @@ export default function Dashboard() {
             className="absolute left-1/2 top-16 sm:top-20 -translate-x-1/2 w-[300px] sm:w-[500px] h-[80px] sm:h-[120px] pointer-events-none"
             aria-hidden="true"
             style={{
-              background: 'radial-gradient(ellipse at center, rgba(34,211,238,0.12) 0%, transparent 70%)',
-              filter: 'blur(30px)',
+              background:
+                "radial-gradient(ellipse at center, rgba(34,211,238,0.12) 0%, transparent 70%)",
+              filter: "blur(30px)",
             }}
           />
 
           <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            {language === 'en' ? (
-              <>Explore {totalAlgorithms} algorithms across {ALGORITHM_CATALOG.length} categories.</>
+            {language === "en" ? (
+              <>
+                Explore {totalAlgorithms} algorithms across{" "}
+                {ALGORITHM_CATALOG.length} categories.
+              </>
             ) : (
-              <>Odkryj {totalAlgorithms} algorytmów w {ALGORITHM_CATALOG.length} kategoriach.</>
-            )}
-            {' '}
-            <span className="text-cyan-400 font-semibold">{availableCount} {language === 'en' ? 'ready to visualize' : 'gotowych do wizualizacji'}</span>, {t.comingSoon}.
+              <>
+                Odkryj {totalAlgorithms} algorytmów w {ALGORITHM_CATALOG.length}{" "}
+                kategoriach.
+              </>
+            )}{" "}
+            <span className="text-cyan-400 font-semibold">
+              {availableCount}{" "}
+              {language === "en"
+                ? "ready to visualize"
+                : "gotowych do wizualizacji"}
+            </span>
+            , {t.comingSoon}.
           </p>
         </motion.header>
 
@@ -174,7 +192,8 @@ export default function Dashboard() {
             <div
               className="absolute -inset-0.5 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 blur-sm"
               style={{
-                background: 'linear-gradient(135deg, rgba(34,211,238,0.2), rgba(99,102,241,0.2), rgba(139,92,246,0.2))',
+                background:
+                  "linear-gradient(135deg, rgba(34,211,238,0.2), rgba(99,102,241,0.2), rgba(139,92,246,0.2))",
               }}
               aria-hidden="true"
             />
@@ -182,17 +201,21 @@ export default function Dashboard() {
             <input
               id="dashboard-search"
               type="text"
-              placeholder={language === 'en' ? "Search algorithms… (e.g. Dijkstra, Quick Sort, A*)" : "Szukaj algorytmów… (np. Dijkstra, Sortowanie, A*)"}
+              placeholder={
+                language === "en"
+                  ? "Search algorithms… (e.g. Dijkstra, Quick Sort, A*)"
+                  : "Szukaj algorytmów… (np. Dijkstra, Sortowanie, A*)"
+              }
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="relative w-full pl-14 pr-6 py-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-white/[0.08] text-slate-200 text-base placeholder:text-slate-500 focus:outline-none focus:border-cyan-400/30 focus:shadow-[0_0_40px_rgba(34,211,238,0.08)] transition-all duration-300 z-10"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={() => setSearchQuery("")}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors text-sm z-10"
               >
-                {language === 'en' ? 'Clear' : 'Wyczyść'}
+                {language === "en" ? "Clear" : "Wyczyść"}
               </button>
             )}
           </div>
@@ -209,12 +232,15 @@ export default function Dashboard() {
               className="text-center py-20"
             >
               <p className="text-slate-500 text-lg">
-                {language === 'en' 
-                  ? `No algorithms found for "${searchQuery}"` 
+                {language === "en"
+                  ? `No algorithms found for "${searchQuery}"`
                   : `Nie znaleziono algorytmów dla frazy "${searchQuery}"`}
               </p>
-              <button onClick={() => setSearchQuery('')} className="mt-4 text-cyan-400 hover:underline text-sm">
-                {language === 'en' ? 'Clear search' : 'Wyczyść wyszukiwanie'}
+              <button
+                onClick={() => setSearchQuery("")}
+                className="mt-4 text-cyan-400 hover:underline text-sm"
+              >
+                {language === "en" ? "Clear search" : "Wyczyść wyszukiwanie"}
               </button>
             </motion.div>
           ) : (
@@ -244,15 +270,12 @@ export default function Dashboard() {
           transition={{ delay: 1.0 }}
           className="text-center mt-14 sm:mt-20 pb-8 text-slate-600 text-sm"
         >
-          <p>
-            Algorithm Visualizer EDVR • Event-Driven Visualization Runtime
-          </p>
+          <p>Algorithm Visualizer EDVR • Event-Driven Visualization Runtime</p>
         </motion.footer>
       </div>
     </div>
   );
 }
-
 
 /* ──────────────────────────────────────────────────────────────────────
  * AnimatedCategoryCard
@@ -281,17 +304,17 @@ interface AnimatedCategoryCardProps {
  */
 const getCategoryIcon = (id: string): React.ReactElement => {
   switch (id) {
-    case 'sorting':
+    case "sorting":
       return <BarChart2 className="w-5 h-5 text-sky-400" />;
-    case 'searching':
+    case "searching":
       return <Search className="w-5 h-5 text-violet-400" />;
-    case 'graphs':
+    case "graphs":
       return <Network className="w-5 h-5 text-emerald-400" />;
-    case 'trees':
+    case "trees":
       return <GitMerge className="w-5 h-5 text-amber-400" />;
-    case 'dp':
+    case "dp":
       return <Layers className="w-5 h-5 text-rose-400" />;
-    case 'grid':
+    case "grid":
       return <Grid className="w-5 h-5 text-indigo-400" />;
     default:
       return <Zap className="w-5 h-5 text-cyan-400" />;
@@ -306,20 +329,20 @@ const getCategoryIcon = (id: string): React.ReactElement => {
  */
 const getCategoryHoverClasses = (id: string): string => {
   switch (id) {
-    case 'sorting':
-      return 'hover:border-sky-500/35 hover:shadow-[0_0_30px_rgba(14,165,233,0.12)]';
-    case 'searching':
-      return 'hover:border-violet-500/35 hover:shadow-[0_0_30px_rgba(139,92,246,0.12)]';
-    case 'graphs':
-      return 'hover:border-emerald-500/35 hover:shadow-[0_0_30px_rgba(16,185,129,0.12)]';
-    case 'trees':
-      return 'hover:border-amber-500/35 hover:shadow-[0_0_30px_rgba(245,158,11,0.12)]';
-    case 'dp':
-      return 'hover:border-rose-500/35 hover:shadow-[0_0_30px_rgba(244,63,94,0.12)]';
-    case 'grid':
-      return 'hover:border-indigo-500/35 hover:shadow-[0_0_30px_rgba(99,102,241,0.12)]';
+    case "sorting":
+      return "hover:border-sky-500/35 hover:shadow-[0_0_30px_rgba(14,165,233,0.12)]";
+    case "searching":
+      return "hover:border-violet-500/35 hover:shadow-[0_0_30px_rgba(139,92,246,0.12)]";
+    case "graphs":
+      return "hover:border-emerald-500/35 hover:shadow-[0_0_30px_rgba(16,185,129,0.12)]";
+    case "trees":
+      return "hover:border-amber-500/35 hover:shadow-[0_0_30px_rgba(245,158,11,0.12)]";
+    case "dp":
+      return "hover:border-rose-500/35 hover:shadow-[0_0_30px_rgba(244,63,94,0.12)]";
+    case "grid":
+      return "hover:border-indigo-500/35 hover:shadow-[0_0_30px_rgba(99,102,241,0.12)]";
     default:
-      return 'hover:border-cyan-500/35 hover:shadow-[0_0_30px_rgba(34,211,238,0.12)]';
+      return "hover:border-cyan-500/35 hover:shadow-[0_0_30px_rgba(34,211,238,0.12)]";
   }
 };
 
@@ -331,20 +354,20 @@ const getCategoryHoverClasses = (id: string): string => {
  */
 const getPillHoverStyles = (categoryId: string): string => {
   switch (categoryId) {
-    case 'sorting':
-      return 'hover:bg-sky-500/10 hover:border-sky-500/30 hover:text-sky-300';
-    case 'searching':
-      return 'hover:bg-violet-500/10 hover:border-violet-500/30 hover:text-violet-300';
-    case 'graphs':
-      return 'hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-300';
-    case 'trees':
-      return 'hover:bg-amber-500/10 hover:border-amber-500/30 hover:text-amber-300';
-    case 'dp':
-      return 'hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-300';
-    case 'grid':
-      return 'hover:bg-indigo-500/10 hover:border-indigo-500/30 hover:text-indigo-300';
+    case "sorting":
+      return "hover:bg-sky-500/10 hover:border-sky-500/30 hover:text-sky-300";
+    case "searching":
+      return "hover:bg-violet-500/10 hover:border-violet-500/30 hover:text-violet-300";
+    case "graphs":
+      return "hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-300";
+    case "trees":
+      return "hover:bg-amber-500/10 hover:border-amber-500/30 hover:text-amber-300";
+    case "dp":
+      return "hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-300";
+    case "grid":
+      return "hover:bg-indigo-500/10 hover:border-indigo-500/30 hover:text-indigo-300";
     default:
-      return 'hover:bg-cyan-500/10 hover:border-cyan-500/30 hover:text-cyan-300';
+      return "hover:bg-cyan-500/10 hover:border-cyan-500/30 hover:text-cyan-300";
   }
 };
 
@@ -357,8 +380,8 @@ function AnimatedCategoryCard({
 }: AnimatedCategoryCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 25, scale: 0.96, filter: 'blur(6px)' }}
-      animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+      initial={{ opacity: 0, y: 25, scale: 0.96, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
       exit={{ opacity: 0, y: -10 }}
       transition={{
         duration: 0.5,
@@ -367,9 +390,9 @@ function AnimatedCategoryCard({
       }}
       layout
       className={`hover-card group relative rounded-2xl glacier-border glass-panel p-4 sm:p-5 transition-all duration-300 overflow-visible h-full flex flex-col justify-between ${getCategoryHoverClasses(
-        cat.id
+        cat.id,
       )}`}
-      style={{ willChange: 'transform, opacity' }}
+      style={{ willChange: "transform, opacity" }}
     >
       {/* Gradient top-border accent */}
       <div
@@ -383,9 +406,9 @@ function AnimatedCategoryCard({
         aria-hidden="true"
         style={{
           background:
-            'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 55%, transparent 60%)',
-          backgroundSize: '200% 100%',
-          backgroundPosition: '200% 0',
+            "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 55%, transparent 60%)",
+          backgroundSize: "200% 100%",
+          backgroundPosition: "200% 0",
         }}
       />
 
@@ -394,7 +417,8 @@ function AnimatedCategoryCard({
         className="absolute inset-0 rounded-2xl pointer-events-none"
         aria-hidden="true"
         style={{
-          boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.04), inset 0 -1px 2px rgba(0,0,0,0.3)',
+          boxShadow:
+            "inset 0 1px 1px rgba(255,255,255,0.04), inset 0 -1px 2px rgba(0,0,0,0.3)",
         }}
       />
 
@@ -408,16 +432,22 @@ function AnimatedCategoryCard({
             {getCategoryIcon(cat.id)}
           </div>
           <h2 className="text-base sm:text-lg font-bold text-slate-200 tracking-wide">
-            {useUIStore.getState().language === 'en' ? cat.label : cat.label_pl}
+            {useUIStore.getState().language === "en" ? cat.label : cat.label_pl}
           </h2>
           <span className="ml-auto text-[10px] text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
-            {cat.algorithms.length} {useUIStore.getState().language === 'en' ? 'algo' : 'algorytm'}{cat.algorithms.length !== 1 ? (useUIStore.getState().language === 'en' ? 's' : 'ów') : ''}
+            {cat.algorithms.length}{" "}
+            {useUIStore.getState().language === "en" ? "algo" : "algorytm"}
+            {cat.algorithms.length !== 1
+              ? useUIStore.getState().language === "en"
+                ? "s"
+                : "ów"
+              : ""}
           </span>
         </div>
 
         {/* Algorithm Pills */}
         <div className="relative flex flex-wrap gap-2 content-start flex-grow">
-          {cat.algorithms.map(algo => {
+          {cat.algorithms.map((algo) => {
             const isHovered = hoveredAlgo === `${cat.id}-${algo.id}`;
             return (
               <motion.button
@@ -431,9 +461,9 @@ function AnimatedCategoryCard({
                 className={`relative px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
                   algo.available
                     ? `border-white/[0.08] text-slate-200 cursor-pointer ${getPillHoverStyles(
-                        cat.id
+                        cat.id,
                       )}`
-                    : 'border-white/[0.03] text-slate-500 cursor-not-allowed opacity-50'
+                    : "border-white/[0.03] text-slate-500 cursor-not-allowed opacity-50"
                 }`}
               >
                 <span className="flex items-center gap-1.5">
@@ -457,17 +487,22 @@ function AnimatedCategoryCard({
                       className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-cyan-400/15 shadow-2xl shadow-black/50 pointer-events-none"
                     >
                       <p className="font-bold text-slate-200 text-sm mb-1">
-                        {useUIStore.getState().language === 'en' ? algo.name : algo.name_pl}
+                        {useUIStore.getState().language === "en"
+                          ? algo.name
+                          : algo.name_pl}
                       </p>
                       <p className="text-slate-400 text-xs mb-3">
-                        {useUIStore.getState().language === 'en' ? algo.description : algo.description_pl}
+                        {useUIStore.getState().language === "en"
+                          ? algo.description
+                          : algo.description_pl}
                       </p>
                       <div className="flex gap-4 text-[11px]">
                         <span className="flex items-center gap-1 text-cyan-400">
                           <Clock className="w-3 h-3" /> {algo.timeComplexity}
                         </span>
                         <span className="flex items-center gap-1 text-violet-400">
-                          <HardDrive className="w-3 h-3" /> {algo.spaceComplexity}
+                          <HardDrive className="w-3 h-3" />{" "}
+                          {algo.spaceComplexity}
                         </span>
                       </div>
                       {/* Arrow */}

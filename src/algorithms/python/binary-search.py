@@ -1,9 +1,11 @@
 import json
 
+
 def emit(event_type, **kwargs):
     event = {"type": event_type}
     event.update(kwargs)
     print(json.dumps(event))
+
 
 def binary_search(arr, target):
     left, right = 0, len(arr) - 1
@@ -20,6 +22,7 @@ def binary_search(arr, target):
             right = mid - 1
     emit("SEARCH_NOT_FOUND", target=target)
     return -1
+
 
 if __name__ == "__main__":
     arr = [3, 9, 10, 27, 38, 43, 82]

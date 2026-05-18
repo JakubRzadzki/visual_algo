@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import CytoscapeGraph from './CytoscapeGraph';
-import type { GraphNode, GraphEdge, GraphInput } from '../../types';
+import { useMemo } from "react";
+import CytoscapeGraph from "./CytoscapeGraph";
+import type { GraphNode, GraphEdge, GraphInput } from "../../types";
 
 interface GraphStageProps {
   nodes: GraphNode[];
@@ -13,14 +13,21 @@ interface GraphStageProps {
  * React wrapper that mounts CytoscapeGraph for better graph visualization
  * Shows algorithms like Dijkstra and Kruskal elegantly on force-directed layouts
  */
-export default function GraphStage({ nodes, edges, isDirected = true }: GraphStageProps) {
+export default function GraphStage({
+  nodes,
+  edges,
+  isDirected = true,
+}: GraphStageProps) {
   // Memoize graph input to prevent unnecessary re-renders
-  const graph: GraphInput = useMemo(() => ({
-    nodes,
-    edges,
-    startNodeId: nodes.length > 0 ? nodes[0].id : undefined,
-    isDirected,
-  }), [nodes, edges, isDirected]);
+  const graph: GraphInput = useMemo(
+    () => ({
+      nodes,
+      edges,
+      startNodeId: nodes.length > 0 ? nodes[0].id : undefined,
+      isDirected,
+    }),
+    [nodes, edges, isDirected],
+  );
 
   return (
     <div className="flex-1 w-full h-full relative">

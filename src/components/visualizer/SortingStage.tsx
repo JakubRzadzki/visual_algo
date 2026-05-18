@@ -8,11 +8,11 @@
  * playback, and rendering internally.
  */
 
-import { useUIStore } from '../../store/uiStore';
-import SortingVisualizer from '../../sorting/components/SortingVisualizer';
+import { useUIStore } from "../../store/uiStore";
+import SortingVisualizer from "../../sorting/components/SortingVisualizer";
 
 export default function SortingStage() {
-  const algorithmName = useUIStore(state => state.activeSortingAlgorithm);
+  const algorithmName = useUIStore((state) => state.activeSortingAlgorithm);
 
   return <SortingVisualizer algorithmName={algorithmName} />;
 }

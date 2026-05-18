@@ -1,8 +1,18 @@
-import { create } from 'zustand';
-import type { TreeNode, AnimationStep } from '../types/tree';
-import { computeLayoutD3 } from '../utils/treeLayout';
+import { create } from "zustand";
+import type { TreeNode, AnimationStep } from "../types/tree";
+import { computeLayoutD3 } from "../utils/treeLayout";
 
-export type TreeType = 'BT' | 'BST' | 'AVL' | 'RB' | 'TRIE' | 'binary' | 'bst' | 'avl' | 'rbt' | 'trie';
+export type TreeType =
+  | "BT"
+  | "BST"
+  | "AVL"
+  | "RB"
+  | "TRIE"
+  | "binary"
+  | "bst"
+  | "avl"
+  | "rbt"
+  | "trie";
 
 interface TreeStore {
   root: TreeNode | null;
@@ -29,25 +39,25 @@ interface TreeStore {
 
 // Generate the hardcoded tree from arr = [15, 10, 20, 8, 12, 17, 25]
 const initialNodes: TreeNode = {
-  id: 'node-15',
+  id: "node-15",
   value: 15,
-  left: { 
-    id: 'node-10', 
-    value: 10, 
-    left: { id: 'node-8', value: 8, left: null, right: null }, 
-    right: { id: 'node-12', value: 12, left: null, right: null } 
+  left: {
+    id: "node-10",
+    value: 10,
+    left: { id: "node-8", value: 8, left: null, right: null },
+    right: { id: "node-12", value: 12, left: null, right: null },
   },
-  right: { 
-    id: 'node-20', 
-    value: 20, 
-    left: { id: 'node-17', value: 17, left: null, right: null }, 
-    right: { id: 'node-25', value: 25, left: null, right: null } 
-  }
+  right: {
+    id: "node-20",
+    value: 20,
+    left: { id: "node-17", value: 17, left: null, right: null },
+    right: { id: "node-25", value: 25, left: null, right: null },
+  },
 };
 
 export const useTreeStore = create<TreeStore>((set, get) => ({
   root: initialNodes,
-  activeTreeType: 'BST',
+  activeTreeType: "BST",
 
   steps: [],
   currentStepIndex: 0,
@@ -63,7 +73,9 @@ export const useTreeStore = create<TreeStore>((set, get) => ({
       steps,
       currentStepIndex: 0,
       isPlaying: true,
-      nodePositions: steps[0]?.treeSnapshot ? computeLayoutD3(steps[0].treeSnapshot) : get().nodePositions
+      nodePositions: steps[0]?.treeSnapshot
+        ? computeLayoutD3(steps[0].treeSnapshot)
+        : get().nodePositions,
     });
   },
 
@@ -74,9 +86,11 @@ export const useTreeStore = create<TreeStore>((set, get) => ({
     if (currentStepIndex < steps.length - 1) {
       const nextIdx = currentStepIndex + 1;
       const snapshot = steps[nextIdx].treeSnapshot;
-      set({ 
+      set({
         currentStepIndex: nextIdx,
-        nodePositions: snapshot ? computeLayoutD3(snapshot) : get().nodePositions
+        nodePositions: snapshot
+          ? computeLayoutD3(snapshot)
+          : get().nodePositions,
       });
     } else {
       set({ isPlaying: false });
@@ -88,9 +102,11 @@ export const useTreeStore = create<TreeStore>((set, get) => ({
     if (currentStepIndex > 0) {
       const prevIdx = currentStepIndex - 1;
       const snapshot = steps[prevIdx].treeSnapshot;
-      set({ 
+      set({
         currentStepIndex: prevIdx,
-        nodePositions: snapshot ? computeLayoutD3(snapshot) : get().nodePositions
+        nodePositions: snapshot
+          ? computeLayoutD3(snapshot)
+          : get().nodePositions,
       });
     }
   },

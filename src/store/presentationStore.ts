@@ -7,11 +7,15 @@
  * navigating to the appropriate route and triggering sandbox execution.
  */
 
-import { create } from 'zustand';
-import { ALGORITHM_CATALOG, type AlgorithmEntry, type CategoryEntry } from '../data/algorithmCatalog';
+import { create } from "zustand";
+import {
+  ALGORITHM_CATALOG,
+  type AlgorithmEntry,
+  type CategoryEntry,
+} from "../data/algorithmCatalog";
 
 /** Supported source code languages for alternation. */
-type PresentationLanguage = 'python' | 'cpp';
+type PresentationLanguage = "python" | "cpp";
 
 /** A single item in the presentation playlist. */
 export interface PresentationItem {
@@ -26,7 +30,12 @@ export interface PresentationItem {
 }
 
 /** Current phase of a single presentation slide. */
-type SlidePhase = 'navigating' | 'loading-code' | 'running' | 'animating' | 'done';
+type SlidePhase =
+  | "navigating"
+  | "loading-code"
+  | "running"
+  | "animating"
+  | "done";
 
 interface PresentationState {
   /** Whether presentation mode is currently active. */
@@ -69,14 +78,14 @@ interface PresentationState {
  */
 function buildPlaylist(): PresentationItem[] {
   const items: PresentationItem[] = [];
-  let langToggle: PresentationLanguage = 'python';
+  let langToggle: PresentationLanguage = "python";
 
   for (const category of ALGORITHM_CATALOG) {
     for (const algo of category.algorithms) {
       if (!algo.available) continue;
 
       // Map category.id to route segment
-      const categoryRoute = category.id === 'trees' ? 'trees' : category.id;
+      const categoryRoute = category.id === "trees" ? "trees" : category.id;
 
       items.push({
         category,
@@ -86,7 +95,7 @@ function buildPlaylist(): PresentationItem[] {
       });
 
       // Alternate language for the next slide
-      langToggle = langToggle === 'python' ? 'cpp' : 'python';
+      langToggle = langToggle === "python" ? "cpp" : "python";
     }
   }
 
@@ -97,7 +106,7 @@ export const usePresentationStore = create<PresentationState>((set, get) => ({
   isActive: false,
   playlist: [],
   currentIndex: 0,
-  slidePhase: 'navigating',
+  slidePhase: "navigating",
   countdownSeconds: 0,
   isPaused: false,
 
@@ -108,7 +117,7 @@ export const usePresentationStore = create<PresentationState>((set, get) => ({
       isActive: true,
       playlist,
       currentIndex: 0,
-      slidePhase: 'navigating',
+      slidePhase: "navigating",
       countdownSeconds: 0,
       isPaused: false,
     });
@@ -119,7 +128,7 @@ export const usePresentationStore = create<PresentationState>((set, get) => ({
       isActive: false,
       playlist: [],
       currentIndex: 0,
-      slidePhase: 'navigating',
+      slidePhase: "navigating",
       countdownSeconds: 0,
       isPaused: false,
     });
@@ -134,7 +143,7 @@ export const usePresentationStore = create<PresentationState>((set, get) => ({
     }
     set({
       currentIndex: currentIndex + 1,
-      slidePhase: 'navigating',
+      slidePhase: "navigating",
       countdownSeconds: 0,
     });
   },
@@ -144,13 +153,13 @@ export const usePresentationStore = create<PresentationState>((set, get) => ({
     if (currentIndex <= 0) return;
     set({
       currentIndex: currentIndex - 1,
-      slidePhase: 'navigating',
+      slidePhase: "navigating",
       countdownSeconds: 0,
     });
   },
 
   togglePause: () => {
-    set(state => ({ isPaused: !state.isPaused }));
+    set((state) => ({ isPaused: !state.isPaused }));
   },
 
   setSlidePhase: (phase) => {
@@ -166,7 +175,7 @@ export const usePresentationStore = create<PresentationState>((set, get) => ({
     if (index < 0 || index >= playlist.length) return;
     set({
       currentIndex: index,
-      slidePhase: 'navigating',
+      slidePhase: "navigating",
       countdownSeconds: 0,
     });
   },

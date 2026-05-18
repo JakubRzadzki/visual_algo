@@ -6,8 +6,8 @@
  * Includes smooth scrolling behavior to bring target elements into view.
  */
 
-import { useEffect, useLayoutEffect, useCallback } from 'react';
-import { useTutorialStore } from '../store/tutorialStore';
+import { useEffect, useLayoutEffect, useCallback } from "react";
+import { useTutorialStore } from "../store/tutorialStore";
 
 /**
  * Throttles the execution of a callback function using requestAnimationFrame.
@@ -55,7 +55,7 @@ export function useSpotlightPosition(stepId: string | null): void {
   const status = useTutorialStore((state) => state.status);
 
   const updatePosition = useCallback(() => {
-    if (!stepId || !isActive || status !== 'running') {
+    if (!stepId || !isActive || status !== "running") {
       setHighlightRect(null);
       return;
     }
@@ -73,18 +73,20 @@ export function useSpotlightPosition(stepId: string | null): void {
 
   // Handle scrolling and initial alignment
   useEffect(() => {
-    if (!stepId || !isActive || status !== 'running') return;
+    if (!stepId || !isActive || status !== "running") return;
 
     let isCancelled = false;
 
     const performFocus = async () => {
-      const element = document.querySelector(`[data-tutorial-step="${stepId}"]`);
+      const element = document.querySelector(
+        `[data-tutorial-step="${stepId}"]`,
+      );
       if (element) {
         // Bring the element into the viewport first
         element.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-          inline: 'nearest',
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
         });
 
         // Wait for smooth scrolling animation to complete (usually 500ms is standard)
@@ -103,21 +105,26 @@ export function useSpotlightPosition(stepId: string | null): void {
 
   // Sync positions on resize, scroll, and content size updates
   useLayoutEffect(() => {
-    if (!stepId || !isActive || status !== 'running') return;
+    if (!stepId || !isActive || status !== "running") return;
 
     // Throttle scroll events for 60fps performance (16ms)
     const handleScroll = throttle(updatePosition);
     // Debounce resize events to let the layout settle (100ms)
     const handleResize = debounce(updatePosition, 100);
 
-    window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', updatePosition);
+    window.addEventListener("scroll", handleScroll, {
+      capture: true,
+      passive: true,
+    });
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", updatePosition);
 
     // Watch for size mutations on the target element or its parents
-    const targetElement = document.querySelector(`[data-tutorial-step="${stepId}"]`);
+    const targetElement = document.querySelector(
+      `[data-tutorial-step="${stepId}"]`,
+    );
     let resizeObserver: ResizeObserver | null = null;
-    if (targetElement && typeof ResizeObserver !== 'undefined') {
+    if (targetElement && typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(() => {
         updatePosition();
       });
@@ -128,9 +135,9 @@ export function useSpotlightPosition(stepId: string | null): void {
     updatePosition();
 
     return () => {
-      window.removeEventListener('scroll', handleScroll, { capture: true });
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', updatePosition);
+      window.removeEventListener("scroll", handleScroll, { capture: true });
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", updatePosition);
       if (resizeObserver) {
         resizeObserver.disconnect();
       }

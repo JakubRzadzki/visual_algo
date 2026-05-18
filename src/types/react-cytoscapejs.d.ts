@@ -1,6 +1,6 @@
-declare module 'react-cytoscapejs' {
-  import { ReactNode } from 'react';
-  import cytoscape from 'cytoscape';
+declare module "react-cytoscapejs" {
+  import { ReactNode } from "react";
+  import cytoscape from "cytoscape";
 
   interface CytoscapeComponentProps {
     elements: cytoscape.ElementDefinition[];
@@ -12,5 +12,7 @@ declare module 'react-cytoscapejs' {
     [key: string]: unknown;
   }
 
-  export default function CytoscapeComponent(props: CytoscapeComponentProps): ReactNode;
+  export default function CytoscapeComponent(
+    props: CytoscapeComponentProps,
+  ): ReactNode;
 }

@@ -9,7 +9,7 @@
  * Space Complexity: O(n)
  */
 
-import type { SortFrame, SortResult } from '../types';
+import type { SortFrame, SortResult } from "../types";
 
 /**
  * Generates all visualization frames for a Merge Sort execution.
@@ -43,7 +43,7 @@ export function generateMergeSortFrames(input: number[]): SortResult {
     });
   };
 
-  snap([], [], null, 'Starting Merge Sort');
+  snap([], [], null, "Starting Merge Sort");
 
   /**
    * Merge two sorted subarrays arr[lo..mid] and arr[mid+1..hi] in-place
@@ -52,18 +52,28 @@ export function generateMergeSortFrames(input: number[]): SortResult {
   function merge(lo: number, mid: number, hi: number): void {
     const left = arr.slice(lo, mid + 1);
     const right = arr.slice(mid + 1, hi + 1);
-    arrayAccesses += (hi - lo + 1);
+    arrayAccesses += hi - lo + 1;
 
     let i = 0;
     let j = 0;
     let k = lo;
 
-    snap([], [], null, `Merging subarrays [${lo}..${mid}] and [${mid + 1}..${hi}]`);
+    snap(
+      [],
+      [],
+      null,
+      `Merging subarrays [${lo}..${mid}] and [${mid + 1}..${hi}]`,
+    );
 
     while (i < left.length && j < right.length) {
       comparisons++;
       arrayAccesses += 2;
-      snap([lo + i, mid + 1 + j], [], null, `Comparing ${left[i]} and ${right[j]}`);
+      snap(
+        [lo + i, mid + 1 + j],
+        [],
+        null,
+        `Comparing ${left[i]} and ${right[j]}`,
+      );
 
       if (left[i] <= right[j]) {
         arr[k] = left[i];
@@ -111,16 +121,16 @@ export function generateMergeSortFrames(input: number[]): SortResult {
   mergeSort(0, n - 1);
 
   for (let i = 0; i < n; i++) sortedIndices.add(i);
-  snap([], [], null, 'Merge Sort complete!');
+  snap([], [], null, "Merge Sort complete!");
 
   return {
     frames,
     info: {
-      name: 'Merge Sort',
-      timeComplexity: 'O(n log n)',
-      spaceComplexity: 'O(n)',
-      bestCase: 'O(n log n)',
-      averageCase: 'O(n log n)',
+      name: "Merge Sort",
+      timeComplexity: "O(n log n)",
+      spaceComplexity: "O(n)",
+      bestCase: "O(n log n)",
+      averageCase: "O(n log n)",
     },
   };
 }

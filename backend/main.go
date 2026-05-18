@@ -42,7 +42,7 @@ func initDB() {
 	if dsn == "" {
 		dsn = "host=db user=user password=password dbname=visual_algo port=5432 sslmode=disable"
 	}
-	
+
 	var err error
 	// Attempt to connect to postgres once to avoid hanging
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -100,7 +100,7 @@ func createSnapshot(c *gin.Context) {
 
 	// Generate a short 8-character UUID
 	id := uuid.New().String()[:8]
-	
+
 	if db != nil {
 		snapshot := Snapshot{
 			ID:        id,
@@ -120,7 +120,7 @@ func createSnapshot(c *gin.Context) {
 
 func getSnapshot(c *gin.Context) {
 	id := c.Param("id")
-	
+
 	if db != nil {
 		var snapshot Snapshot
 		if err := db.First(&snapshot, "id = ?", id).Error; err == nil {

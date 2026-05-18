@@ -1,11 +1,11 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect } from "react";
 
-interface Point { 
-  x: number; 
-  y: number; 
-  vx: number; 
-  vy: number; 
-  pulse: number; 
+interface Point {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  pulse: number;
   pulseDir: number;
 }
 
@@ -23,7 +23,7 @@ export default function AmbientGraph() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     let width = window.innerWidth;
@@ -37,15 +37,15 @@ export default function AmbientGraph() {
       vx: (Math.random() - 0.5) * 0.4,
       vy: (Math.random() - 0.5) * 0.4,
       pulse: Math.random(),
-      pulseDir: Math.random() > 0.5 ? 0.005 : -0.005
+      pulseDir: Math.random() > 0.5 ? 0.005 : -0.005,
     }));
 
     const bits: Bit[] = Array.from({ length: 60 }).map(() => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      val: Math.random() > 0.5 ? '1' : '0',
+      val: Math.random() > 0.5 ? "1" : "0",
       speed: 0.3 + Math.random() * 1.5,
-      opacity: Math.random() * 0.5
+      opacity: Math.random() * 0.5,
     }));
 
     let animationId: number;
@@ -54,8 +54,8 @@ export default function AmbientGraph() {
       ctx.clearRect(0, 0, width, height);
 
       // 1. Draw Binary Streams (Matrix-like but very subtle)
-      ctx.font = '10px monospace';
-      bits.forEach(bit => {
+      ctx.font = "10px monospace";
+      bits.forEach((bit) => {
         bit.y += bit.speed;
         if (bit.y > height) {
           bit.y = -20;
@@ -81,7 +81,7 @@ export default function AmbientGraph() {
         const glow = p1.pulse * 5;
         ctx.fillStyle = `rgba(125, 211, 252, ${0.2 + p1.pulse * 0.3})`;
         ctx.shadowBlur = glow;
-        ctx.shadowColor = '#7dd3fc';
+        ctx.shadowColor = "#7dd3fc";
         ctx.beginPath();
         ctx.arc(p1.x, p1.y, size, 0, Math.PI * 2);
         ctx.fill();
@@ -92,8 +92,9 @@ export default function AmbientGraph() {
           const dx = p1.x - p2.x;
           const dy = p1.y - p2.y;
           const distSq = dx * dx + dy * dy;
-          
-          if (distSq < 40000) { // 200 squared
+
+          if (distSq < 40000) {
+            // 200 squared
             const dist = Math.sqrt(distSq);
             const opacity = (1 - dist / 200) * 0.3;
             ctx.strokeStyle = `rgba(125, 211, 252, ${opacity})`;
@@ -116,14 +117,20 @@ export default function AmbientGraph() {
       canvas.width = width;
       canvas.height = height;
     };
-    
-    window.addEventListener('resize', handleResize);
+
+    window.addEventListener("resize", handleResize);
 
     return () => {
       cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 z-[1] pointer-events-none opacity-60 mix-blend-screen" style={{ willChange: 'transform' }} />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 z-[1] pointer-events-none opacity-60 mix-blend-screen"
+      style={{ willChange: "transform" }}
+    />
+  );
 }

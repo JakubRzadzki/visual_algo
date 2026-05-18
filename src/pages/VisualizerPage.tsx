@@ -1,59 +1,72 @@
-import { useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useUIStore } from '../store/uiStore';
-import { findAlgorithm } from '../data/algorithmCatalog';
-import { globalEventBus } from '../core/EventBus';
-import { globalEngine } from '../core/AnimationEngine';
-import { globalWorkerPool } from '../core/WorkerPool';
-import Navbar from '../components/layout/Navbar';
-import Sidebar from '../components/layout/Sidebar';
+import { useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useUIStore } from "../store/uiStore";
+import { findAlgorithm } from "../data/algorithmCatalog";
+import { globalEventBus } from "../core/EventBus";
+import { globalEngine } from "../core/AnimationEngine";
+import { globalWorkerPool } from "../core/WorkerPool";
+import Navbar from "../components/layout/Navbar";
+import Sidebar from "../components/layout/Sidebar";
 
-import GraphStage from '../components/visualizer/GraphStage';
-import GridStage from '../components/visualizer/GridStage';
-import MatrixStage from '../components/visualizer/MatrixStage';
-import SortingStage from '../components/visualizer/SortingStage';
-import SearchingStage from '../components/visualizer/SearchingStage';
-import PlaybackDeck from '../components/controls/PlaybackDeck';
+import GraphStage from "../components/visualizer/GraphStage";
+import GridStage from "../components/visualizer/GridStage";
+import MatrixStage from "../components/visualizer/MatrixStage";
+import SortingStage from "../components/visualizer/SortingStage";
+import SearchingStage from "../components/visualizer/SearchingStage";
+import PlaybackDeck from "../components/controls/PlaybackDeck";
 
-
-
-import MonacoCodeEditor from '../components/hud/MonacoCodeEditor';
-import EventLog from '../components/hud/EventLog';
-import AlgorithmInfoPanel from '../components/hud/AlgorithmInfoPanel';
-import AriaLiveRegion from '../components/a11y/AriaLiveRegion';
-import { getAlgorithmEducation } from '../data/algorithmEducation';
-import { ArrowLeft } from 'lucide-react';
-import type { GraphNode, GraphInput } from '../types';
+import MonacoCodeEditor from "../components/hud/MonacoCodeEditor";
+import EventLog from "../components/hud/EventLog";
+import AlgorithmInfoPanel from "../components/hud/AlgorithmInfoPanel";
+import AriaLiveRegion from "../components/a11y/AriaLiveRegion";
+import { getAlgorithmEducation } from "../data/algorithmEducation";
+import { ArrowLeft } from "lucide-react";
+import type { GraphNode, GraphInput } from "../types";
 
 // Demo graph nodes / edges — will be replaced when user generates a new graph
 const DEMO_NODES: GraphNode[] = Array.from({ length: 8 }, (_, i) => ({
-  id: `n${i}`, label: String(i),
+  id: `n${i}`,
+  label: String(i),
   x: Math.cos((i / 8) * Math.PI * 2) * 150,
   y: Math.sin((i / 8) * Math.PI * 2) * 150,
-  vx: 0, vy: 0,
+  vx: 0,
+  vy: 0,
 }));
 const DEMO_EDGES = DEMO_NODES.map((_, i) => ({
-  id: `e${i}`, from: `n${i}`, to: `n${(i + 1) % DEMO_NODES.length}`,
+  id: `e${i}`,
+  from: `n${i}`,
+  to: `n${(i + 1) % DEMO_NODES.length}`,
   weight: Math.floor(Math.random() * 15) + 1,
 }));
-const DEMO_GRAPH = { nodes: DEMO_NODES, edges: DEMO_EDGES, startNodeId: 'n0' };
+const DEMO_GRAPH = { nodes: DEMO_NODES, edges: DEMO_EDGES, startNodeId: "n0" };
 
 export default function VisualizerPage() {
-  const { category, algoId } = useParams<{ category: string; algoId: string }>();
+  const { category, algoId } = useParams<{
+    category: string;
+    algoId: string;
+  }>();
   const navigate = useNavigate();
-  const { 
-    isSidebarOpen, activeMode, currentGraph, language,
-    setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm, setActiveGridAlgorithm, setActiveDPAlgorithm
+  const {
+    isSidebarOpen,
+    activeMode,
+    currentGraph,
+    language,
+    setActiveMode,
+    setActiveSortingAlgorithm,
+    setActiveSearchingAlgorithm,
+    setActiveGraphAlgorithm,
+    setActiveGridAlgorithm,
+    setActiveDPAlgorithm,
   } = useUIStore();
   const graphToDisplay = currentGraph || DEMO_GRAPH;
-  const educationData = getAlgorithmEducation(algoId || '', language);
+  const educationData = getAlgorithmEducation(algoId || "", language);
 
   // Sync the UI store with the route params
   useEffect(() => {
     if (!category || !algoId) return;
     const found = findAlgorithm(category, algoId);
     if (!found || !found.algorithm.available) {
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
       return;
     }
 
@@ -62,67 +75,92 @@ export default function VisualizerPage() {
     useUIStore.getState().setIsAnimating(false);
 
     // Set the correct mode based on the category
-    if (category === 'sorting') {
-      setActiveMode('sorting');
+    if (category === "sorting") {
+      setActiveMode("sorting");
       setActiveSortingAlgorithm(found.algorithm.name);
-    } else if (category === 'searching') {
-      setActiveMode('searching');
+    } else if (category === "searching") {
+      setActiveMode("searching");
       setActiveSearchingAlgorithm(found.algorithm.name);
-    } else if (category === 'graphs' || category === 'trees') {
-      setActiveMode('graph');
+    } else if (category === "graphs" || category === "trees") {
+      setActiveMode("graph");
       setActiveGraphAlgorithm(found.algorithm.name);
-    } else if (category === 'grid') {
-      setActiveMode('grid');
+    } else if (category === "grid") {
+      setActiveMode("grid");
       setActiveGridAlgorithm(found.algorithm.name);
-    } else if (category === 'dp') {
-      setActiveMode('dp');
+    } else if (category === "dp") {
+      setActiveMode("dp");
       setActiveDPAlgorithm(found.algorithm.name);
     }
 
     // Preload demonstration trace client-side via worker if available
-    if (['knapsack', 'lcs', 'dijkstra', 'kruskal', 'bfs', 'dfs', 'prim', 'topo-sort', 'bst', 'avl', 'max-heap', 'union-find'].includes(found.algorithm.id)) {
+    if (
+      [
+        "knapsack",
+        "lcs",
+        "dijkstra",
+        "kruskal",
+        "bfs",
+        "dfs",
+        "prim",
+        "topo-sort",
+        "bst",
+        "avl",
+        "max-heap",
+        "union-find",
+      ].includes(found.algorithm.id)
+    ) {
       // Pass a safe empty object or dummy graph payload
       const dummyPayload = { nodes: [], edges: [], values: [] };
-      globalWorkerPool.run(found.algorithm.id, dummyPayload as any).then(trace => {
-        globalEngine.loadTrace(trace);
-        globalEngine.setSpeed(1.0);
-        useUIStore.getState().setIsAnimating(true);
-        globalEngine.play();
-      }).catch(err => console.error('Auto-simulation preload failed:', err));
+      globalWorkerPool
+        .run(found.algorithm.id, dummyPayload as any)
+        .then((trace) => {
+          globalEngine.loadTrace(trace);
+          globalEngine.setSpeed(1.0);
+          useUIStore.getState().setIsAnimating(true);
+          globalEngine.play();
+        })
+        .catch((err) => console.error("Auto-simulation preload failed:", err));
     }
-  }, [category, algoId, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm, setActiveGridAlgorithm, setActiveDPAlgorithm]);
-
-
+  }, [
+    category,
+    algoId,
+    navigate,
+    setActiveMode,
+    setActiveSortingAlgorithm,
+    setActiveSearchingAlgorithm,
+    setActiveGraphAlgorithm,
+    setActiveGridAlgorithm,
+    setActiveDPAlgorithm,
+  ]);
 
   // Listen for graph updates from the sandbox
   useEffect(() => {
     const unsub = globalEventBus.subscribe((e) => {
-      if (e.type === 'TRACE_LOADED' && e.metadata && e.metadata.initialGraph) {
+      if (e.type === "TRACE_LOADED" && e.metadata && e.metadata.initialGraph) {
         const newGraph = e.metadata.initialGraph as GraphInput;
         const current = useUIStore.getState().currentGraph;
-        
+
         // Merge coordinates from current graph to preserve beautiful layouts
         if (current && current.nodes && current.nodes.length > 0) {
-          newGraph.nodes = newGraph.nodes.map(node => {
-            const existingNode = current.nodes.find(n => n.id === node.id);
+          newGraph.nodes = newGraph.nodes.map((node) => {
+            const existingNode = current.nodes.find((n) => n.id === node.id);
             if (existingNode) {
               return { ...node, x: existingNode.x, y: existingNode.y };
             }
             // Fallback for completely new nodes added in code
-            return { 
-              ...node, 
-              x: typeof node.x === 'number' ? node.x : Math.random() * 400, 
-              y: typeof node.y === 'number' ? node.y : Math.random() * 400 
+            return {
+              ...node,
+              x: typeof node.x === "number" ? node.x : Math.random() * 400,
+              y: typeof node.y === "number" ? node.y : Math.random() * 400,
             };
           });
         }
-        
+
         useUIStore.getState().setCurrentGraph(newGraph);
       }
     });
     return () => unsub();
   }, []);
-
 
   return (
     <div className="relative h-screen bg-glacier-bg text-slate-200 selection:bg-ice-blue/30 selection:text-ice-blue overflow-hidden cursor-default">
@@ -144,34 +182,44 @@ export default function VisualizerPage() {
             <span>Catalog</span>
           </Link>
 
-
-
           {isSidebarOpen && <Sidebar />}
         </div>
 
         <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated shadow-2xl shadow-ice-blue/5 border border-ice-blue/10">
           {/* Switch between sorting bars, force-directed graph, and css grid */}
-          {activeMode === 'graph'
-            ? <GraphStage key={`${algoId}-${currentGraph?.nodes.length}-${currentGraph?.edges.length}`} nodes={graphToDisplay.nodes} edges={graphToDisplay.edges} isDirected={(graphToDisplay as GraphInput).isDirected !== undefined ? (graphToDisplay as GraphInput).isDirected : !['kruskal', 'prim'].includes(algoId || '')} />
-            : activeMode === 'grid'
-            ? <GridStage />
-            : activeMode === 'dp'
-            ? <MatrixStage />
-            : activeMode === 'searching'
-            ? <SearchingStage key={algoId} />
-            : activeMode === 'sorting'
-            ? <SortingStage key={algoId} />
-            : <div className="flex-1 flex items-center justify-center text-slate-500 italic">Select an algorithm to begin</div>
-          }
+          {activeMode === "graph" ? (
+            <GraphStage
+              key={`${algoId}-${currentGraph?.nodes.length}-${currentGraph?.edges.length}`}
+              nodes={graphToDisplay.nodes}
+              edges={graphToDisplay.edges}
+              isDirected={
+                (graphToDisplay as GraphInput).isDirected !== undefined
+                  ? (graphToDisplay as GraphInput).isDirected
+                  : !["kruskal", "prim"].includes(algoId || "")
+              }
+            />
+          ) : activeMode === "grid" ? (
+            <GridStage />
+          ) : activeMode === "dp" ? (
+            <MatrixStage />
+          ) : activeMode === "searching" ? (
+            <SearchingStage key={algoId} />
+          ) : activeMode === "sorting" ? (
+            <SortingStage key={algoId} />
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-slate-500 italic">
+              Select an algorithm to begin
+            </div>
+          )}
 
           {/* Controls are now scoped to the visual stage */}
-          {activeMode !== 'sorting' && <PlaybackDeck />}
+          {activeMode !== "sorting" && <PlaybackDeck />}
         </div>
 
         <aside className="w-[350px] lg:w-[400px] xl:w-[420px] 2xl:w-[450px] min-w-0 hidden lg:flex flex-col gap-4 h-[calc(100vh-6rem)] overflow-hidden pb-4">
-           <MonacoCodeEditor />
-           <AlgorithmInfoPanel data={educationData} />
-           <EventLog />
+          <MonacoCodeEditor />
+          <AlgorithmInfoPanel data={educationData} />
+          <EventLog />
         </aside>
       </div>
     </div>

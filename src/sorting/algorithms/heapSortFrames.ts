@@ -6,7 +6,7 @@
  * Space Complexity: O(1) auxiliary
  */
 
-import type { SortFrame, SortResult } from '../types';
+import type { SortFrame, SortResult } from "../types";
 
 /**
  * Generates all visualization frames for a Heap Sort execution.
@@ -40,7 +40,7 @@ export function generateHeapSortFrames(input: number[]): SortResult {
     });
   };
 
-  snap([], [], null, 'Starting Heap Sort');
+  snap([], [], null, "Starting Heap Sort");
 
   /** Sift-down (max-heapify) subtree rooted at index i within arr[0..heapSize-1]. */
   function heapify(heapSize: number, i: number): void {
@@ -51,24 +51,44 @@ export function generateHeapSortFrames(input: number[]): SortResult {
     if (left < heapSize) {
       comparisons++;
       arrayAccesses += 2;
-      snap([largest, left], [], null, `Comparing arr[${largest}]=${arr[largest]} with left child arr[${left}]=${arr[left]}`);
+      snap(
+        [largest, left],
+        [],
+        null,
+        `Comparing arr[${largest}]=${arr[largest]} with left child arr[${left}]=${arr[left]}`,
+      );
       if (arr[left] > arr[largest]) largest = left;
     }
 
     if (right < heapSize) {
       comparisons++;
       arrayAccesses += 2;
-      snap([largest, right], [], null, `Comparing arr[${largest}]=${arr[largest]} with right child arr[${right}]=${arr[right]}`);
+      snap(
+        [largest, right],
+        [],
+        null,
+        `Comparing arr[${largest}]=${arr[largest]} with right child arr[${right}]=${arr[right]}`,
+      );
       if (arr[right] > arr[largest]) largest = right;
     }
 
     if (largest !== i) {
-      snap([], [i, largest], null, `Swapping arr[${i}]=${arr[i]} ↔ arr[${largest}]=${arr[largest]}`);
+      snap(
+        [],
+        [i, largest],
+        null,
+        `Swapping arr[${i}]=${arr[i]} ↔ arr[${largest}]=${arr[largest]}`,
+      );
       const temp = arr[i];
       arr[i] = arr[largest];
       arr[largest] = temp;
       arrayAccesses += 4;
-      snap([], [i, largest], null, `Swapped → arr[${i}]=${arr[i]}, arr[${largest}]=${arr[largest]}`);
+      snap(
+        [],
+        [i, largest],
+        null,
+        `Swapped → arr[${i}]=${arr[i]}, arr[${largest}]=${arr[largest]}`,
+      );
 
       // Recursively heapify the affected sub-tree
       heapify(heapSize, largest);
@@ -76,14 +96,14 @@ export function generateHeapSortFrames(input: number[]): SortResult {
   }
 
   // Phase 1: Build max-heap from input array (bottom-up, O(n))
-  snap([], [], null, 'Phase 1: Building max-heap');
+  snap([], [], null, "Phase 1: Building max-heap");
   for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
     heapify(n, i);
   }
-  snap([], [], null, 'Max-heap built successfully');
+  snap([], [], null, "Max-heap built successfully");
 
   // Phase 2: Extract elements one by one from the heap
-  snap([], [], null, 'Phase 2: Extracting sorted elements');
+  snap([], [], null, "Phase 2: Extracting sorted elements");
   for (let i = n - 1; i > 0; i--) {
     // Move current root (max) to end
     snap([], [0, i], null, `Moving max ${arr[0]} to position ${i}`);
@@ -100,16 +120,16 @@ export function generateHeapSortFrames(input: number[]): SortResult {
   }
 
   sortedIndices.add(0);
-  snap([], [], null, 'Heap Sort complete!');
+  snap([], [], null, "Heap Sort complete!");
 
   return {
     frames,
     info: {
-      name: 'Heap Sort',
-      timeComplexity: 'O(n log n)',
-      spaceComplexity: 'O(1)',
-      bestCase: 'O(n log n)',
-      averageCase: 'O(n log n)',
+      name: "Heap Sort",
+      timeComplexity: "O(n log n)",
+      spaceComplexity: "O(1)",
+      bestCase: "O(n log n)",
+      averageCase: "O(n log n)",
     },
   };
 }

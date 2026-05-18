@@ -8,7 +8,7 @@
   --color-glacier-surface-elevated: var(--glacier-surface-elevated);
   --color-glacier-border: var(--glacier-border);
   --color-glacier-border-bright: var(--glacier-border-bright);
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 :root {
@@ -37,7 +37,7 @@
   body {
     @apply bg-glacier-bg text-slate-200 antialiased selection:bg-ice-blue/30 selection:text-ice-blue transition-colors duration-500;
   }
-  
+
   .light-mode body {
     @apply text-slate-900;
   }
@@ -65,9 +65,15 @@
  * Animated gradient for the title text
  * ──────────────────────────────────────────────────── */
 @keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .animate-gradient-shift {
@@ -78,13 +84,21 @@
  * Category Card Hover Effects
  * ──────────────────────────────────────────────────── */
 @keyframes shine-sweep {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @media (hover: hover) {
   .hover-card {
-    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.5s ease;
+    transition:
+      transform 0.3s ease,
+      border-color 0.3s ease,
+      box-shadow 0.3s ease,
+      background-color 0.5s ease;
   }
 
   .hover-card:hover {
@@ -94,7 +108,7 @@
       0 0 30px rgba(34, 211, 238, 0.06),
       0 8px 32px rgba(0, 0, 0, 0.3);
   }
-  
+
   .light-mode .hover-card:hover {
     box-shadow:
       0 0 30px rgba(34, 211, 238, 0.1),

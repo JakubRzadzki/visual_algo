@@ -6,9 +6,9 @@
  * bounds checking for step navigation, and lifecycle callbacks support.
  */
 
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import type { TutorialStep, PopoverSide } from '../types/tutorial';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import type { TutorialStep, PopoverSide } from "../types/tutorial";
 
 /**
  * State properties of the interactive tutorial store.
@@ -24,7 +24,7 @@ export interface TutorialState {
   steps: TutorialStep[];
 
   /** Current execution status of the tutorial session. */
-  status: 'idle' | 'running' | 'paused' | 'completed';
+  status: "idle" | "running" | "paused" | "completed";
 
   /** Bounding box of the currently highlighted DOM element, or null if none. */
   highlightRect: DOMRect | null;
@@ -114,9 +114,9 @@ export const useTutorialStore = create<TutorialStore>()(
       isActive: false,
       currentStepIndex: 0,
       steps: [],
-      status: 'idle',
+      status: "idle",
       highlightRect: null,
-      popoverSide: 'auto',
+      popoverSide: "auto",
 
       // --- Actions ---
       startTutorial: (steps) => {
@@ -127,9 +127,9 @@ export const useTutorialStore = create<TutorialStore>()(
           steps: targetSteps,
           currentStepIndex: 0,
           isActive: true,
-          status: 'running',
+          status: "running",
           highlightRect: null,
-          popoverSide: targetSteps[0]?.position || 'auto',
+          popoverSide: targetSteps[0]?.position || "auto",
         });
 
         // Trigger onEnter hook for the first step if defined
@@ -139,7 +139,10 @@ export const useTutorialStore = create<TutorialStore>()(
             const result = firstStep.onEnter();
             if (result instanceof Promise) {
               result.catch((err) => {
-                console.error(`Error in onEnter for step ${firstStep.id}:`, err);
+                console.error(
+                  `Error in onEnter for step ${firstStep.id}:`,
+                  err,
+                );
               });
             }
           } catch (err) {
@@ -150,7 +153,7 @@ export const useTutorialStore = create<TutorialStore>()(
 
       nextStep: async () => {
         const { currentStepIndex, steps, status } = get();
-        if (steps.length === 0 || status === 'completed') return;
+        if (steps.length === 0 || status === "completed") return;
 
         const currentStep = steps[currentStepIndex];
 
@@ -159,7 +162,10 @@ export const useTutorialStore = create<TutorialStore>()(
           try {
             await currentStep.onLeave();
           } catch (err) {
-            console.error(`Error in onLeave callback for step ${currentStep.id}:`, err);
+            console.error(
+              `Error in onLeave callback for step ${currentStep.id}:`,
+              err,
+            );
           }
         }
 
@@ -167,8 +173,14 @@ export const useTutorialStore = create<TutorialStore>()(
         const nextIndex = currentStepIndex + 1;
 
         if (nextIndex >= steps.length) {
-          // If we reached the end, transition to completed
-          set({ status: 'completed', highlightRect: null });
+          // Tutorial is complete — fully deactivate to remove the overlay and unblock the UI
+          set({
+            isActive: false,
+            currentStepIndex: 0,
+            status: "completed",
+            highlightRect: null,
+            popoverSide: "auto",
+          });
           return;
         }
 
@@ -179,13 +191,16 @@ export const useTutorialStore = create<TutorialStore>()(
           try {
             await nextStep.onEnter();
           } catch (err) {
-            console.error(`Error in onEnter callback for step ${nextStep.id}:`, err);
+            console.error(
+              `Error in onEnter callback for step ${nextStep.id}:`,
+              err,
+            );
           }
         }
 
         set({
           currentStepIndex: nextIndex,
-          popoverSide: nextStep.position || 'auto',
+          popoverSide: nextStep.position || "auto",
           highlightRect: null, // clear rect to trigger recalculation
         });
       },
@@ -201,7 +216,10 @@ export const useTutorialStore = create<TutorialStore>()(
           try {
             await currentStep.onLeave();
           } catch (err) {
-            console.error(`Error in onLeave callback for step ${currentStep.id}:`, err);
+            console.error(
+              `Error in onLeave callback for step ${currentStep.id}:`,
+              err,
+            );
           }
         }
 
@@ -214,24 +232,27 @@ export const useTutorialStore = create<TutorialStore>()(
           try {
             await previousStep.onEnter();
           } catch (err) {
-            console.error(`Error in onEnter callback for step ${previousStep.id}:`, err);
+            console.error(
+              `Error in onEnter callback for step ${previousStep.id}:`,
+              err,
+            );
           }
         }
 
         set({
           currentStepIndex: prevIndex,
-          popoverSide: previousStep.position || 'auto',
+          popoverSide: previousStep.position || "auto",
           highlightRect: null, // clear rect to trigger recalculation
-          status: 'running', // in case it was completed
+          status: "running", // in case it was completed
         });
       },
 
       pauseTutorial: () => {
-        set({ status: 'paused' });
+        set({ status: "paused" });
       },
 
       resumeTutorial: () => {
-        set({ status: 'running' });
+        set({ status: "running" });
       },
 
       stopTutorial: () => {
@@ -243,7 +264,10 @@ export const useTutorialStore = create<TutorialStore>()(
             const result = currentStep.onLeave();
             if (result instanceof Promise) {
               result.catch((err) => {
-                console.error(`Error in onLeave for step ${currentStep.id}:`, err);
+                console.error(
+                  `Error in onLeave for step ${currentStep.id}:`,
+                  err,
+                );
               });
             }
           } catch (err) {
@@ -254,9 +278,9 @@ export const useTutorialStore = create<TutorialStore>()(
         set({
           isActive: false,
           currentStepIndex: 0,
-          status: 'idle',
+          status: "idle",
           highlightRect: null,
-          popoverSide: 'auto',
+          popoverSide: "auto",
         });
       },
 
@@ -271,7 +295,10 @@ export const useTutorialStore = create<TutorialStore>()(
           try {
             await currentStep.onLeave();
           } catch (err) {
-            console.error(`Error in onLeave callback for step ${currentStep.id}:`, err);
+            console.error(
+              `Error in onLeave callback for step ${currentStep.id}:`,
+              err,
+            );
           }
         }
 
@@ -282,15 +309,18 @@ export const useTutorialStore = create<TutorialStore>()(
           try {
             await targetStep.onEnter();
           } catch (err) {
-            console.error(`Error in onEnter callback for step ${targetStep.id}:`, err);
+            console.error(
+              `Error in onEnter callback for step ${targetStep.id}:`,
+              err,
+            );
           }
         }
 
         set({
           currentStepIndex: index,
-          popoverSide: targetStep.position || 'auto',
+          popoverSide: targetStep.position || "auto",
           highlightRect: null,
-          status: 'running',
+          status: "running",
         });
       },
 
@@ -298,14 +328,14 @@ export const useTutorialStore = create<TutorialStore>()(
       setPopoverSide: (side) => set({ popoverSide: side }),
     }),
     {
-      name: 'visual-algo-tutorial',
+      name: "visual-algo-tutorial",
       storage: createJSONStorage(() => sessionStorage),
       // Only persist the non-volatile state properties.
       // Exclude volatile ones like highlightRect which should be computed dynamically in the browser.
       partialize: (state) => ({
         isActive: state.isActive,
         currentStepIndex: state.currentStepIndex,
-        steps: state.steps.map(step => ({
+        steps: state.steps.map((step) => ({
           id: step.id,
           title: step.title,
           content: step.content,
@@ -317,6 +347,6 @@ export const useTutorialStore = create<TutorialStore>()(
         })),
         status: state.status,
       }),
-    }
-  )
+    },
+  ),
 );

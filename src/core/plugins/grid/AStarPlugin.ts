@@ -16,7 +16,7 @@ import type {
   VisualizationEvent,
   GridInput,
   EventPayload,
-} from '../../../types';
+} from "../../../types";
 
 /**
  * Internal interface representing a grid coordinate and its associated pathfinding costs.
@@ -36,9 +36,9 @@ interface AStarNode {
  * AStarPlugin — Encapsulates the deterministic execution and tracing of the A* algorithm.
  */
 export class AStarPlugin implements AlgorithmPlugin<GridInput> {
-  id = 'a-star';
-  name = 'A* Search';
-  category = 'grid' as const;
+  id = "a-star";
+  name = "A* Search";
+  category = "grid" as const;
 
   /**
    * Computes the Manhattan distance heuristic between two grid coordinates.
@@ -49,7 +49,12 @@ export class AStarPlugin implements AlgorithmPlugin<GridInput> {
    * @param y2 - Target Y coordinate.
    * @returns The estimated distance cost.
    */
-  private manhattanDistance(x1: number, y1: number, x2: number, y2: number): number {
+  private manhattanDistance(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+  ): number {
     return Math.abs(x1 - x2) + Math.abs(y1 - y2);
   }
 
@@ -80,14 +85,20 @@ export class AStarPlugin implements AlgorithmPlugin<GridInput> {
 
     // Validate bounds to prevent propagation of malformed inputs
     if (
-      start.x < 0 || start.x >= width || start.y < 0 || start.y >= height ||
-      target.x < 0 || target.x >= width || target.y < 0 || target.y >= height
+      start.x < 0 ||
+      start.x >= width ||
+      start.y < 0 ||
+      start.y >= height ||
+      target.x < 0 ||
+      target.x >= width ||
+      target.y < 0 ||
+      target.y >= height
     ) {
       return {
         events: [],
         metadata: {
-          timeComplexity: 'O(E)',
-          spaceComplexity: 'O(V)',
+          timeComplexity: "O(E)",
+          spaceComplexity: "O(V)",
           executionTimeMs: 0,
           nodeCount: width * height,
           algorithmName: this.name,
@@ -112,9 +123,9 @@ export class AStarPlugin implements AlgorithmPlugin<GridInput> {
 
     // Phase 1: Initialize open and closed sets, base costs
     pushEvent({
-      type: 'SYSTEM_LOG',
+      type: "SYSTEM_LOG",
       message: `Initializing A* Search on ${width}x${height} grid. Start: (${start.x},${start.y}), Target: (${target.x},${target.y}).`,
-      level: 'INFO',
+      level: "INFO",
     });
 
     const openSet = new Map<string, AStarNode>();
@@ -137,7 +148,7 @@ export class AStarPlugin implements AlgorithmPlugin<GridInput> {
 
     // Initial highlight for start node
     pushEvent({
-      type: 'MATRIX_CELL_UPDATE',
+      type: "MATRIX_CELL_UPDATE",
       row: start.y,
       col: start.x,
       value: startH,
@@ -149,7 +160,7 @@ export class AStarPlugin implements AlgorithmPlugin<GridInput> {
     // Phase 2: Main A* Search loop — extract node with lowest fScore
     while (openSet.size > 0) {
       // Find node in openSet with the lowest fScore
-      let currentKey = '';
+      let currentKey = "";
       let lowestF = Infinity;
 
       for (const [key, node] of openSet.entries()) {
@@ -166,26 +177,26 @@ export class AStarPlugin implements AlgorithmPlugin<GridInput> {
       // Highlight currently evaluated node
       if (current.x !== start.x || current.y !== start.y) {
         pushEvent({
-          type: 'MATRIX_CELL_HIGHLIGHT',
+          type: "MATRIX_CELL_HIGHLIGHT",
           row: current.y,
           col: current.x,
-          color: '#06b6d4', // Cyan expansion highlight
+          color: "#06b6d4", // Cyan expansion highlight
         });
       }
 
       pushEvent({
-        type: 'SYSTEM_LOG',
+        type: "SYSTEM_LOG",
         message: `Evaluating cell (${current.x},${current.y}) with fScore = ${current.fScore} (g=${current.gScore}, h=${current.fScore - current.gScore}).`,
-        level: 'INFO',
+        level: "INFO",
       });
 
       // Check if we reached the destination
       if (current.x === target.x && current.y === target.y) {
         targetReachedNode = current;
         pushEvent({
-          type: 'SYSTEM_LOG',
+          type: "SYSTEM_LOG",
           message: `Target (${target.x},${target.y}) successfully reached! Total path cost: ${current.gScore}.`,
-          level: 'INFO',
+          level: "INFO",
         });
         break;
       }
@@ -193,8 +204,8 @@ export class AStarPlugin implements AlgorithmPlugin<GridInput> {
       // Generate valid orthogonal neighbor transitions
       const directions = [
         { x: 0, y: -1 }, // Up
-        { x: 1, y: 0 },  // Right
-        { x: 0, y: 1 },  // Down
+        { x: 1, y: 0 }, // Right
+        { x: 0, y: 1 }, // Down
         { x: -1, y: 0 }, // Left
       ];
 
@@ -205,8 +216,12 @@ export class AStarPlugin implements AlgorithmPlugin<GridInput> {
 
         // Filter out-of-bounds, walls, and already finalized closed-set nodes
         if (
-          nx < 0 || nx >= width || ny < 0 || ny >= height ||
-          walls.has(neighborKey) || closedSet.has(neighborKey)
+          nx < 0 ||
+          nx >= width ||
+          ny < 0 ||
+          ny >= height ||
+          walls.has(neighborKey) ||
+          closedSet.has(neighborKey)
         ) {
           continue;
         }
@@ -230,7 +245,7 @@ export class AStarPlugin implements AlgorithmPlugin<GridInput> {
 
           // Emit visual notification of discovered or relaxed neighbor costs
           pushEvent({
-            type: 'MATRIX_CELL_UPDATE',
+            type: "MATRIX_CELL_UPDATE",
             row: ny,
             col: nx,
             value: neighbor.fScore,
@@ -248,27 +263,30 @@ export class AStarPlugin implements AlgorithmPlugin<GridInput> {
       while (curr) {
         pathCoords.push([curr.x, curr.y]);
         // Highlight optimal path cells in bright yellow/emerald
-        if ((curr.x !== start.x || curr.y !== start.y) && (curr.x !== target.x || curr.y !== target.y)) {
+        if (
+          (curr.x !== start.x || curr.y !== start.y) &&
+          (curr.x !== target.x || curr.y !== target.y)
+        ) {
           pushEvent({
-            type: 'MATRIX_CELL_HIGHLIGHT',
+            type: "MATRIX_CELL_HIGHLIGHT",
             row: curr.y,
             col: curr.x,
-            color: '#eab308', // Premium golden yellow path accent
+            color: "#eab308", // Premium golden yellow path accent
           });
         }
         curr = curr.parentKey ? allNodes.get(curr.parentKey) || null : null;
       }
 
       pushEvent({
-        type: 'SYSTEM_LOG',
+        type: "SYSTEM_LOG",
         message: `Optimal path successfully reconstructed. Length: ${pathCoords.length} steps.`,
-        level: 'INFO',
+        level: "INFO",
       });
     } else {
       pushEvent({
-        type: 'SYSTEM_LOG',
+        type: "SYSTEM_LOG",
         message: `Search exhausted. Target (${target.x},${target.y}) is unreachable due to boundary enclosures.`,
-        level: 'WARN',
+        level: "WARN",
       });
     }
 
@@ -277,8 +295,8 @@ export class AStarPlugin implements AlgorithmPlugin<GridInput> {
     return {
       events,
       metadata: {
-        timeComplexity: 'O(E)',
-        spaceComplexity: 'O(V)',
+        timeComplexity: "O(E)",
+        spaceComplexity: "O(V)",
         executionTimeMs: endTime - startTime,
         nodeCount: width * height,
         algorithmName: this.name,

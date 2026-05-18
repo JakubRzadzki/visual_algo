@@ -1,111 +1,132 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
-import Editor, { type Monaco, useMonaco } from '@monaco-editor/react';
-import type { editor } from 'monaco-editor';
-import { globalEventBus } from '../../core/EventBus';
-import { globalEngine } from '../../core/AnimationEngine';
-import { useUIStore } from '../../store/uiStore';
-import { getTranslation } from '../../data/translations';
+import { useEffect, useState, useRef, useCallback } from "react";
+import Editor, { type Monaco, useMonaco } from "@monaco-editor/react";
+import type { editor } from "monaco-editor";
+import { globalEventBus } from "../../core/EventBus";
+import { globalEngine } from "../../core/AnimationEngine";
+import { useUIStore } from "../../store/uiStore";
+import { getTranslation } from "../../data/translations";
 
-import { useTreeStore } from '../../store/treeStore';
+import { useTreeStore } from "../../store/treeStore";
 
-import { executeInSandbox, buildExecutionTrace, saveSnapshot } from '../../services/sandboxApi';
-import { useToast } from './Toast';
-import { Copy, Download, Check, Save, ChevronDown, Play, Loader2, Share2 } from 'lucide-react';
-import { globalWorkerPool } from '../../core/WorkerPool';
-import { findAlgorithmByName } from '../../data/algorithmCatalog';
+import {
+  executeInSandbox,
+  buildExecutionTrace,
+  saveSnapshot,
+} from "../../services/sandboxApi";
+import { useToast } from "./Toast";
+import {
+  Copy,
+  Download,
+  Check,
+  Save,
+  ChevronDown,
+  Play,
+  Loader2,
+  Share2,
+} from "lucide-react";
+import { globalWorkerPool } from "../../core/WorkerPool";
+import { findAlgorithmByName } from "../../data/algorithmCatalog";
 
 // ─── Vite raw imports for real algorithm source files ─────────────────────────
-const pyModules = import.meta.glob('../../algorithms/python/*.py', { query: '?raw', import: 'default', eager: true });
-const cppModules = import.meta.glob('../../algorithms/cpp/*.cpp', { query: '?raw', import: 'default', eager: true });
+const pyModules = import.meta.glob("../../algorithms/python/*.py", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+});
+const cppModules = import.meta.glob("../../algorithms/cpp/*.cpp", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+});
 
 // ─── Language config ──────────────────────────────────────────────────────────
-type Language = 'python' | 'cpp';
+type Language = "python" | "cpp";
 
 const LANGUAGE_LABELS: Record<Language, string> = {
-  python: 'Python',
-  cpp: 'C++',
+  python: "Python",
+  cpp: "C++",
 };
 
 const LANGUAGE_MONACO_IDS: Record<Language, string> = {
-  python: 'python',
-  cpp: 'cpp',
+  python: "python",
+  cpp: "cpp",
 };
 
 /** Map language selector values to the backend's expected language identifiers */
 const LANGUAGE_TO_BACKEND: Record<Language, string> = {
-  python: 'python',
-  cpp: 'cpp',
+  python: "python",
+  cpp: "cpp",
 };
 
 // ─── GlacierDark Theme ───────────────────────────────────────────────────────
 function defineGlacierDark(monaco: Monaco) {
-  monaco.editor.defineTheme('GlacierDark', {
-    base: 'vs-dark',
+  monaco.editor.defineTheme("GlacierDark", {
+    base: "vs-dark",
     inherit: true,
     rules: [
       // Keywords: cyan
-      { token: 'keyword', foreground: '06b6d4', fontStyle: 'bold' },
-      { token: 'keyword.control', foreground: '06b6d4', fontStyle: 'bold' },
-      { token: 'storage.type', foreground: '06b6d4' },
+      { token: "keyword", foreground: "06b6d4", fontStyle: "bold" },
+      { token: "keyword.control", foreground: "06b6d4", fontStyle: "bold" },
+      { token: "storage.type", foreground: "06b6d4" },
 
       // Strings: emerald
-      { token: 'string', foreground: '10b981' },
-      { token: 'string.quoted', foreground: '10b981' },
+      { token: "string", foreground: "10b981" },
+      { token: "string.quoted", foreground: "10b981" },
 
       // Comments: muted slate
-      { token: 'comment', foreground: '475569', fontStyle: 'italic' },
+      { token: "comment", foreground: "475569", fontStyle: "italic" },
 
       // Numbers: amber
-      { token: 'number', foreground: 'f59e0b' },
-      { token: 'constant.numeric', foreground: 'f59e0b' },
+      { token: "number", foreground: "f59e0b" },
+      { token: "constant.numeric", foreground: "f59e0b" },
 
       // Functions: sky
-      { token: 'entity.name.function', foreground: '38bdf8' },
-      { token: 'support.function', foreground: '38bdf8' },
+      { token: "entity.name.function", foreground: "38bdf8" },
+      { token: "support.function", foreground: "38bdf8" },
 
       // Types: lavender
-      { token: 'entity.name.type', foreground: 'c8a0f0' },
-      { token: 'support.type', foreground: 'c8a0f0' },
-      { token: 'type', foreground: 'c8a0f0' },
+      { token: "entity.name.type", foreground: "c8a0f0" },
+      { token: "support.type", foreground: "c8a0f0" },
+      { token: "type", foreground: "c8a0f0" },
 
       // Variables
-      { token: 'variable', foreground: 'cbd5e1' },
-      { token: 'variable.parameter', foreground: 'cbd5e1' },
+      { token: "variable", foreground: "cbd5e1" },
+      { token: "variable.parameter", foreground: "cbd5e1" },
 
       // Operators
-      { token: 'keyword.operator', foreground: '94a3b8' },
+      { token: "keyword.operator", foreground: "94a3b8" },
 
       // Punctuation
-      { token: 'delimiter', foreground: '64748b' },
-      { token: 'delimiter.bracket', foreground: '94a3b8' },
+      { token: "delimiter", foreground: "64748b" },
+      { token: "delimiter.bracket", foreground: "94a3b8" },
 
       // Default text
-      { token: '', foreground: 'e2e8f0' },
+      { token: "", foreground: "e2e8f0" },
     ],
     colors: {
-      'editor.background': '#0a0e1a',
-      'editor.foreground': '#e2e8f0',
-      'editor.lineHighlightBackground': '#1e293b40',
-      'editor.selectionBackground': '#7dd3fc30',
-      'editor.inactiveSelectionBackground': '#7dd3fc15',
-      'editorLineNumber.foreground': '#334155',
-      'editorLineNumber.activeForeground': '#7dd3fc',
-      'editorCursor.foreground': '#7dd3fc',
-      'editor.selectionHighlightBackground': '#7dd3fc15',
-      'editorIndentGuide.background': '#1e293b',
-      'editorIndentGuide.activeBackground': '#334155',
-      'editorBracketMatch.background': '#7dd3fc20',
-      'editorBracketMatch.border': '#7dd3fc40',
-      'scrollbar.shadow': '#00000000',
-      'scrollbarSlider.background': '#7dd3fc15',
-      'scrollbarSlider.hoverBackground': '#7dd3fc25',
-      'scrollbarSlider.activeBackground': '#7dd3fc35',
-      'editorWidget.background': '#0f1524',
-      'editorWidget.border': '#1e293b',
-      'editorSuggestWidget.background': '#0f1524',
-      'editorSuggestWidget.border': '#1e293b',
-      'editorSuggestWidget.selectedBackground': '#1e293b',
-      'minimap.background': '#0a0e1a',
+      "editor.background": "#0a0e1a",
+      "editor.foreground": "#e2e8f0",
+      "editor.lineHighlightBackground": "#1e293b40",
+      "editor.selectionBackground": "#7dd3fc30",
+      "editor.inactiveSelectionBackground": "#7dd3fc15",
+      "editorLineNumber.foreground": "#334155",
+      "editorLineNumber.activeForeground": "#7dd3fc",
+      "editorCursor.foreground": "#7dd3fc",
+      "editor.selectionHighlightBackground": "#7dd3fc15",
+      "editorIndentGuide.background": "#1e293b",
+      "editorIndentGuide.activeBackground": "#334155",
+      "editorBracketMatch.background": "#7dd3fc20",
+      "editorBracketMatch.border": "#7dd3fc40",
+      "scrollbar.shadow": "#00000000",
+      "scrollbarSlider.background": "#7dd3fc15",
+      "scrollbarSlider.hoverBackground": "#7dd3fc25",
+      "scrollbarSlider.activeBackground": "#7dd3fc35",
+      "editorWidget.background": "#0f1524",
+      "editorWidget.border": "#1e293b",
+      "editorSuggestWidget.background": "#0f1524",
+      "editorSuggestWidget.border": "#1e293b",
+      "editorSuggestWidget.selectedBackground": "#1e293b",
+      "minimap.background": "#0a0e1a",
     },
   });
 }
@@ -113,45 +134,45 @@ function defineGlacierDark(monaco: Monaco) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function MonacoCodeEditor() {
-  const activeMode = useUIStore(state => state.activeMode);
-  const activeTreeType = useTreeStore(state => state.activeTreeType);
-  const uiLanguage = useUIStore(state => state.language);
-  const theme = useUIStore(state => state.theme);
+  const activeMode = useUIStore((state) => state.activeMode);
+  const activeTreeType = useTreeStore((state) => state.activeTreeType);
+  const uiLanguage = useUIStore((state) => state.language);
+  const theme = useUIStore((state) => state.theme);
   const t = getTranslation(uiLanguage);
-  
-  const globalAlgo = useUIStore(state => {
-    if (state.activeMode === 'sorting') return state.activeSortingAlgorithm;
-    if (state.activeMode === 'searching') return state.activeSearchingAlgorithm;
-    if (state.activeMode === 'graph') return state.activeGraphAlgorithm;
-    if (state.activeMode === 'dp') return state.activeDPAlgorithm;
-    if (state.activeMode === 'grid') return state.activeGridAlgorithm;
+
+  const globalAlgo = useUIStore((state) => {
+    if (state.activeMode === "sorting") return state.activeSortingAlgorithm;
+    if (state.activeMode === "searching") return state.activeSearchingAlgorithm;
+    if (state.activeMode === "graph") return state.activeGraphAlgorithm;
+    if (state.activeMode === "dp") return state.activeDPAlgorithm;
+    if (state.activeMode === "grid") return state.activeGridAlgorithm;
     return state.activeSortingAlgorithm;
   });
 
   const getAlgoName = (): string => {
-    if (activeMode === 'tree') {
-      if (activeTreeType === 'binary') return 'Binary Tree';
-      if (activeTreeType === 'bst') return 'Binary Search Tree';
-      if (activeTreeType === 'avl') return 'AVL Tree';
-      if (activeTreeType === 'rbt') return 'Red-Black Tree';
-      if (activeTreeType === 'trie') return 'Trie Prefix Tree';
+    if (activeMode === "tree") {
+      if (activeTreeType === "binary") return "Binary Tree";
+      if (activeTreeType === "bst") return "Binary Search Tree";
+      if (activeTreeType === "avl") return "AVL Tree";
+      if (activeTreeType === "rbt") return "Red-Black Tree";
+      if (activeTreeType === "trie") return "Trie Prefix Tree";
     }
     return globalAlgo;
   };
 
-  const setIsAnimating = useUIStore(state => state.setIsAnimating);
-  const currentGraph = useUIStore(state => state.currentGraph);
+  const setIsAnimating = useUIStore((state) => state.setIsAnimating);
+  const currentGraph = useUIStore((state) => state.currentGraph);
 
   const [algoName, setAlgoName] = useState<string>(getAlgoName());
-  const [language, setLanguage] = useState<Language>('python');
+  const [language, setLanguage] = useState<Language>("python");
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
-  const [editorContent, setEditorContent] = useState('');
+  const [editorContent, setEditorContent] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [activeLine, setActiveLine] = useState<number | null>(null);
-  
+
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monaco = useMonaco();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -165,34 +186,54 @@ export default function MonacoCodeEditor() {
 
   useEffect(() => {
     const unsubscribe = globalEventBus.subscribe((e) => {
-      if (e.type === 'TRACE_LOADED') {
+      if (e.type === "TRACE_LOADED") {
         setAlgoName(e.metadata.algorithmName);
         setActiveLine(null);
-      } else if (['ARRAY_COMPARE', 'ARRAY_SWAP', 'SEARCH_CHECK', 'SEARCH_FOUND', 'SEARCH_NARROW'].includes(e.type)) {
+      } else if (
+        [
+          "ARRAY_COMPARE",
+          "ARRAY_SWAP",
+          "SEARCH_CHECK",
+          "SEARCH_FOUND",
+          "SEARCH_NARROW",
+        ].includes(e.type)
+      ) {
         // Bonus: Highlight the currently executing line using heuristic pattern matching
         if (!editorRef.current) return;
         const model = editorRef.current.getModel();
         if (!model) return;
         const lines = model.getLinesContent();
-        
-        let targetPattern = '';
-        if (e.type === 'ARRAY_COMPARE') targetPattern = 'if ';
-        else if (e.type === 'ARRAY_SWAP') targetPattern = 'temp';
-        else if (e.type === 'SEARCH_CHECK') targetPattern = '==';
-        else if (e.type === 'SEARCH_FOUND') targetPattern = 'return';
-        else if (e.type === 'SEARCH_NARROW') targetPattern = 'mid';
-        
+
+        let targetPattern = "";
+        if (e.type === "ARRAY_COMPARE") targetPattern = "if ";
+        else if (e.type === "ARRAY_SWAP") targetPattern = "temp";
+        else if (e.type === "SEARCH_CHECK") targetPattern = "==";
+        else if (e.type === "SEARCH_FOUND") targetPattern = "return";
+        else if (e.type === "SEARCH_NARROW") targetPattern = "mid";
+
         if (targetPattern) {
-          const idx = lines.findIndex(l => l.toLowerCase().includes(targetPattern));
+          const idx = lines.findIndex((l) =>
+            l.toLowerCase().includes(targetPattern),
+          );
           if (idx !== -1) setActiveLine(idx + 1);
         }
-      } else if ((e as any).type === 'ARRAY_SET' && (e as any).metadata && (e as any).metadata.newArray) {
+      } else if (
+        (e as any).type === "ARRAY_SET" &&
+        (e as any).metadata &&
+        (e as any).metadata.newArray
+      ) {
         const newArr = (e as any).metadata.newArray as number[];
-        setEditorContent(prev => {
-          if (language === 'python') {
-            return prev.replace(/^(\s*)arr\s*=\s*\[([\d\s,]+)\]/m, `$1arr = [${newArr.join(', ')}]`);
-          } else if (language === 'cpp') {
-            return prev.replace(/^(\s*)(?:std::)?vector<int>\s+arr\s*=\s*\{([\d\s,]+)\};/m, `$1vector<int> arr = {${newArr.join(', ')}};`);
+        setEditorContent((prev) => {
+          if (language === "python") {
+            return prev.replace(
+              /^(\s*)arr\s*=\s*\[([\d\s,]+)\]/m,
+              `$1arr = [${newArr.join(", ")}]`,
+            );
+          } else if (language === "cpp") {
+            return prev.replace(
+              /^(\s*)(?:std::)?vector<int>\s+arr\s*=\s*\{([\d\s,]+)\};/m,
+              `$1vector<int> arr = {${newArr.join(", ")}};`,
+            );
           }
           return prev;
         });
@@ -207,143 +248,188 @@ export default function MonacoCodeEditor() {
     const model = editorRef.current.getModel();
     if (!model) return;
 
-    const decorationId = editorRef.current.deltaDecorations([], [
-      {
-        range: new monaco.Range(activeLine, 1, activeLine, 1),
-        options: {
-          isWholeLine: true,
-          className: 'bg-cyan-500/20 border-l-4 border-cyan-400',
-        }
-      }
-    ]);
-    
-    return () => { editorRef.current?.deltaDecorations(decorationId, []); };
+    const decorationId = editorRef.current.deltaDecorations(
+      [],
+      [
+        {
+          range: new monaco.Range(activeLine, 1, activeLine, 1),
+          options: {
+            isWholeLine: true,
+            className: "bg-cyan-500/20 border-l-4 border-cyan-400",
+          },
+        },
+      ],
+    );
+
+    return () => {
+      editorRef.current?.deltaDecorations(decorationId, []);
+    };
   }, [activeLine, monaco, editorContent]);
 
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setIsLangDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   // Resolve source code based on language and algorithm
   const getSourceCode = useCallback((): string => {
     const algoIdToFilename: Record<string, string> = {
-      'Merge Sort': 'merge-sort',
-      'Quick Sort': 'quick-sort',
-      'Bubble Sort': 'bubble-sort',
-      'Heap Sort': 'heap-sort',
-      'Binary Search': 'binary-search',
-      'Linear Search': 'linear-search',
-      "Dijkstra's Path": 'dijkstra',
-      "Dijkstra's Shortest Path": 'dijkstra',
-      "Kruskal's MST": 'kruskal',
-      'Breadth-First Search': 'bfs',
-      'Depth-First Search': 'dfs',
-      "Prim's MST": 'prim',
-      'Topological Sort': 'topo-sort',
-      'Binary Tree': 'binary',
-      'Binary Search Tree': 'bst',
-      'AVL Tree': 'avl',
-      'Red-Black Tree': 'rbt',
-      'Trie Prefix Tree': 'trie',
-      'Max Heap': 'max-heap',
-      'Union-Find': 'union-find',
-      '0/1 Knapsack': 'knapsack',
-      'Longest Common Subsequence': 'lcs',
-      'A* Search': 'a-star',
-      'Flood Fill': 'flood-fill',
+      "Merge Sort": "merge-sort",
+      "Quick Sort": "quick-sort",
+      "Bubble Sort": "bubble-sort",
+      "Heap Sort": "heap-sort",
+      "Binary Search": "binary-search",
+      "Linear Search": "linear-search",
+      "Dijkstra's Path": "dijkstra",
+      "Dijkstra's Shortest Path": "dijkstra",
+      "Kruskal's MST": "kruskal",
+      "Breadth-First Search": "bfs",
+      "Depth-First Search": "dfs",
+      "Prim's MST": "prim",
+      "Topological Sort": "topo-sort",
+      "Binary Tree": "binary",
+      "Binary Search Tree": "bst",
+      "AVL Tree": "avl",
+      "Red-Black Tree": "rbt",
+      "Trie Prefix Tree": "trie",
+      "Max Heap": "max-heap",
+      "Union-Find": "union-find",
+      "0/1 Knapsack": "knapsack",
+      "Longest Common Subsequence": "lcs",
+      "A* Search": "a-star",
+      "Flood Fill": "flood-fill",
     };
-    const filename = algoIdToFilename[algoName] || 'merge-sort';
+    const filename = algoIdToFilename[algoName] || "merge-sort";
 
-    if (language === 'python') {
-      return (pyModules[`../../algorithms/python/${filename}.py`] as string) || '# Source file not found';
-    } else if (language === 'cpp') {
-      return (cppModules[`../../algorithms/cpp/${filename}.cpp`] as string) || '// Source file not found';
+    if (language === "python") {
+      return (
+        (pyModules[`../../algorithms/python/${filename}.py`] as string) ||
+        "# Source file not found"
+      );
+    } else if (language === "cpp") {
+      return (
+        (cppModules[`../../algorithms/cpp/${filename}.cpp`] as string) ||
+        "// Source file not found"
+      );
     }
-    return '';
+    return "";
   }, [language, algoName]);
 
   // Update editor content whenever language, algorithm, or graph template changes
   useEffect(() => {
-    const graphId = currentGraph ? `${currentGraph.nodes.length}-${currentGraph.edges.length}-${currentGraph.edges.map(e => e.id).join('')}` : 'default';
+    const graphId = currentGraph
+      ? `${currentGraph.nodes.length}-${currentGraph.edges.length}-${currentGraph.edges.map((e) => e.id).join("")}`
+      : "default";
     const storageKey = `monaco-editor-${algoName}-${language}-${graphId}`;
     const savedCode = localStorage.getItem(storageKey);
-    let code = (savedCode || getSourceCode()).replace(/\r\n/g, '\n');
+    let code = (savedCode || getSourceCode()).replace(/\r\n/g, "\n");
 
-    if (activeMode === 'graph' && currentGraph && language === 'python') {
+    if (activeMode === "graph" && currentGraph && language === "python") {
       const isAdjList = /^([ \t]*)graph\s*=\s*\[[\s\S]*?^\1\]/m.test(code);
       const isEdgeList = /^([ \t]*)edges\s*=\s*\[[\s\S]*?^\1\]/m.test(code);
 
       if (isAdjList) {
         const numNodes = currentGraph.nodes.length;
-        const adj: [number, number, string][][] = Array.from({ length: numNodes }, () => []);
-        currentGraph.edges.forEach(e => {
-          const u = parseInt(e.from.replace('n', ''), 10);
-          const v = parseInt(e.to.replace('n', ''), 10);
+        const adj: [number, number, string][][] = Array.from(
+          { length: numNodes },
+          () => [],
+        );
+        currentGraph.edges.forEach((e) => {
+          const u = parseInt(e.from.replace("n", ""), 10);
+          const v = parseInt(e.to.replace("n", ""), 10);
           if (!isNaN(u) && !isNaN(v)) {
             adj[u].push([v, e.weight, e.id]);
           }
         });
         const match = code.match(/^([ \t]*)graph\s*=\s*\[[\s\S]*?^\1\]/m);
-        const indent = match ? match[1] : '    ';
+        const indent = match ? match[1] : "    ";
         let block = `${indent}graph = [\n`;
-        adj.forEach(neighbors => {
-          const neighborStrs = neighbors.map(n => `(${n[0]}, ${n[1]}, "${n[2]}")`);
-          block += `${indent}    [${neighborStrs.join(', ')}],\n`;
+        adj.forEach((neighbors) => {
+          const neighborStrs = neighbors.map(
+            (n) => `(${n[0]}, ${n[1]}, "${n[2]}")`,
+          );
+          block += `${indent}    [${neighborStrs.join(", ")}],\n`;
         });
         block += `${indent}]`;
         code = code.replace(/^([ \t]*)graph\s*=\s*\[[\s\S]*?^\1\]/m, block);
       } else if (isEdgeList) {
-        const edgeStrings = currentGraph.edges.map(e => {
-          const u = e.from.replace('n','');
-          const v = e.to.replace('n','');
+        const edgeStrings = currentGraph.edges.map((e) => {
+          const u = e.from.replace("n", "");
+          const v = e.to.replace("n", "");
           return `(${u}, ${v}, "${e.id}", ${e.weight})`;
         });
         const match = code.match(/^([ \t]*)edges\s*=\s*\[[\s\S]*?^\1\]/m);
-        const indent = match ? match[1] : '    ';
-        const block = `${indent}edges = [\n${edgeStrings.map(str => indent + '    ' + str).join(',\n')}\n${indent}]`;
+        const indent = match ? match[1] : "    ";
+        const block = `${indent}edges = [\n${edgeStrings.map((str) => indent + "    " + str).join(",\n")}\n${indent}]`;
         code = code.replace(/^([ \t]*)edges\s*=\s*\[[\s\S]*?^\1\]/m, block);
-        code = code.replace(/^([ \t]*)nodes\s*=\s*\d+/m, `${indent}nodes = ${currentGraph.nodes.length}`);
+        code = code.replace(
+          /^([ \t]*)nodes\s*=\s*\d+/m,
+          `${indent}nodes = ${currentGraph.nodes.length}`,
+        );
       }
-    } else if (activeMode === 'graph' && currentGraph && language === 'cpp') {
-      const isAdjList = /^([ \t]*)vector<vector<Edge>>\s+graph\(\d+\);/m.test(code);
-      const isEdgeList = /^([ \t]*)vector<Edge>\s+edges\s*=\s*\{[\s\S]*?^\1\};/m.test(code);
+    } else if (activeMode === "graph" && currentGraph && language === "cpp") {
+      const isAdjList = /^([ \t]*)vector<vector<Edge>>\s+graph\(\d+\);/m.test(
+        code,
+      );
+      const isEdgeList =
+        /^([ \t]*)vector<Edge>\s+edges\s*=\s*\{[\s\S]*?^\1\};/m.test(code);
 
       if (isAdjList) {
         const numNodes = currentGraph.nodes.length;
-        const adj: [number, number, string][][] = Array.from({ length: numNodes }, () => []);
-        currentGraph.edges.forEach(e => {
-          const u = parseInt(e.from.replace('n', ''), 10);
-          const v = parseInt(e.to.replace('n', ''), 10);
+        const adj: [number, number, string][][] = Array.from(
+          { length: numNodes },
+          () => [],
+        );
+        currentGraph.edges.forEach((e) => {
+          const u = parseInt(e.from.replace("n", ""), 10);
+          const v = parseInt(e.to.replace("n", ""), 10);
           if (!isNaN(u) && !isNaN(v)) {
             adj[u].push([v, e.weight, e.id]);
           }
         });
-        const match = code.match(/^([ \t]*)vector<vector<Edge>>\s+graph\(\d+\);[\s\S]*?^\1graph\[\d+\]\s*=\s*\{[^}]*\};/m);
-        const indent = match ? match[1] : '    ';
+        const match = code.match(
+          /^([ \t]*)vector<vector<Edge>>\s+graph\(\d+\);[\s\S]*?^\1graph\[\d+\]\s*=\s*\{[^}]*\};/m,
+        );
+        const indent = match ? match[1] : "    ";
         let block = `${indent}vector<vector<Edge>> graph(${numNodes});\n`;
         adj.forEach((neighbors, u) => {
-          const neighborStrs = neighbors.map(n => `{${n[0]}, ${n[1]}, "${n[2]}"}`);
-          block += `${indent}graph[${u}] = {${neighborStrs.join(', ')}};${u < numNodes - 1 ? '\n' : ''}`;
+          const neighborStrs = neighbors.map(
+            (n) => `{${n[0]}, ${n[1]}, "${n[2]}"}`,
+          );
+          block += `${indent}graph[${u}] = {${neighborStrs.join(", ")}};${u < numNodes - 1 ? "\n" : ""}`;
         });
-        code = code.replace(/^([ \t]*)vector<vector<Edge>>\s+graph\(\d+\);[\s\S]*?^\1graph\[\d+\]\s*=\s*\{[^}]*\};/m, block);
+        code = code.replace(
+          /^([ \t]*)vector<vector<Edge>>\s+graph\(\d+\);[\s\S]*?^\1graph\[\d+\]\s*=\s*\{[^}]*\};/m,
+          block,
+        );
       } else if (isEdgeList) {
-        const edgeStrings = currentGraph.edges.map(e => {
-          const u = e.from.replace('n','');
-          const v = e.to.replace('n','');
+        const edgeStrings = currentGraph.edges.map((e) => {
+          const u = e.from.replace("n", "");
+          const v = e.to.replace("n", "");
           return `{${u}, ${v}, ${e.weight}, "${e.id}"}`;
         });
-        const match = code.match(/^([ \t]*)vector<Edge>\s+edges\s*=\s*\{[\s\S]*?^\1\};/m);
-        const indent = match ? match[1] : '    ';
-        const block = `${indent}vector<Edge> edges = {\n${edgeStrings.map(str => indent + '    ' + str).join(',\n')}\n${indent}};`;
-        code = code.replace(/^([ \t]*)vector<Edge>\s+edges\s*=\s*\{[\s\S]*?^\1\};/m, block);
-        code = code.replace(/^([ \t]*)int\s+nodes\s*=\s*\d+;/m, `${indent}int nodes = ${currentGraph.nodes.length};`);
+        const match = code.match(
+          /^([ \t]*)vector<Edge>\s+edges\s*=\s*\{[\s\S]*?^\1\};/m,
+        );
+        const indent = match ? match[1] : "    ";
+        const block = `${indent}vector<Edge> edges = {\n${edgeStrings.map((str) => indent + "    " + str).join(",\n")}\n${indent}};`;
+        code = code.replace(
+          /^([ \t]*)vector<Edge>\s+edges\s*=\s*\{[\s\S]*?^\1\};/m,
+          block,
+        );
+        code = code.replace(
+          /^([ \t]*)int\s+nodes\s*=\s*\d+;/m,
+          `${indent}int nodes = ${currentGraph.nodes.length};`,
+        );
       }
     }
 
@@ -352,30 +438,32 @@ export default function MonacoCodeEditor() {
 
   // Sync the array in the editor to the visualization canvas directly
   useEffect(() => {
-    if (activeMode !== 'sorting' && activeMode !== 'searching') return;
+    if (activeMode !== "sorting" && activeMode !== "searching") return;
     if (useUIStore.getState().isAnimating) return;
-    
+
     const timeout = setTimeout(() => {
       let match = null;
-      if (language === 'python') {
+      if (language === "python") {
         const regex = /arr\s*=\s*\[([\d\s,]+)\]/;
         match = editorContent.match(regex);
-      } else if (language === 'cpp') {
+      } else if (language === "cpp") {
         const regex = /(?:std::)?vector<int>\s+arr\s*=\s*\{([\d\s,]+)\};/;
         match = editorContent.match(regex);
       }
-      
+
       if (match && match[1]) {
-        const arr = match[1].split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
+        const arr = match[1]
+          .split(",")
+          .map((n) => parseInt(n.trim(), 10))
+          .filter((n) => !isNaN(n));
         if (arr.length > 0) {
           useUIStore.getState().setVisualizationData({ values: arr });
         }
       }
     }, 500);
-    
+
     return () => clearTimeout(timeout);
   }, [editorContent, language, activeMode]);
-
 
   // Define theme once Monaco is ready
   useEffect(() => {
@@ -384,21 +472,22 @@ export default function MonacoCodeEditor() {
     }
   }, [monaco]);
 
-  const handleEditorMount = (editor: editor.IStandaloneCodeEditor, monacoInstance: Monaco) => {
+  const handleEditorMount = (
+    editor: editor.IStandaloneCodeEditor,
+    monacoInstance: Monaco,
+  ) => {
     editorRef.current = editor;
 
     // Register Ctrl+S / Cmd+S save shortcut
     editor.addCommand(
-       
       monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS,
-      () => handleSave()
+      () => handleSave(),
     );
 
     // Register Ctrl+Enter / Cmd+Enter run shortcut
     editor.addCommand(
-       
       monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
-      () => handleRunCode()
+      () => handleRunCode(),
     );
   };
 
@@ -409,19 +498,19 @@ export default function MonacoCodeEditor() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error("Failed to copy:", err);
     }
   };
 
   const handleDownload = () => {
     const code = editorRef.current?.getValue() || editorContent;
-    const ext = language === 'python' ? '.py' : '.cpp';
-    const safeAlgoName = algoName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+    const ext = language === "python" ? ".py" : ".cpp";
+    const safeAlgoName = algoName.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
     const filename = `${safeAlgoName}${ext}`;
 
-    const blob = new Blob([code], { type: 'text/plain' });
+    const blob = new Blob([code], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = filename;
     document.body.appendChild(a);
@@ -432,7 +521,9 @@ export default function MonacoCodeEditor() {
 
   const handleSave = () => {
     const code = editorRef.current?.getValue() || editorContent;
-    const graphId = currentGraph ? `${currentGraph.nodes.length}-${currentGraph.edges.length}-${currentGraph.edges.map(e => e.id).join('')}` : 'default';
+    const graphId = currentGraph
+      ? `${currentGraph.nodes.length}-${currentGraph.edges.length}-${currentGraph.edges.map((e) => e.id).join("")}`
+      : "default";
     const storageKey = `monaco-editor-${algoName}-${language}-${graphId}`;
     localStorage.setItem(storageKey, code);
     setSaved(true);
@@ -440,27 +531,35 @@ export default function MonacoCodeEditor() {
   };
 
   const handleFormat = () => {
-    editorRef.current?.getAction('editor.action.formatDocument')?.run();
+    editorRef.current?.getAction("editor.action.formatDocument")?.run();
   };
 
   const handleShare = async () => {
     if (isSharing) return;
     const code = editorRef.current?.getValue() || editorContent;
-    
+
     setIsSharing(true);
     try {
       const payload = {
         globalAlgo,
         language,
         code,
-        currentGraph
+        currentGraph,
       };
       const id = await saveSnapshot(payload);
       const url = `${window.location.origin}/share/${id}`;
       await navigator.clipboard.writeText(url);
-      showToast('Link copied to clipboard!', 'success', 'You can now share this visualization.');
+      showToast(
+        "Link copied to clipboard!",
+        "success",
+        "You can now share this visualization.",
+      );
     } catch (err) {
-      showToast('Failed to share', 'error', err instanceof Error ? err.message : 'Unknown error');
+      showToast(
+        "Failed to share",
+        "error",
+        err instanceof Error ? err.message : "Unknown error",
+      );
     } finally {
       setIsSharing(false);
     }
@@ -472,14 +571,9 @@ export default function MonacoCodeEditor() {
 
     const code = editorRef.current?.getValue() || editorContent;
     if (!code.trim()) {
-      showToast('Editor is empty', 'error', 'Write some code before running.');
+      showToast("Editor is empty", "error", "Write some code before running.");
       return;
     }
-
-
-
-
-
 
     const backendLang = LANGUAGE_TO_BACKEND[language];
     setIsRunning(true);
@@ -492,8 +586,8 @@ export default function MonacoCodeEditor() {
       // Check for stderr errors from the sandbox
       if (response.error && response.error.trim().length > 0) {
         showToast(
-          'Execution completed with errors',
-          'error',
+          "Execution completed with errors",
+          "error",
           response.error.trim().slice(0, 300),
         );
       }
@@ -505,54 +599,73 @@ export default function MonacoCodeEditor() {
         globalEngine.setSpeed(1.0);
         setIsAnimating(true);
         globalEngine.play();
-        
+
         showToast(
           `Trace loaded — ${trace.events.length} steps`,
-          'success',
+          "success",
           `Executed in ${elapsedMs}ms via Docker sandbox`,
         );
       } else if (!response.error || response.error.trim().length === 0) {
         // No trace events and no error — the script ran but produced no events
         showToast(
-          'No trace events produced',
-          'info',
+          "No trace events produced",
+          "info",
           response.output
             ? `Output: ${response.output.trim().slice(0, 200)}`
-            : 'Your code ran successfully but did not emit any trace JSON events.',
+            : "Your code ran successfully but did not emit any trace JSON events.",
         );
       }
     } catch (err) {
-      console.warn("Sandbox execution failed. Falling back to local offline worker.", err);
+      console.warn(
+        "Sandbox execution failed. Falling back to local offline worker.",
+        err,
+      );
       try {
         const match = findAlgorithmByName(algoName);
         if (!match) throw new Error(`Could not resolve algorithm: ${algoName}`);
-        
+
         const payload = {
           nodes: currentGraph?.nodes || [],
           edges: currentGraph?.edges || [],
-          values: useUIStore.getState().visualizationData.values || [],
-          ...useUIStore.getState().visualizationData
+          values: (useUIStore.getState().visualizationData as any)?.values || [],
+          ...useUIStore.getState().visualizationData,
         };
-        
-        const trace = await globalWorkerPool.run(match.algorithm.id, payload as any);
+
+        const trace = await globalWorkerPool.run(
+          match.algorithm.id,
+          payload as any,
+        );
         globalEngine.loadTrace(trace);
         globalEngine.setSpeed(1.0);
         setIsAnimating(true);
         globalEngine.play();
-        
+
         showToast(
-          'Executed locally (Offline mode)',
-          'info',
-          'Sandbox is unreachable. Successfully generated trace using local fallback engine.'
+          "Executed locally (Offline mode)",
+          "info",
+          "Sandbox is unreachable. Successfully generated trace using local fallback engine.",
         );
       } catch (fallbackErr) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        showToast('Sandbox execution failed', 'error', message + ' (Local fallback also failed)');
+        const message = err instanceof Error ? err.message : "Unknown error";
+        showToast(
+          "Sandbox execution failed",
+          "error",
+          message + " (Local fallback also failed)",
+        );
       }
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, editorContent, language, algoName, showToast, setIsAnimating, globalAlgo, currentGraph]);
+  }, [
+    isRunning,
+    editorContent,
+    language,
+    algoName,
+    showToast,
+    setIsAnimating,
+    globalAlgo,
+    currentGraph,
+  ]);
 
   return (
     <div
@@ -560,8 +673,8 @@ export default function MonacoCodeEditor() {
       data-tutorial-step="code-editor"
       className={`flex-1 flex flex-col font-mono text-sm text-slate-300 rounded-lg border glass-panel transition-all duration-300 ${
         isRunning
-          ? 'border-cyan-400/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]'
-          : 'border-ice-blue/10'
+          ? "border-cyan-400/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]"
+          : "border-ice-blue/10"
       }`}
     >
       {/* ── Toolbar ──────────────────────────────────────────────── */}
@@ -579,8 +692,6 @@ export default function MonacoCodeEditor() {
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap justify-end">
-
-
           {/* ▶ Run Code Button */}
           <button
             id="run-code-btn"
@@ -588,8 +699,8 @@ export default function MonacoCodeEditor() {
             disabled={isRunning}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
               isRunning
-                ? 'bg-cyan-500/10 text-cyan-300/60 border border-cyan-500/20 cursor-wait'
-                : 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 text-cyan-300 border border-cyan-500/30 hover:from-cyan-500/30 hover:to-emerald-500/30 hover:text-cyan-200 hover:border-cyan-400/40 hover:shadow-[0_0_12px_rgba(6,182,212,0.2)] active:scale-[0.97]'
+                ? "bg-cyan-500/10 text-cyan-300/60 border border-cyan-500/20 cursor-wait"
+                : "bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 text-cyan-300 border border-cyan-500/30 hover:from-cyan-500/30 hover:to-emerald-500/30 hover:text-cyan-200 hover:border-cyan-400/40 hover:shadow-[0_0_12px_rgba(6,182,212,0.2)] active:scale-[0.97]"
             }`}
             title="Run code (Ctrl+Enter)"
           >
@@ -600,7 +711,10 @@ export default function MonacoCodeEditor() {
               </>
             ) : (
               <>
-                <Play className="w-3.5 h-3.5" style={{ fill: 'currentColor' }} />
+                <Play
+                  className="w-3.5 h-3.5"
+                  style={{ fill: "currentColor" }}
+                />
                 {t.run}
               </>
             )}
@@ -617,7 +731,9 @@ export default function MonacoCodeEditor() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-800/60 border border-slate-700/50 text-slate-300 hover:border-ice-blue/30 hover:text-ice-blue transition-all duration-200"
             >
               {LANGUAGE_LABELS[language]}
-              <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isLangDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`w-3 h-3 transition-transform duration-200 ${isLangDropdownOpen ? "rotate-180" : ""}`}
+              />
             </button>
 
             {isLangDropdownOpen && (
@@ -632,8 +748,8 @@ export default function MonacoCodeEditor() {
                     }}
                     className={`w-full text-left px-4 py-2 text-xs font-medium transition-all duration-150 ${
                       language === lang
-                        ? 'text-ice-blue bg-ice-blue/10'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                        ? "text-ice-blue bg-ice-blue/10"
+                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
                     }`}
                   >
                     {LANGUAGE_LABELS[lang]}
@@ -663,7 +779,11 @@ export default function MonacoCodeEditor() {
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-emerald-400 hover:bg-emerald-400/5 transition-all duration-200"
             title="Save to localStorage (Ctrl+S)"
           >
-            {saved ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Save className="w-3.5 h-3.5" />}
+            {saved ? (
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <Save className="w-3.5 h-3.5" />
+            )}
             {saved ? t.saved : t.save}
           </button>
 
@@ -671,16 +791,30 @@ export default function MonacoCodeEditor() {
           <button
             id="reset-code-btn"
             onClick={() => {
-              if (confirm('Are you sure you want to reset the code to the default template? This will erase your changes.')) {
-                const graphId = currentGraph ? `${currentGraph.nodes.length}-${currentGraph.edges.length}-${currentGraph.edges.map(e => e.id).join('')}` : 'default';
-                localStorage.removeItem(`monaco-editor-${algoName}-${language}-${graphId}`);
-                localStorage.removeItem(`monaco-editor-${algoName}-${language}`);
+              if (
+                confirm(
+                  "Are you sure you want to reset the code to the default template? This will erase your changes.",
+                )
+              ) {
+                const graphId = currentGraph
+                  ? `${currentGraph.nodes.length}-${currentGraph.edges.length}-${currentGraph.edges.map((e) => e.id).join("")}`
+                  : "default";
+                localStorage.removeItem(
+                  `monaco-editor-${algoName}-${language}-${graphId}`,
+                );
+                localStorage.removeItem(
+                  `monaco-editor-${algoName}-${language}`,
+                );
                 const defaultCode = getSourceCode();
                 setEditorContent(defaultCode);
                 if (editorRef.current) {
                   editorRef.current.setValue(defaultCode);
                 }
-                showToast('Code reset', 'info', 'Restored default algorithm template.');
+                showToast(
+                  "Code reset",
+                  "info",
+                  "Restored default algorithm template.",
+                );
               }
             }}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-red-400 hover:bg-red-400/5 transition-all duration-200"
@@ -696,7 +830,11 @@ export default function MonacoCodeEditor() {
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-ice-blue hover:bg-white/5 transition-all duration-200"
             title="Copy to clipboard"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <Copy className="w-3.5 h-3.5" />
+            )}
             {copied ? t.copied : t.copy}
           </button>
 
@@ -718,7 +856,11 @@ export default function MonacoCodeEditor() {
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-purple-400 hover:bg-purple-400/5 transition-all duration-200"
             title="Share visualization"
           >
-            {isSharing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
+            {isSharing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Share2 className="w-3.5 h-3.5" />
+            )}
             {t.share}
           </button>
         </div>
@@ -740,9 +882,9 @@ export default function MonacoCodeEditor() {
           height="100%"
           language={LANGUAGE_MONACO_IDS[language]}
           value={editorContent}
-          theme={theme === 'dark' ? 'GlacierDark' : 'vs'}
+          theme={theme === "dark" ? "GlacierDark" : "vs"}
           onChange={(value) => {
-            setEditorContent(value || '');
+            setEditorContent(value || "");
             useUIStore.getState().setIsAnimating(false);
           }}
           onMount={handleEditorMount}
@@ -756,7 +898,8 @@ export default function MonacoCodeEditor() {
           }
           options={{
             fontSize: 12,
-            fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
+            fontFamily:
+              "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
             fontLigatures: true,
             lineHeight: 22,
             letterSpacing: 0.3,
@@ -768,13 +911,13 @@ export default function MonacoCodeEditor() {
               useShadows: false,
             },
             padding: { top: 16, bottom: 16 },
-            renderLineHighlight: 'line',
+            renderLineHighlight: "line",
             renderLineHighlightOnlyWhenFocus: false,
-            cursorBlinking: 'smooth',
-            cursorSmoothCaretAnimation: 'on',
+            cursorBlinking: "smooth",
+            cursorSmoothCaretAnimation: "on",
             smoothScrolling: true,
             tabSize: 2,
-            wordWrap: 'off',
+            wordWrap: "off",
             automaticLayout: true,
             bracketPairColorization: { enabled: true },
             guides: {

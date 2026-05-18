@@ -1,5 +1,9 @@
-import type { ExecutionTrace, AlgorithmPlugin, VisualizationEvent } from '../types';
-import { globalEventBus } from './EventBus';
+import type {
+  ExecutionTrace,
+  AlgorithmPlugin,
+  VisualizationEvent,
+} from "../types";
+import { globalEventBus } from "./EventBus";
 
 /**
  * Easing function types for smooth animation curves
@@ -85,7 +89,11 @@ export class AnimationEngine {
    * Orchestrates execution of a plugin with Watchdog protection.
    * If the plugin execution blocks for > 5000ms, it's manually flagged or prevented (in Worker environments)
    */
-  public generateTraceWithWatchdog<T>(plugin: AlgorithmPlugin<T>, input: T, timeoutMs: number = 5000): Promise<ExecutionTrace> {
+  public generateTraceWithWatchdog<T>(
+    plugin: AlgorithmPlugin<T>,
+    input: T,
+    timeoutMs: number = 5000,
+  ): Promise<ExecutionTrace> {
     return new Promise((resolve, reject) => {
       const startTime = performance.now();
 
@@ -97,7 +105,9 @@ export class AnimationEngine {
         const elapsed = performance.now() - startTime;
 
         if (elapsed > timeoutMs) {
-          console.warn(`[Watchdog] Plugin ${plugin.name} exceeded ${timeoutMs}ms limit! (${Math.round(elapsed)}ms)`);
+          console.warn(
+            `[Watchdog] Plugin ${plugin.name} exceeded ${timeoutMs}ms limit! (${Math.round(elapsed)}ms)`,
+          );
         }
         resolve(trace);
       } catch (err) {
@@ -115,17 +125,17 @@ export class AnimationEngine {
       id: crypto.randomUUID(),
       timestamp: Date.now(),
       step: 0,
-      type: 'TRACE_LOADED',
-      metadata: trace.metadata
+      type: "TRACE_LOADED",
+      metadata: trace.metadata,
     });
 
     globalEventBus.emit({
       id: crypto.randomUUID(),
       timestamp: Date.now(),
       step: 0,
-      type: 'SYSTEM_LOG',
-      level: 'INFO',
-      message: `Loaded trace for ${trace.metadata.algorithmName} with ${trace.events.length} steps.`
+      type: "SYSTEM_LOG",
+      level: "INFO",
+      message: `Loaded trace for ${trace.metadata.algorithmName} with ${trace.events.length} steps.`,
     });
 
     this.emitPlaybackState();
@@ -181,7 +191,10 @@ export class AnimationEngine {
    * Advance to the next algorithm step
    */
   public stepForward(): void {
-    if (!this.currentTrace || this.currentStep >= this.currentTrace.events.length) {
+    if (
+      !this.currentTrace ||
+      this.currentStep >= this.currentTrace.events.length
+    ) {
       this.pause();
       return;
     }
@@ -199,7 +212,10 @@ export class AnimationEngine {
     if (!this.currentTrace || this.currentStep <= 0) return;
 
     this.currentStep--;
-    const event = { ...this.currentTrace.events[this.currentStep], isReverse: true };
+    const event = {
+      ...this.currentTrace.events[this.currentStep],
+      isReverse: true,
+    };
     globalEventBus.emit(event);
     this.emitPlaybackState();
   }
@@ -210,7 +226,10 @@ export class AnimationEngine {
   public seekTo(stepIndex: number): void {
     if (!this.currentTrace) return;
 
-    const target = Math.max(0, Math.min(stepIndex, this.currentTrace.events.length));
+    const target = Math.max(
+      0,
+      Math.min(stepIndex, this.currentTrace.events.length),
+    );
 
     this.pause();
 
@@ -252,7 +271,7 @@ export class AnimationEngine {
     duration: number,
     onUpdate: (progress: number) => void,
     easing: EasingFunction = Easing.easeInOut,
-    onComplete?: () => void
+    onComplete?: () => void,
   ): string {
     const id = `anim-${++this.animationIdCounter}`;
     this.activeAnimations.set(id, {
@@ -322,7 +341,7 @@ export class AnimationEngine {
       id: crypto.randomUUID(),
       timestamp: Date.now(),
       step: this.currentStep,
-      type: 'SYSTEM_PLAYBACK_STATE',
+      type: "SYSTEM_PLAYBACK_STATE",
       isPlaying: this.isPlaying,
       currentStep: this.currentStep,
       totalSteps: this.currentTrace ? this.currentTrace.events.length : 0,
@@ -339,7 +358,9 @@ export class AnimationEngine {
     if (!this.isPlaying) return;
 
     // Calculate precise deltaTime since last frame
-    const deltaTime = this.lastFrameTime ? currentTime - this.lastFrameTime : 16;
+    const deltaTime = this.lastFrameTime
+      ? currentTime - this.lastFrameTime
+      : 16;
     this.lastFrameTime = currentTime;
 
     // Accumulate time for algorithm step scheduling
@@ -362,7 +383,7 @@ export class AnimationEngine {
       id: crypto.randomUUID(),
       timestamp: Date.now(),
       step: this.currentStep,
-      type: 'ANIMATION_FRAME',
+      type: "ANIMATION_FRAME",
       deltaTime,
       speed: this.playbackSpeed,
     } as VisualizationEvent);

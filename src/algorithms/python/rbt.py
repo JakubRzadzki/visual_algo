@@ -4,6 +4,7 @@
 RED = "red"
 BLACK = "black"
 
+
 class Node:
     def __init__(self, value, color=RED):
         self.value = value
@@ -11,6 +12,7 @@ class Node:
         self.left = None
         self.right = None
         self.parent = None
+
 
 class RedBlackTree:
     def __init__(self):

@@ -1,6 +1,6 @@
-import type { ExecutionTrace, WorkerMessage, WorkerResponse } from '../types';
+import type { ExecutionTrace, WorkerMessage, WorkerResponse } from "../types";
 
-type WorkerState = 'idle' | 'busy';
+type WorkerState = "idle" | "busy";
 
 interface PoolWorker {
   worker: Worker;
@@ -20,7 +20,10 @@ interface PendingTask {
  */
 export class WorkerPool {
   private pool: PoolWorker[] = [];
-  private taskQueue: (WorkerMessage & { resolve: PendingTask['resolve']; reject: PendingTask['reject'] })[] = [];
+  private taskQueue: (WorkerMessage & {
+    resolve: PendingTask["resolve"];
+    reject: PendingTask["reject"];
+  })[] = [];
   // Map taskId → pending promise handlers for in-flight tasks
   private pending: Map<string, PendingTask> = new Map();
 
@@ -38,13 +41,16 @@ export class WorkerPool {
    * Schedule an algorithm run on the next available worker.
    * Returns a Promise that resolves with the completed ExecutionTrace.
    */
-  public run(algorithmId: string, payload: import('../types').VisualizationData): Promise<ExecutionTrace> {
+  public run(
+    algorithmId: string,
+    payload: import("../types").VisualizationData,
+  ): Promise<ExecutionTrace> {
     return new Promise((resolve, reject) => {
       const taskId = crypto.randomUUID();
       const message: WorkerMessage = { taskId, algorithmId, payload };
 
       // Find an idle worker to hand off to immediately
-      const idle = this.pool.find(pw => pw.state === 'idle');
+      const idle = this.pool.find((pw) => pw.state === "idle");
 
       if (idle) {
         this.dispatch(idle, message, resolve, reject);
@@ -68,14 +74,17 @@ export class WorkerPool {
   private spawnWorkers(): void {
     for (let i = 0; i < this.maxWorkers; i++) {
       // Vite resolves ?worker suffix as a Worker module URL at build time
-      const worker = new Worker(new URL('./workers/algo.worker.ts', import.meta.url), { type: 'module' });
-      const pw: PoolWorker = { worker, state: 'idle' };
+      const worker = new Worker(
+        new URL("./workers/algo.worker.ts", import.meta.url),
+        { type: "module" },
+      );
+      const pw: PoolWorker = { worker, state: "idle" };
 
-      worker.addEventListener('message', (e: MessageEvent<WorkerResponse>) => {
+      worker.addEventListener("message", (e: MessageEvent<WorkerResponse>) => {
         this.handleWorkerMessage(pw, e.data);
       });
 
-      worker.addEventListener('error', (e) => {
+      worker.addEventListener("error", (e) => {
         this.handleWorkerError(pw, e);
       });
 
@@ -87,11 +96,15 @@ export class WorkerPool {
   private dispatch(
     pw: PoolWorker,
     message: WorkerMessage,
-    resolve: PendingTask['resolve'],
-    reject: PendingTask['reject'],
+    resolve: PendingTask["resolve"],
+    reject: PendingTask["reject"],
   ): void {
-    pw.state = 'busy';
-    this.pending.set(message.taskId, { taskId: message.taskId, resolve, reject });
+    pw.state = "busy";
+    this.pending.set(message.taskId, {
+      taskId: message.taskId,
+      resolve,
+      reject,
+    });
     pw.worker.postMessage(message);
   }
 
@@ -102,14 +115,14 @@ export class WorkerPool {
 
     this.pending.delete(response.taskId);
 
-    if (response.status === 'ok') {
+    if (response.status === "ok") {
       task.resolve(response.trace);
     } else {
       task.reject(new Error(response.message));
     }
 
     // Mark worker idle and process any queued tasks
-    pw.state = 'idle';
+    pw.state = "idle";
     this.drainQueue(pw);
   }
 
@@ -120,7 +133,7 @@ export class WorkerPool {
       task.reject(new Error(`[WorkerPool] Worker error: ${e.message}`));
       this.pending.delete(taskId);
     }
-    pw.state = 'idle';
+    pw.state = "idle";
     this.drainQueue(pw);
   }
 

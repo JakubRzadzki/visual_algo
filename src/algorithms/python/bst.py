@@ -2,10 +2,12 @@
 import json
 import time
 
+
 def emit(event_type, **kwargs):
     event = {"type": event_type}
     event.update(kwargs)
     print(json.dumps(event))
+
 
 class Node:
     def __init__(self, key):
@@ -13,6 +15,7 @@ class Node:
         self.id = f"node-{key}"
         self.left = None
         self.right = None
+
 
 def insert(root, key):
     if root is None:
@@ -25,6 +28,7 @@ def insert(root, key):
         else:
             root.left = insert(root.left, key)
     return root
+
 
 # Example usage:
 arr = [15, 10, 20, 8, 12, 17, 25]

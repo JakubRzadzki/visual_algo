@@ -7,84 +7,96 @@
  * the worker boundary already isolates memory from the main thread.
  */
 
-import type { WorkerMessage, WorkerResponse, AlgorithmPlugin } from '../../types';
+import type {
+  WorkerMessage,
+  WorkerResponse,
+  AlgorithmPlugin,
+} from "../../types";
 
-import { DijkstraPlugin } from '../plugins/graph/DijkstraPlugin';
-import { KruskalPlugin } from '../plugins/graph/KruskalPlugin';
-import { BFSPlugin } from '../plugins/graph/BFSPlugin';
-import { DFSPlugin } from '../plugins/graph/DFSPlugin';
-import { PrimPlugin } from '../plugins/graph/PrimPlugin';
-import { TopoSortPlugin } from '../plugins/graph/TopoSortPlugin';
+import { DijkstraPlugin } from "../plugins/graph/DijkstraPlugin";
+import { KruskalPlugin } from "../plugins/graph/KruskalPlugin";
+import { BFSPlugin } from "../plugins/graph/BFSPlugin";
+import { DFSPlugin } from "../plugins/graph/DFSPlugin";
+import { PrimPlugin } from "../plugins/graph/PrimPlugin";
+import { TopoSortPlugin } from "../plugins/graph/TopoSortPlugin";
 
-import { BubbleSortPlugin } from '../plugins/sorting/BubbleSortPlugin';
-import { HeapSortPlugin } from '../plugins/sorting/HeapSortPlugin';
-import { MergeSortPlugin } from '../plugins/sorting/MergeSortPlugin';
-import { QuickSortPlugin } from '../plugins/sorting/QuickSortPlugin';
+import { BubbleSortPlugin } from "../plugins/sorting/BubbleSortPlugin";
+import { HeapSortPlugin } from "../plugins/sorting/HeapSortPlugin";
+import { MergeSortPlugin } from "../plugins/sorting/MergeSortPlugin";
+import { QuickSortPlugin } from "../plugins/sorting/QuickSortPlugin";
 
-import { BinarySearchPlugin } from '../plugins/searching/BinarySearchPlugin';
-import { LinearSearchPlugin } from '../plugins/searching/LinearSearchPlugin';
+import { BinarySearchPlugin } from "../plugins/searching/BinarySearchPlugin";
+import { LinearSearchPlugin } from "../plugins/searching/LinearSearchPlugin";
 
-import { BSTPlugin } from '../plugins/trees/BSTPlugin';
-import { AVLTreePlugin } from '../plugins/trees/AVLTreePlugin';
-import { MaxHeapPlugin } from '../plugins/trees/MaxHeapPlugin';
-import { UnionFindPlugin } from '../plugins/trees/UnionFindPlugin';
+import { BSTPlugin } from "../plugins/trees/BSTPlugin";
+import { AVLTreePlugin } from "../plugins/trees/AVLTreePlugin";
+import { MaxHeapPlugin } from "../plugins/trees/MaxHeapPlugin";
+import { UnionFindPlugin } from "../plugins/trees/UnionFindPlugin";
 
-import { KnapsackDPPlugin } from '../plugins/dp/KnapsackDPPlugin';
-import { LCSPlugin } from '../plugins/dp/LCSPlugin';
+import { KnapsackDPPlugin } from "../plugins/dp/KnapsackDPPlugin";
+import { LCSPlugin } from "../plugins/dp/LCSPlugin";
 
-import { AStarPlugin } from '../plugins/grid/AStarPlugin';
-import { FloodFillPlugin } from '../plugins/grid/FloodFillPlugin';
+import { AStarPlugin } from "../plugins/grid/AStarPlugin";
+import { FloodFillPlugin } from "../plugins/grid/FloodFillPlugin";
 
 // Registry: algorithm id → plugin instance
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
-  dijkstra:        new DijkstraPlugin(),
-  kruskal:         new KruskalPlugin(),
-  bfs:             new BFSPlugin(),
-  dfs:             new DFSPlugin(),
-  prim:            new PrimPlugin(),
-  'topo-sort':     new TopoSortPlugin(),
+  dijkstra: new DijkstraPlugin(),
+  kruskal: new KruskalPlugin(),
+  bfs: new BFSPlugin(),
+  dfs: new DFSPlugin(),
+  prim: new PrimPlugin(),
+  "topo-sort": new TopoSortPlugin(),
 
-  'bubble-sort':   new BubbleSortPlugin(),
-  'heap-sort':     new HeapSortPlugin(),
-  'merge-sort':    new MergeSortPlugin(),
-  'quick-sort':    new QuickSortPlugin(),
+  "bubble-sort": new BubbleSortPlugin(),
+  "heap-sort": new HeapSortPlugin(),
+  "merge-sort": new MergeSortPlugin(),
+  "quick-sort": new QuickSortPlugin(),
 
-  'binary-search': new BinarySearchPlugin(),
-  'linear-search': new LinearSearchPlugin(),
+  "binary-search": new BinarySearchPlugin(),
+  "linear-search": new LinearSearchPlugin(),
 
-  'bst':           new BSTPlugin(),
-  'avl':           new AVLTreePlugin(),
-  'max-heap':      new MaxHeapPlugin(),
-  'union-find':    new UnionFindPlugin(),
+  bst: new BSTPlugin(),
+  avl: new AVLTreePlugin(),
+  "max-heap": new MaxHeapPlugin(),
+  "union-find": new UnionFindPlugin(),
 
-  'knapsack':      new KnapsackDPPlugin(),
-  'lcs':           new LCSPlugin(),
+  knapsack: new KnapsackDPPlugin(),
+  lcs: new LCSPlugin(),
 
-  'a-star':        new AStarPlugin(),
-  'flood-fill':    new FloodFillPlugin(),
+  "a-star": new AStarPlugin(),
+  "flood-fill": new FloodFillPlugin(),
 };
 
 // Listen for tasks from the WorkerPool
-self.addEventListener('message', (e: MessageEvent<WorkerMessage>) => {
+self.addEventListener("message", (e: MessageEvent<WorkerMessage>) => {
   const { taskId, algorithmId, payload } = e.data;
 
   const plugin = PLUGINS[algorithmId];
 
   if (!plugin) {
     // Unknown algorithm — return an error response
-    const err: WorkerResponse = { taskId, status: 'error', message: `Unknown algorithm: "${algorithmId}"` };
+    const err: WorkerResponse = {
+      taskId,
+      status: "error",
+      message: `Unknown algorithm: "${algorithmId}"`,
+    };
     self.postMessage(err);
     return;
   }
 
   try {
     const trace = plugin.execute(payload);
-    const ok: WorkerResponse = { taskId, status: 'ok', trace };
+    const ok: WorkerResponse = { taskId, status: "ok", trace };
     // Post result back — no Transferable needed for JSON-serialisable trace
     self.postMessage(ok);
   } catch (err) {
-    const fail: WorkerResponse = { taskId, status: 'error', message: String(err) };
+    const fail: WorkerResponse = {
+      taskId,
+      status: "error",
+      message: String(err),
+    };
     self.postMessage(fail);
   }
 });

@@ -9,7 +9,7 @@
  * Space Complexity: O(log n) recursion stack
  */
 
-import type { SortFrame, SortResult } from '../types';
+import type { SortFrame, SortResult } from "../types";
 
 /**
  * Generates all visualization frames for a Quick Sort execution.
@@ -45,7 +45,7 @@ export function generateQuickSortFrames(input: number[]): SortResult {
   };
 
   // Initial state
-  snap([], [], null, 'Starting Quick Sort');
+  snap([], [], null, "Starting Quick Sort");
 
   /**
    * Lomuto partition scheme.
@@ -62,17 +62,32 @@ export function generateQuickSortFrames(input: number[]): SortResult {
     for (let j = lo; j < hi; j++) {
       comparisons++;
       arrayAccesses++;
-      snap([j, hi], [], hi, `Comparing arr[${j}]=${arr[j]} with pivot ${pivotVal}`);
+      snap(
+        [j, hi],
+        [],
+        hi,
+        `Comparing arr[${j}]=${arr[j]} with pivot ${pivotVal}`,
+      );
 
       if (arr[j] <= pivotVal) {
         i++;
         if (i !== j) {
-          snap([], [i, j], hi, `Swapping arr[${i}]=${arr[i]} ↔ arr[${j}]=${arr[j]}`);
+          snap(
+            [],
+            [i, j],
+            hi,
+            `Swapping arr[${i}]=${arr[i]} ↔ arr[${j}]=${arr[j]}`,
+          );
           const temp = arr[i];
           arr[i] = arr[j];
           arr[j] = temp;
           arrayAccesses += 4;
-          snap([], [i, j], hi, `Swapped → arr[${i}]=${arr[i]}, arr[${j}]=${arr[j]}`);
+          snap(
+            [],
+            [i, j],
+            hi,
+            `Swapped → arr[${i}]=${arr[i]}, arr[${j}]=${arr[j]}`,
+          );
         }
       }
     }
@@ -80,7 +95,12 @@ export function generateQuickSortFrames(input: number[]): SortResult {
     // Place pivot in its final position
     const pivotPos = i + 1;
     if (pivotPos !== hi) {
-      snap([], [pivotPos, hi], hi, `Placing pivot: swap arr[${pivotPos}]=${arr[pivotPos]} ↔ arr[${hi}]=${arr[hi]}`);
+      snap(
+        [],
+        [pivotPos, hi],
+        hi,
+        `Placing pivot: swap arr[${pivotPos}]=${arr[pivotPos]} ↔ arr[${hi}]=${arr[hi]}`,
+      );
       const temp = arr[pivotPos];
       arr[pivotPos] = arr[hi];
       arr[hi] = temp;
@@ -111,16 +131,16 @@ export function generateQuickSortFrames(input: number[]): SortResult {
 
   // Mark all as sorted
   for (let i = 0; i < n; i++) sortedIndices.add(i);
-  snap([], [], null, 'Quick Sort complete!');
+  snap([], [], null, "Quick Sort complete!");
 
   return {
     frames,
     info: {
-      name: 'Quick Sort',
-      timeComplexity: 'O(n log n)',
-      spaceComplexity: 'O(log n)',
-      bestCase: 'O(n log n)',
-      averageCase: 'O(n log n)',
+      name: "Quick Sort",
+      timeComplexity: "O(n log n)",
+      spaceComplexity: "O(log n)",
+      bestCase: "O(n log n)",
+      averageCase: "O(n log n)",
     },
   };
 }

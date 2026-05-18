@@ -1,33 +1,44 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useUIStore } from '../../store/uiStore';
-import { useTreeStore } from '../../store/treeStore';
-import { findAlgorithm } from '../../data/algorithmCatalog';
-import { globalEngine } from '../../core/AnimationEngine';
-import Sidebar from '../layout/Sidebar';
+import React, { useEffect, useState, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useUIStore } from "../../store/uiStore";
+import { useTreeStore } from "../../store/treeStore";
+import { findAlgorithm } from "../../data/algorithmCatalog";
+import { globalEngine } from "../../core/AnimationEngine";
+import Sidebar from "../layout/Sidebar";
 
-import GraphStage from '../visualizer/GraphStage';
-import SortingStage from '../visualizer/SortingStage';
-import SearchingStage from '../visualizer/SearchingStage';
-import MatrixStage from '../visualizer/MatrixStage';
-import TreeVisualizer from '../visualizer/TreeVisualizer';
-import GridStage from '../visualizer/GridStage';
-import MonacoCodeEditor from '../hud/MonacoCodeEditor';
-import EventLog from '../hud/EventLog';
-import AlgorithmInfoPanel from '../hud/AlgorithmInfoPanel';
-import PlaybackDeck from '../controls/PlaybackDeck';
-import { getAlgorithmEducation } from '../../data/algorithmEducation';
-import type { GraphInput } from '../../types';
+import GraphStage from "../visualizer/GraphStage";
+import SortingStage from "../visualizer/SortingStage";
+import SearchingStage from "../visualizer/SearchingStage";
+import MatrixStage from "../visualizer/MatrixStage";
+import TreeVisualizer from "../visualizer/TreeVisualizer";
+import GridStage from "../visualizer/GridStage";
+import MonacoCodeEditor from "../hud/MonacoCodeEditor";
+import EventLog from "../hud/EventLog";
+import AlgorithmInfoPanel from "../hud/AlgorithmInfoPanel";
+import PlaybackDeck from "../controls/PlaybackDeck";
+import { getAlgorithmEducation } from "../../data/algorithmEducation";
+import type { GraphInput } from "../../types";
 
 // Demo graph nodes / edges — will be replaced when user generates a new graph
 const DEMO_NODES = Array.from({ length: 8 }, (_, i) => ({
-  id: `n${i}`, label: String(i), x: Math.cos((i / 8) * Math.PI * 2) * 150, y: Math.sin((i / 8) * Math.PI * 2) * 150, vx: 0, vy: 0,
+  id: `n${i}`,
+  label: String(i),
+  x: Math.cos((i / 8) * Math.PI * 2) * 150,
+  y: Math.sin((i / 8) * Math.PI * 2) * 150,
+  vx: 0,
+  vy: 0,
 }));
 const DEMO_EDGES = DEMO_NODES.map((_, i) => ({
-  id: `e${i}`, from: `n${i}`, to: `n${(i + 1) % DEMO_NODES.length}`,
+  id: `e${i}`,
+  from: `n${i}`,
+  to: `n${(i + 1) % DEMO_NODES.length}`,
   weight: Math.floor(Math.random() * 15) + 1,
 }));
-const DEMO_GRAPH: GraphInput = { nodes: DEMO_NODES, edges: DEMO_EDGES, startNodeId: 'n0' };
+const DEMO_GRAPH: GraphInput = {
+  nodes: DEMO_NODES,
+  edges: DEMO_EDGES,
+  startNodeId: "n0",
+};
 
 /** Default width of the Monaco editor panel in pixels. */
 const DEFAULT_EDITOR_WIDTH = 700;
@@ -59,16 +70,16 @@ export default function AlgorithmViewer(): React.ReactElement {
     setActiveSortingAlgorithm,
     setActiveSearchingAlgorithm,
     setActiveGraphAlgorithm,
-    setActiveGridAlgorithm
+    setActiveGridAlgorithm,
   } = useUIStore();
-  const language = useUIStore(state => state.language);
-  const educationData = getAlgorithmEducation(id || '', language);
+  const language = useUIStore((state) => state.language);
+  const educationData = getAlgorithmEducation(id || "", language);
 
   const graphToDisplay = currentGraph || DEMO_GRAPH;
 
   // Resizable Monaco Code Editor layout state
   const [editorWidth, setEditorWidth] = useState<number>(() => {
-    const saved = localStorage.getItem('visual-algo-editor-width');
+    const saved = localStorage.getItem("visual-algo-editor-width");
     return saved ? parseInt(saved, 10) : DEFAULT_EDITOR_WIDTH;
   });
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -79,23 +90,31 @@ export default function AlgorithmViewer(): React.ReactElement {
    *
    * @param e - The mouse event triggered on the divider handle.
    */
-  const startResize = useCallback((e: React.MouseEvent<HTMLDivElement>): void => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
+  const startResize = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>): void => {
+      e.preventDefault();
+      setIsDragging(true);
+    },
+    [],
+  );
 
   // Sync route params with visualizer active mode and algorithm selection
   useEffect(() => {
-    console.log("AlgorithmViewer useEffect running for category:", category, "id:", id);
+    console.log(
+      "AlgorithmViewer useEffect running for category:",
+      category,
+      "id:",
+      id,
+    );
     if (!category || !id) return;
 
     let match;
 
     // Skip catalog enforcement for trees as their state is managed by 'useTreeStore'
-    if (category !== 'trees') {
+    if (category !== "trees") {
       match = findAlgorithm(category, id);
       if (!match || !match.algorithm.available) {
-        navigate('/', { replace: true });
+        navigate("/", { replace: true });
         return;
       }
     }
@@ -107,25 +126,33 @@ export default function AlgorithmViewer(): React.ReactElement {
     }
     useUIStore.getState().setIsAnimating(false);
 
-    if (category === 'sorting') {
-      setActiveMode('sorting');
-      setActiveSortingAlgorithm(match?.algorithm.name || '');
-    } else if (category === 'searching') {
-      setActiveMode('searching');
-      setActiveSearchingAlgorithm(match?.algorithm.name || '');
-    } else if (category === 'graphs') {
-      setActiveMode('graph');
-      setActiveGraphAlgorithm(match?.algorithm.name || '');
-    } else if (category === 'trees') {
-      setActiveMode('tree');
+    if (category === "sorting") {
+      setActiveMode("sorting");
+      setActiveSortingAlgorithm(match?.algorithm.name || "");
+    } else if (category === "searching") {
+      setActiveMode("searching");
+      setActiveSearchingAlgorithm(match?.algorithm.name || "");
+    } else if (category === "graphs") {
+      setActiveMode("graph");
+      setActiveGraphAlgorithm(match?.algorithm.name || "");
+    } else if (category === "trees") {
+      setActiveMode("tree");
       useTreeStore.getState().setTreeType(id as any);
-    } else if (category === 'dp') {
-      setActiveMode('dp');
+    } else if (category === "dp") {
+      setActiveMode("dp");
     } else {
-      setActiveMode('grid');
-      setActiveGridAlgorithm(match?.algorithm.name || '');
+      setActiveMode("grid");
+      setActiveGridAlgorithm(match?.algorithm.name || "");
     }
-  }, [category, id, navigate, setActiveMode, setActiveSortingAlgorithm, setActiveSearchingAlgorithm, setActiveGraphAlgorithm]);
+  }, [
+    category,
+    id,
+    navigate,
+    setActiveMode,
+    setActiveSortingAlgorithm,
+    setActiveSearchingAlgorithm,
+    setActiveGraphAlgorithm,
+  ]);
 
   // Handle dragging mouse move and mouse up globally
   useEffect(() => {
@@ -141,7 +168,10 @@ export default function AlgorithmViewer(): React.ReactElement {
       const newWidth = window.innerWidth - e.clientX - 24; // 24px matches layout padding (px-6)
 
       // Enforce minimum and maximum constraints
-      const maxAllowedWidth = Math.min(window.innerWidth * 0.75, MAX_EDITOR_WIDTH);
+      const maxAllowedWidth = Math.min(
+        window.innerWidth * 0.75,
+        MAX_EDITOR_WIDTH,
+      );
       if (newWidth >= MIN_EDITOR_WIDTH && newWidth <= maxAllowedWidth) {
         setEditorWidth(newWidth);
       }
@@ -152,15 +182,15 @@ export default function AlgorithmViewer(): React.ReactElement {
      */
     const handleMouseUp = (): void => {
       setIsDragging(false);
-      localStorage.setItem('visual-algo-editor-width', editorWidth.toString());
+      localStorage.setItem("visual-algo-editor-width", editorWidth.toString());
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging, editorWidth]);
 
@@ -170,29 +200,45 @@ export default function AlgorithmViewer(): React.ReactElement {
    * @returns React element representing the visualization stage.
    */
   const renderStage = (): React.ReactElement => {
-    console.log("renderStage called. activeMode:", activeMode, "category:", category, "id:", id);
+    console.log(
+      "renderStage called. activeMode:",
+      activeMode,
+      "category:",
+      category,
+      "id:",
+      id,
+    );
     switch (activeMode) {
-      case 'graph':
+      case "graph":
         return (
           <GraphStage
             key={id}
             nodes={graphToDisplay.nodes}
             edges={graphToDisplay.edges}
-            isDirected={graphToDisplay.isDirected !== undefined ? graphToDisplay.isDirected : activeGraphAlgorithm !== "Kruskal's MST" && activeGraphAlgorithm !== "Prim's MST"}
+            isDirected={
+              graphToDisplay.isDirected !== undefined
+                ? graphToDisplay.isDirected
+                : activeGraphAlgorithm !== "Kruskal's MST" &&
+                  activeGraphAlgorithm !== "Prim's MST"
+            }
           />
         );
-      case 'sorting':
+      case "sorting":
         return <SortingStage key={id} />;
-      case 'searching':
+      case "searching":
         return <SearchingStage key={id} />;
-      case 'dp':
+      case "dp":
         return <MatrixStage key={id} />;
-      case 'tree':
+      case "tree":
         return <TreeVisualizer key={id} />;
-      case 'grid':
+      case "grid":
         return <GridStage key={id} />;
       default:
-        return <div className="flex-1 flex items-center justify-center text-slate-500 italic">Select an algorithm to begin</div>;
+        return (
+          <div className="flex-1 flex items-center justify-center text-slate-500 italic">
+            Select an algorithm to begin
+          </div>
+        );
     }
   };
 
@@ -205,7 +251,10 @@ export default function AlgorithmViewer(): React.ReactElement {
 
       {isSidebarOpen && <Sidebar />}
 
-      <div data-tutorial-step="algorithm-viewer" className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated border border-white/10 shadow-2xl">
+      <div
+        data-tutorial-step="algorithm-viewer"
+        className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated border border-white/10 shadow-2xl"
+      >
         {renderStage()}
       </div>
 
@@ -213,12 +262,14 @@ export default function AlgorithmViewer(): React.ReactElement {
       <div
         onMouseDown={startResize}
         className={`hidden lg:flex items-center justify-center w-2 h-full cursor-col-resize select-none group relative transition-colors ${
-          isDragging ? 'bg-cyan-500/10' : 'hover:bg-cyan-500/5'
+          isDragging ? "bg-cyan-500/10" : "hover:bg-cyan-500/5"
         }`}
       >
         <div
           className={`w-[2px] h-12 rounded-full transition-all duration-200 ${
-            isDragging ? 'bg-cyan-400 h-24 shadow-[0_0_12px_rgba(6,182,212,0.8)]' : 'bg-slate-700/50 group-hover:bg-cyan-400 group-hover:h-16'
+            isDragging
+              ? "bg-cyan-400 h-24 shadow-[0_0_12px_rgba(6,182,212,0.8)]"
+              : "bg-slate-700/50 group-hover:bg-cyan-400 group-hover:h-16"
           }`}
         />
       </div>
@@ -233,7 +284,7 @@ export default function AlgorithmViewer(): React.ReactElement {
       </aside>
 
       {/* Global Playback Controls (Only rendered if NOT in sorting or tree mode) */}
-      {activeMode !== 'sorting' && activeMode !== 'tree' && <PlaybackDeck />}
+      {activeMode !== "sorting" && activeMode !== "tree" && <PlaybackDeck />}
     </div>
   );
 }

@@ -8,11 +8,11 @@
  * how optimal solutions are constructed frame-by-frame.
  */
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { globalEventBus } from '../../core/EventBus';
-import { useUIStore } from '../../store/uiStore';
-import type { VisualizationEvent } from '../../types';
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { globalEventBus } from "../../core/EventBus";
+import { useUIStore } from "../../store/uiStore";
+import type { VisualizationEvent } from "../../types";
 
 /**
  * Represents the state of a single cell in the DP matrix.
@@ -62,30 +62,35 @@ function FormulaHUDPanel({
   }
 
   const [r, c] = activeCell;
-  const isKnapsack = algoName.toLowerCase().includes('knapsack');
-  const isLCS = algoName.toLowerCase().includes('subsequence') || algoName.toLowerCase().includes('lcs');
+  const isKnapsack = algoName.toLowerCase().includes("knapsack");
+  const isLCS =
+    algoName.toLowerCase().includes("subsequence") ||
+    algoName.toLowerCase().includes("lcs");
 
   // ─── 0/1 Knapsack HUD Parsing ──────────────────────────────────────────────
   if (isKnapsack) {
-    const rowHeader = rowHeaders[r] || '';
-    const colHeader = colHeaders[c] || '';
-    
+    const rowHeader = rowHeaders[r] || "";
+    const colHeader = colHeaders[c] || "";
+
     // Parse weight and value from row header string e.g., "Item 1 (w:3, v:20)"
     const match = rowHeader.match(/w:\s*(\d+),\s*v:\s*(\d+)/);
     const weight = match ? parseInt(match[1], 10) : 0;
     const itemVal = match ? parseInt(match[2], 10) : 0;
-    const capacity = parseInt(colHeader.replace(/\D/g, ''), 10) || c;
+    const capacity = parseInt(colHeader.replace(/\D/g, ""), 10) || c;
 
-    const valExcl = r > 0 && cells[r - 1]?.[c]?.value !== null ? cells[r - 1][c].value : 0;
+    const valExcl =
+      r > 0 && cells[r - 1]?.[c]?.value !== null ? cells[r - 1][c].value : 0;
     const canInclude = weight <= capacity;
     const subproblemCapacity = capacity - weight;
-    const valSubproblem = r > 0 && canInclude && cells[r - 1]?.[subproblemCapacity]?.value !== null
-      ? (cells[r - 1][subproblemCapacity].value as number)
-      : 0;
+    const valSubproblem =
+      r > 0 && canInclude && cells[r - 1]?.[subproblemCapacity]?.value !== null
+        ? (cells[r - 1][subproblemCapacity].value as number)
+        : 0;
     const valIncl = canInclude ? valSubproblem + itemVal : 0;
 
-    const optimalChoice = canInclude && valIncl > (valExcl || 0) ? 'INCLUDE' : 'EXCLUDE';
-    const computedVal = cells[r]?.[c]?.value !== null ? cells[r][c].value : '—';
+    const optimalChoice =
+      canInclude && valIncl > (valExcl || 0) ? "INCLUDE" : "EXCLUDE";
+    const computedVal = cells[r]?.[c]?.value !== null ? cells[r][c].value : "—";
     const capacityProgress = (capacity / (colHeaders.length - 1)) * 100;
 
     return (
@@ -105,12 +110,14 @@ function FormulaHUDPanel({
               dp[{r}][{c}]
             </span>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end gap-1">
-              <span className="text-[10px] text-slate-500 uppercase font-bold leading-none">Current Capacity</span>
+              <span className="text-[10px] text-slate-500 uppercase font-bold leading-none">
+                Current Capacity
+              </span>
               <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                <motion.div 
+                <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${capacityProgress}%` }}
                   className="h-full bg-gradient-to-r from-cyan-500 to-blue-500"
@@ -119,7 +126,8 @@ function FormulaHUDPanel({
             </div>
             <div className="flex items-center gap-3 text-[11px] bg-white/5 px-3 py-1 rounded-lg border border-white/5">
               <span className="text-slate-400">
-                W: <strong className="text-amber-400 font-mono">{capacity}</strong>
+                W:{" "}
+                <strong className="text-amber-400 font-mono">{capacity}</strong>
               </span>
               {r > 0 && (
                 <>
@@ -137,28 +145,34 @@ function FormulaHUDPanel({
         {r === 0 || c === 0 ? (
           <div className="text-xs text-slate-400 italic py-1 flex items-center gap-2">
             <span className="text-lg">ℹ️</span>
-            <span>Base Case: With 0 items or 0 capacity, the maximum value we can carry is 0.</span>
+            <span>
+              Base Case: With 0 items or 0 capacity, the maximum value we can
+              carry is 0.
+            </span>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             <div className="text-[11px] text-slate-400 font-medium">
-              Decision: <span className="text-white">Should we include Item {r} in a knapsack of capacity {capacity}?</span>
+              Decision:{" "}
+              <span className="text-white">
+                Should we include Item {r} in a knapsack of capacity {capacity}?
+              </span>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Option 1: Exclude */}
               <div
                 className={`p-3 rounded-lg border transition-all relative ${
-                  optimalChoice === 'EXCLUDE'
-                    ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
-                    : 'bg-white/[0.02] border-white/5 text-slate-400 opacity-60'
+                  optimalChoice === "EXCLUDE"
+                    ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.1)]"
+                    : "bg-white/[0.02] border-white/5 text-slate-400 opacity-60"
                 }`}
               >
                 <div className="flex items-center justify-between text-[11px] mb-1.5">
                   <span className="font-semibold uppercase tracking-wider">
                     NO: Leave Item {r}
                   </span>
-                  {optimalChoice === 'EXCLUDE' && (
+                  {optimalChoice === "EXCLUDE" && (
                     <span className="bg-cyan-500 text-cyan-950 font-bold px-1.5 py-0.5 rounded text-[9px] animate-pulse">
                       CHOSEN
                     </span>
@@ -174,10 +188,10 @@ function FormulaHUDPanel({
               <div
                 className={`p-3 rounded-lg border transition-all relative ${
                   !canInclude
-                    ? 'bg-red-500/5 border-red-500/10 text-slate-500 opacity-40'
-                    : optimalChoice === 'INCLUDE'
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
-                    : 'bg-white/[0.02] border-white/5 text-slate-400 opacity-60'
+                    ? "bg-red-500/5 border-red-500/10 text-slate-500 opacity-40"
+                    : optimalChoice === "INCLUDE"
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                      : "bg-white/[0.02] border-white/5 text-slate-400 opacity-60"
                 }`}
               >
                 <div className="flex items-center justify-between text-[11px] mb-1.5">
@@ -185,8 +199,10 @@ function FormulaHUDPanel({
                     YES: Take Item {r}
                   </span>
                   {!canInclude ? (
-                    <span className="text-red-400 font-bold text-[9px]">TOO HEAVY</span>
-                  ) : optimalChoice === 'INCLUDE' ? (
+                    <span className="text-red-400 font-bold text-[9px]">
+                      TOO HEAVY
+                    </span>
+                  ) : optimalChoice === "INCLUDE" ? (
                     <span className="bg-emerald-500 text-emerald-950 font-bold px-1.5 py-0.5 rounded text-[9px] animate-pulse">
                       CHOSEN
                     </span>
@@ -196,7 +212,8 @@ function FormulaHUDPanel({
                   {canInclude ? (
                     <>
                       <span className="text-slate-400">
-                        Value({itemVal}) + Previous value at capacity({subproblemCapacity})
+                        Value({itemVal}) + Previous value at capacity(
+                        {subproblemCapacity})
                       </span>
                       <strong className="text-sm text-emerald-400">
                         {itemVal} + {valSubproblem} = {valIncl}
@@ -216,11 +233,18 @@ function FormulaHUDPanel({
         {/* Conclusion Footer */}
         <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[10px] text-slate-500 uppercase font-bold tracking-widest">
           <div className="flex gap-4">
-            <span>Formula: <code className="text-cyan-400 lowercase">max(above, left_offset + value)</code></span>
+            <span>
+              Formula:{" "}
+              <code className="text-cyan-400 lowercase">
+                max(above, left_offset + value)
+              </code>
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <span>Resulting Value:</span>
-            <span className="text-white bg-white/10 px-2 py-0.5 rounded font-mono text-xs border border-white/10">{computedVal}</span>
+            <span className="text-white bg-white/10 px-2 py-0.5 rounded font-mono text-xs border border-white/10">
+              {computedVal}
+            </span>
           </div>
         </div>
       </motion.div>
@@ -229,18 +253,27 @@ function FormulaHUDPanel({
 
   // ─── Longest Common Subsequence HUD Parsing ────────────────────────────────
   if (isLCS) {
-    const rowHeader = rowHeaders[r] || '';
-    const colHeader = colHeaders[c] || '';
+    const rowHeader = rowHeaders[r] || "";
+    const colHeader = colHeaders[c] || "";
 
     // Extract raw character representations e.g., "T1[2]: C" -> "C"
-    const char1 = rowHeader.includes(':') ? rowHeader.split(':')[1].trim() : '';
-    const char2 = colHeader.includes(':') ? colHeader.split(':')[1].trim() : '';
+    const char1 = rowHeader.includes(":") ? rowHeader.split(":")[1].trim() : "";
+    const char2 = colHeader.includes(":") ? colHeader.split(":")[1].trim() : "";
 
-    const isMatch = r > 0 && c > 0 && char1 === char2 && char1 !== '';
-    const valPrevDiag = r > 0 && c > 0 && cells[r - 1]?.[c - 1]?.value !== null ? (cells[r - 1][c - 1].value as number) : 0;
-    const valExcludeT1 = r > 0 && cells[r - 1]?.[c]?.value !== null ? (cells[r - 1][c].value as number) : 0;
-    const valExcludeT2 = c > 0 && cells[r]?.[c - 1]?.value !== null ? (cells[r][c - 1].value as number) : 0;
-    const computedVal = cells[r]?.[c]?.value !== null ? cells[r][c].value : '—';
+    const isMatch = r > 0 && c > 0 && char1 === char2 && char1 !== "";
+    const valPrevDiag =
+      r > 0 && c > 0 && cells[r - 1]?.[c - 1]?.value !== null
+        ? (cells[r - 1][c - 1].value as number)
+        : 0;
+    const valExcludeT1 =
+      r > 0 && cells[r - 1]?.[c]?.value !== null
+        ? (cells[r - 1][c].value as number)
+        : 0;
+    const valExcludeT2 =
+      c > 0 && cells[r]?.[c - 1]?.value !== null
+        ? (cells[r][c - 1].value as number)
+        : 0;
+    const computedVal = cells[r]?.[c]?.value !== null ? cells[r][c].value : "—";
 
     return (
       <motion.div
@@ -263,21 +296,31 @@ function FormulaHUDPanel({
             {r > 0 && c > 0 ? (
               <>
                 <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5">
-                  <span className="text-slate-400 text-[10px] uppercase font-bold">Comparing</span>
-                  <span className="text-cyan-300 font-mono font-bold">'{char1}'</span>
+                  <span className="text-slate-400 text-[10px] uppercase font-bold">
+                    Comparing
+                  </span>
+                  <span className="text-cyan-300 font-mono font-bold">
+                    '{char1}'
+                  </span>
                   <span className="text-slate-600">↔</span>
-                  <span className="text-amber-400 font-mono font-bold">'{char2}'</span>
+                  <span className="text-amber-400 font-mono font-bold">
+                    '{char2}'
+                  </span>
                 </div>
                 <span
                   className={`px-2 py-1 rounded text-[10px] font-bold font-mono uppercase tracking-tighter ${
-                    isMatch ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-white/5'
+                    isMatch
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      : "bg-slate-800 text-slate-400 border border-white/5"
                   }`}
                 >
-                  {isMatch ? 'MATCH FOUND' : 'MISMATCH'}
+                  {isMatch ? "MATCH FOUND" : "MISMATCH"}
                 </span>
               </>
             ) : (
-              <span className="text-[10px] text-slate-500 uppercase font-bold">Base Case Analysis</span>
+              <span className="text-[10px] text-slate-500 uppercase font-bold">
+                Base Case Analysis
+              </span>
             )}
           </div>
         </div>
@@ -286,13 +329,20 @@ function FormulaHUDPanel({
         {r === 0 || c === 0 ? (
           <div className="text-xs text-slate-400 italic py-1 flex items-center gap-2">
             <span className="text-lg">ℹ️</span>
-            <span>If one string is empty, the Longest Common Subsequence must be of length 0.</span>
+            <span>
+              If one string is empty, the Longest Common Subsequence must be of
+              length 0.
+            </span>
           </div>
         ) : isMatch ? (
           /* Match Pathway */
           <div className="flex flex-col gap-2">
-             <div className="text-[11px] text-slate-400 font-medium">
-              Decision: <span className="text-white font-semibold italic">A match is found! Increment the LCS length of the previous subproblem.</span>
+            <div className="text-[11px] text-slate-400 font-medium">
+              Decision:{" "}
+              <span className="text-white font-semibold italic">
+                A match is found! Increment the LCS length of the previous
+                subproblem.
+              </span>
             </div>
             <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-200">
               <div className="flex items-center justify-between text-[11px] mb-1.5 font-semibold uppercase tracking-wider">
@@ -302,7 +352,9 @@ function FormulaHUDPanel({
                 </span>
               </div>
               <div className="font-mono text-xs flex items-center justify-between bg-black/20 px-3 py-2 rounded">
-                <span className="text-slate-300 italic">Previous LCS length + 1</span>
+                <span className="text-slate-300 italic">
+                  Previous LCS length + 1
+                </span>
                 <strong className="text-sm text-emerald-400">
                   {valPrevDiag} + 1 = {computedVal}
                 </strong>
@@ -312,15 +364,19 @@ function FormulaHUDPanel({
         ) : (
           /* Mismatch Branching */
           <div className="flex flex-col gap-3">
-             <div className="text-[11px] text-slate-400 font-medium">
-              Decision: <span className="text-white">Characters don't match. Taking the maximum LCS from excluding either character.</span>
+            <div className="text-[11px] text-slate-400 font-medium">
+              Decision:{" "}
+              <span className="text-white">
+                Characters don't match. Taking the maximum LCS from excluding
+                either character.
+              </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div
                 className={`p-3 rounded-lg border transition-all relative ${
                   (valExcludeT1 || 0) >= (valExcludeT2 || 0)
-                    ? 'bg-pink-500/10 border-pink-500/30 text-pink-200 shadow-[0_0_15px_rgba(236,72,153,0.1)]'
-                    : 'bg-white/[0.02] border-white/5 text-slate-400 opacity-60'
+                    ? "bg-pink-500/10 border-pink-500/30 text-pink-200 shadow-[0_0_15px_rgba(236,72,153,0.1)]"
+                    : "bg-white/[0.02] border-white/5 text-slate-400 opacity-60"
                 }`}
               >
                 <div className="flex items-center justify-between text-[11px] mb-1.5 font-semibold uppercase tracking-wider">
@@ -333,15 +389,17 @@ function FormulaHUDPanel({
                 </div>
                 <div className="font-mono text-xs flex items-center justify-between bg-black/20 px-2.5 py-1.5 rounded">
                   <span className="text-slate-400 text-[10px]">dp[i-1][j]</span>
-                  <strong className="text-sm text-pink-300">{valExcludeT1}</strong>
+                  <strong className="text-sm text-pink-300">
+                    {valExcludeT1}
+                  </strong>
                 </div>
               </div>
 
               <div
                 className={`p-3 rounded-lg border transition-all relative ${
                   (valExcludeT2 || 0) > (valExcludeT1 || 0)
-                    ? 'bg-pink-500/10 border-pink-500/30 text-pink-200 shadow-[0_0_15px_rgba(236,72,153,0.1)]'
-                    : 'bg-white/[0.02] border-white/5 text-slate-400 opacity-60'
+                    ? "bg-pink-500/10 border-pink-500/30 text-pink-200 shadow-[0_0_15px_rgba(236,72,153,0.1)]"
+                    : "bg-white/[0.02] border-white/5 text-slate-400 opacity-60"
                 }`}
               >
                 <div className="flex items-center justify-between text-[11px] mb-1.5 font-semibold uppercase tracking-wider">
@@ -354,7 +412,9 @@ function FormulaHUDPanel({
                 </div>
                 <div className="font-mono text-xs flex items-center justify-between bg-black/20 px-2.5 py-1.5 rounded">
                   <span className="text-slate-400 text-[10px]">dp[i][j-1]</span>
-                  <strong className="text-sm text-pink-300">{valExcludeT2}</strong>
+                  <strong className="text-sm text-pink-300">
+                    {valExcludeT2}
+                  </strong>
                 </div>
               </div>
             </div>
@@ -364,11 +424,18 @@ function FormulaHUDPanel({
         {/* Conclusion Footer */}
         <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[10px] text-slate-500 uppercase font-bold tracking-widest">
           <div className="flex gap-4">
-            <span>Formula: <code className="text-pink-400 lowercase">{isMatch ? 'diag + 1' : 'max(above, left)'}</code></span>
+            <span>
+              Formula:{" "}
+              <code className="text-pink-400 lowercase">
+                {isMatch ? "diag + 1" : "max(above, left)"}
+              </code>
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <span>Resulting Value:</span>
-            <span className="text-white bg-white/10 px-2 py-0.5 rounded font-mono text-xs border border-white/10">{computedVal}</span>
+            <span className="text-white bg-white/10 px-2 py-0.5 rounded font-mono text-xs border border-white/10">
+              {computedVal}
+            </span>
           </div>
         </div>
       </motion.div>
@@ -378,8 +445,12 @@ function FormulaHUDPanel({
   // Fallback generic info panel
   return (
     <div className="w-full glass-panel px-6 py-4 rounded-xl border border-ice-blue/10 flex items-center justify-between text-slate-300 text-xs font-mono">
-      <span>Updating cell table[{r}][{c}]</span>
-      <span className="text-cyan-400 font-bold">Value: {cells[r]?.[c]?.value !== null ? cells[r][c].value : '—'}</span>
+      <span>
+        Updating cell table[{r}][{c}]
+      </span>
+      <span className="text-cyan-400 font-bold">
+        Value: {cells[r]?.[c]?.value !== null ? cells[r][c].value : "—"}
+      </span>
     </div>
   );
 }
@@ -387,11 +458,17 @@ function FormulaHUDPanel({
 /**
  * Renders an inventory of items for the Knapsack problem, highlighting picked ones.
  */
-function ItemInventory({ items, pickedIndices }: { items: any[], pickedIndices: number[] }) {
+function ItemInventory({
+  items,
+  pickedIndices,
+}: {
+  items: any[];
+  pickedIndices: number[];
+}) {
   if (!items || items.length === 0) return null;
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ x: 20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       className="w-64 glass-panel p-4 flex flex-col gap-3 border border-ice-blue/10 overflow-y-auto max-h-full"
@@ -405,22 +482,34 @@ function ItemInventory({ items, pickedIndices }: { items: any[], pickedIndices: 
           return (
             <motion.div
               key={`item-${idx}`}
-              animate={{ 
-                borderColor: isPicked ? '#10b981' : 'rgba(255,255,255,0.05)',
-                backgroundColor: isPicked ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.02)'
+              animate={{
+                borderColor: isPicked ? "#10b981" : "rgba(255,255,255,0.05)",
+                backgroundColor: isPicked
+                  ? "rgba(16,185,129,0.1)"
+                  : "rgba(255,255,255,0.02)",
               }}
               className="p-3 rounded-lg border flex flex-col gap-1 transition-colors"
             >
               <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Item {idx + 1}</span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                  Item {idx + 1}
+                </span>
                 {isPicked && (
-                  <span className="text-[9px] bg-emerald-500 text-emerald-950 font-bold px-1.5 py-0.5 rounded leading-none">PICKED</span>
+                  <span className="text-[9px] bg-emerald-500 text-emerald-950 font-bold px-1.5 py-0.5 rounded leading-none">
+                    PICKED
+                  </span>
                 )}
               </div>
               <div className="flex justify-between items-end">
                 <div className="flex flex-col">
-                  <span className="text-xs text-slate-300 font-mono">Value: <strong className="text-emerald-400">{item.value}</strong></span>
-                  <span className="text-xs text-slate-300 font-mono">Weight: <strong className="text-cyan-400">{item.weight}</strong></span>
+                  <span className="text-xs text-slate-300 font-mono">
+                    Value:{" "}
+                    <strong className="text-emerald-400">{item.value}</strong>
+                  </span>
+                  <span className="text-xs text-slate-300 font-mono">
+                    Weight:{" "}
+                    <strong className="text-cyan-400">{item.weight}</strong>
+                  </span>
                 </div>
                 <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center border border-white/5">
                   <span className="text-lg opacity-40">📦</span>
@@ -444,7 +533,9 @@ function ItemInventory({ items, pickedIndices }: { items: any[], pickedIndices: 
  */
 export default function MatrixStage() {
   const activeDPAlgorithm = useUIStore((state) => state.activeDPAlgorithm);
-  const [algoName, setAlgoName] = useState<string>(activeDPAlgorithm || '0/1 Knapsack');
+  const [algoName, setAlgoName] = useState<string>(
+    activeDPAlgorithm || "0/1 Knapsack",
+  );
 
   const [rows, setRows] = useState(0);
   const [cols, setCols] = useState(0);
@@ -455,7 +546,7 @@ export default function MatrixStage() {
   const [colHeaders, setColHeaders] = useState<string[]>([]);
   const [items, setItems] = useState<any[]>([]);
   const [pickedIndices, setPickedIndices] = useState<number[]>([]);
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   /** Synchronize default state with global storage selection */
@@ -466,105 +557,157 @@ export default function MatrixStage() {
   }, [activeDPAlgorithm]);
 
   /** Initializes matrix canvas grids with clean initial memory footprint */
-  const initMatrix = useCallback((r: number, c: number, customRowHeaders?: string[], customColHeaders?: string[]) => {
-    const newCells: CellState[][] = Array.from({ length: r }, () =>
-      Array.from({ length: c }, () => ({
-        value: null,
-        highlighted: false,
-        color: '',
-        isDependency: false,
-      }))
-    );
-    setRows(r);
-    setCols(c);
-    setCells(newCells);
-    setRowHeaders(customRowHeaders || Array.from({ length: r }, (_, i) => `Row ${i}`));
-    setColHeaders(customColHeaders || Array.from({ length: c }, (_, i) => `Col ${i}`));
-    setPickedIndices([]);
-  }, []);
+  const initMatrix = useCallback(
+    (
+      r: number,
+      c: number,
+      customRowHeaders?: string[],
+      customColHeaders?: string[],
+    ) => {
+      const newCells: CellState[][] = Array.from({ length: r }, () =>
+        Array.from({ length: c }, () => ({
+          value: null,
+          highlighted: false,
+          color: "",
+          isDependency: false,
+        })),
+      );
+      setRows(r);
+      setCols(c);
+      setCells(newCells);
+      setRowHeaders(
+        customRowHeaders || Array.from({ length: r }, (_, i) => `Row ${i}`),
+      );
+      setColHeaders(
+        customColHeaders || Array.from({ length: c }, (_, i) => `Col ${i}`),
+      );
+      setPickedIndices([]);
+    },
+    [],
+  );
 
   /** Listen to standard global event dispatches to drive frame-by-frame progression */
   useEffect(() => {
-    const unsubscribe = globalEventBus.subscribe((event: VisualizationEvent) => {
-      switch (event.type) {
-        case 'TRACE_LOADED': {
-          if (event.metadata?.algorithmName) {
-            setAlgoName(event.metadata.algorithmName);
-          }
-          if (event.metadata?.items) {
-            setItems(event.metadata.items);
-          }
-          const rowsCount = event.metadata.rowHeaders?.length || event.metadata.nodeCount || 5;
-          const colsCount = event.metadata.colHeaders?.length || event.metadata.nodeCount || 5;
-          initMatrix(rowsCount, colsCount, event.metadata.rowHeaders, event.metadata.colHeaders);
-          setActiveCell(null);
-          setDependencies([]);
-          break;
-        }
-
-        case 'MATRIX_CELL_UPDATE': {
-          const { row, col, value, dependencies: deps = [] } = event;
-
-          setCells((prev) => {
-            const next = prev.map((r) => r.map((c) => ({ ...c, highlighted: false, isDependency: false })));
-
-            // Matrix padding expansion logic
-            while (next.length <= row) {
-              next.push(Array.from({ length: cols || col + 1 }, () => ({ value: null, highlighted: false, color: '', isDependency: false })));
+    const unsubscribe = globalEventBus.subscribe(
+      (event: VisualizationEvent) => {
+        switch (event.type) {
+          case "TRACE_LOADED": {
+            if (event.metadata?.algorithmName) {
+              setAlgoName(event.metadata.algorithmName);
             }
-            while (next[row].length <= col) {
-              for (let rIdx = 0; rIdx < next.length; rIdx++) {
-                next[rIdx].push({ value: null, highlighted: false, color: '', isDependency: false });
-              }
+            if (event.metadata?.items) {
+              setItems(event.metadata.items);
             }
+            const rowsCount =
+              event.metadata.rowHeaders?.length ||
+              event.metadata.nodeCount ||
+              5;
+            const colsCount =
+              event.metadata.colHeaders?.length ||
+              event.metadata.nodeCount ||
+              5;
+            initMatrix(
+              rowsCount,
+              colsCount,
+              event.metadata.rowHeaders,
+              event.metadata.colHeaders,
+            );
+            setActiveCell(null);
+            setDependencies([]);
+            break;
+          }
 
-            // Assign target cell evaluation state
-            next[row][col] = { value, highlighted: true, color: '#06b6d4', isDependency: false };
+          case "MATRIX_CELL_UPDATE": {
+            const { row, col, value, dependencies: deps = [] } = event;
 
-            // Apply distinct dependency badges to preceding subproblem nodes
-            deps.forEach(([dr, dc]) => {
-              if (next[dr] && next[dr][dc]) {
-                next[dr][dc].isDependency = true;
+            setCells((prev) => {
+              const next = prev.map((r) =>
+                r.map((c) => ({
+                  ...c,
+                  highlighted: false,
+                  isDependency: false,
+                })),
+              );
+
+              // Matrix padding expansion logic
+              while (next.length <= row) {
+                next.push(
+                  Array.from({ length: cols || col + 1 }, () => ({
+                    value: null,
+                    highlighted: false,
+                    color: "",
+                    isDependency: false,
+                  })),
+                );
               }
+              while (next[row].length <= col) {
+                for (let rIdx = 0; rIdx < next.length; rIdx++) {
+                  next[rIdx].push({
+                    value: null,
+                    highlighted: false,
+                    color: "",
+                    isDependency: false,
+                  });
+                }
+              }
+
+              // Assign target cell evaluation state
+              next[row][col] = {
+                value,
+                highlighted: true,
+                color: "#06b6d4",
+                isDependency: false,
+              };
+
+              // Apply distinct dependency badges to preceding subproblem nodes
+              deps.forEach(([dr, dc]) => {
+                if (next[dr] && next[dr][dc]) {
+                  next[dr][dc].isDependency = true;
+                }
+              });
+
+              return next;
             });
 
-            return next;
-          });
-
-          setActiveCell([row, col]);
-          setDependencies(deps);
-          if (row >= rows) setRows(row + 1);
-          if (col >= cols) setCols(col + 1);
-          break;
-        }
-
-        case 'MATRIX_CELL_HIGHLIGHT': {
-          const { row, col, color } = event;
-          setCells((prev) => {
-            if (row >= prev.length || col >= prev[row].length) return prev;
-            const next = prev.map((r) => [...r]);
-            next[row][col] = {
-              ...next[row][col],
-              highlighted: true,
-              color: color || '#22c55e',
-            };
-            return next;
-          });
-
-          // If it's a backtracking highlight, add to path
-          if (color === '#10b981' || color === '#ef4444' || color === '#3b82f6') {
             setActiveCell([row, col]);
-            setDependencies([]); // Clear dependencies for backtracking view
+            setDependencies(deps);
+            if (row >= rows) setRows(row + 1);
+            if (col >= cols) setCols(col + 1);
+            break;
           }
-          break;
-        }
 
-        case 'KNAPSACK_FINAL_SELECTION': {
-          setPickedIndices(event.indices);
-          break;
+          case "MATRIX_CELL_HIGHLIGHT": {
+            const { row, col, color } = event;
+            setCells((prev) => {
+              if (row >= prev.length || col >= prev[row].length) return prev;
+              const next = prev.map((r) => [...r]);
+              next[row][col] = {
+                ...next[row][col],
+                highlighted: true,
+                color: color || "#22c55e",
+              };
+              return next;
+            });
+
+            // If it's a backtracking highlight, add to path
+            if (
+              color === "#10b981" ||
+              color === "#ef4444" ||
+              color === "#3b82f6"
+            ) {
+              setActiveCell([row, col]);
+              setDependencies([]); // Clear dependencies for backtracking view
+            }
+            break;
+          }
+
+          case "KNAPSACK_FINAL_SELECTION": {
+            setPickedIndices(event.indices);
+            break;
+          }
         }
-      }
-    });
+      },
+    );
 
     return () => unsubscribe();
   }, [rows, cols, initMatrix]);
@@ -603,7 +746,10 @@ export default function MatrixStage() {
   }, [activeCell, dependencies]);
 
   return (
-    <div ref={containerRef} className="flex-1 w-full h-full flex flex-col p-6 gap-5 select-none bg-[#050810] overflow-hidden">
+    <div
+      ref={containerRef}
+      className="flex-1 w-full h-full flex flex-col p-6 gap-5 select-none bg-[#050810] overflow-hidden"
+    >
       {/* ── Top HUD Dashboard ── */}
       <FormulaHUDPanel
         algoName={algoName}
@@ -617,12 +763,28 @@ export default function MatrixStage() {
         {/* ── Matrix Scroll Canvas Grid ── */}
         <div className="flex-1 relative glass-panel p-6 rounded-2xl border border-ice-blue/10 shadow-2xl overflow-auto flex flex-col justify-start items-start">
           {/* SVG Arrow Canvas Overlay */}
-          <svg className="absolute inset-0 pointer-events-none z-20" style={{ minWidth: '100%', minHeight: '100%' }}>
+          <svg
+            className="absolute inset-0 pointer-events-none z-20"
+            style={{ minWidth: "100%", minHeight: "100%" }}
+          >
             <defs>
-              <marker id="bezierArrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <marker
+                id="bezierArrow"
+                markerWidth="8"
+                markerHeight="6"
+                refX="7"
+                refY="3"
+                orient="auto"
+              >
                 <polygon points="0 0, 8 3, 0 6" fill="#f59e0b" />
               </marker>
-              <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient
+                id="neonGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
                 <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.8" />
                 <stop offset="100%" stopColor="#06b6d4" stopOpacity="1" />
               </linearGradient>
@@ -644,7 +806,7 @@ export default function MatrixStage() {
                     initial={{ pathLength: 0, opacity: 0 }}
                     animate={{ pathLength: 1, opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.4, ease: 'easeInOut' }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
                     d={curve.pathString}
                     fill="none"
                     stroke="url(#neonGradient)"
@@ -656,7 +818,11 @@ export default function MatrixStage() {
                   <motion.circle
                     initial={{ cx: curve.x1, cy: curve.y1, opacity: 0 }}
                     animate={{ cx: curve.x2, cy: curve.y2, opacity: [0, 1, 0] }}
-                    transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
+                    transition={{
+                      duration: 0.8,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
                     r="3.5"
                     fill="#ffffff"
                     className="filter drop-shadow-[0_0_6px_#ffffff]"
@@ -668,7 +834,7 @@ export default function MatrixStage() {
 
           <div className="relative z-10 w-full min-w-max pb-4">
             {/* ── Column Headers ── */}
-            <div className="flex gap-1 mb-2" style={{ paddingLeft: '120px' }}>
+            <div className="flex gap-1 mb-2" style={{ paddingLeft: "120px" }}>
               {colHeaders.map((h, cIdx) => {
                 const isColActive = activeCell?.[1] === cIdx;
                 return (
@@ -676,11 +842,11 @@ export default function MatrixStage() {
                     key={`col-head-${cIdx}`}
                     className={`w-12 h-8 flex items-center justify-center text-[10px] font-mono rounded transition-all ${
                       isColActive
-                        ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.25)] font-bold'
-                        : 'text-slate-500 bg-white/[0.01]'
+                        ? "bg-cyan-500/20 text-cyan-200 border border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.25)] font-bold"
+                        : "text-slate-500 bg-white/[0.01]"
                     }`}
                   >
-                    {h.replace('Base (0)', '0').replace('W=', '')}
+                    {h.replace("Base (0)", "0").replace("W=", "")}
                   </div>
                 );
               })}
@@ -690,13 +856,16 @@ export default function MatrixStage() {
             {cells.map((row, rIdx) => {
               const isRowActive = activeCell?.[0] === rIdx;
               return (
-                <div key={`matrix-row-${rIdx}`} className="flex items-center gap-1 mb-1">
+                <div
+                  key={`matrix-row-${rIdx}`}
+                  className="flex items-center gap-1 mb-1"
+                >
                   {/* Row Header Label */}
                   <div
                     className={`w-[116px] h-12 px-2 flex items-center justify-start text-[10px] font-mono shrink-0 truncate rounded transition-all ${
                       isRowActive
-                        ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.25)] font-bold'
-                        : 'text-slate-400 bg-white/[0.01]'
+                        ? "bg-cyan-500/20 text-cyan-200 border border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.25)] font-bold"
+                        : "text-slate-400 bg-white/[0.01]"
                     }`}
                     title={rowHeaders[rIdx]}
                   >
@@ -713,36 +882,48 @@ export default function MatrixStage() {
                         initial={false}
                         animate={{
                           backgroundColor: cell.highlighted
-                            ? cell.color + '33'
+                            ? cell.color + "33"
                             : cell.isDependency
-                            ? '#f59e0b2a'
-                            : isCalculated
-                            ? '#ffffff08'
-                            : '#0a0e1a80',
+                              ? "#f59e0b2a"
+                              : isCalculated
+                                ? "#ffffff08"
+                                : "#0a0e1a80",
                           borderColor: cell.highlighted
                             ? cell.color
                             : cell.isDependency
-                            ? '#f59e0b77'
-                            : isCalculated
-                            ? '#334155'
-                            : '#1e293b',
-                          scale: cell.highlighted ? 1.08 : cell.isDependency ? 1.03 : 1,
+                              ? "#f59e0b77"
+                              : isCalculated
+                                ? "#334155"
+                                : "#1e293b",
+                          scale: cell.highlighted
+                            ? 1.08
+                            : cell.isDependency
+                              ? 1.03
+                              : 1,
                         }}
-                        transition={{ type: 'spring', stiffness: 350, damping: 20 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 350,
+                          damping: 20,
+                        }}
                         className={`
                           w-12 h-12 flex items-center justify-center text-xs font-mono font-bold 
                           rounded-lg border relative transition-colors duration-150 cursor-pointer
                           ${
                             cell.highlighted
-                              ? 'text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.4)] z-10'
+                              ? "text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.4)] z-10"
                               : cell.isDependency
-                              ? 'text-amber-300 z-5'
-                              : isCalculated
-                              ? 'text-slate-300'
-                              : 'text-slate-600 font-normal'
+                                ? "text-amber-300 z-5"
+                                : isCalculated
+                                  ? "text-slate-300"
+                                  : "text-slate-600 font-normal"
                           }
                         `}
-                        whileHover={{ scale: 1.05, borderColor: '#7dd3fc', zIndex: 15 }}
+                        whileHover={{
+                          scale: 1.05,
+                          borderColor: "#7dd3fc",
+                          zIndex: 15,
+                        }}
                       >
                         <AnimatePresence mode="wait">
                           <motion.span
@@ -752,7 +933,7 @@ export default function MatrixStage() {
                             exit={{ opacity: 0, scale: 0.5 }}
                             transition={{ duration: 0.15 }}
                           >
-                            {isCalculated ? cell.value : '·'}
+                            {isCalculated ? cell.value : "·"}
                           </motion.span>
                         </AnimatePresence>
 
@@ -773,7 +954,7 @@ export default function MatrixStage() {
         </div>
 
         {/* ── Item Inventory Sidebar ── */}
-        {algoName.toLowerCase().includes('knapsack') && (
+        {algoName.toLowerCase().includes("knapsack") && (
           <ItemInventory items={items} pickedIndices={pickedIndices} />
         )}
       </div>
@@ -786,11 +967,15 @@ export default function MatrixStage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-amber-500/20 border border-amber-400/50" />
-          <span className="text-amber-300 font-bold">Subproblem Dependency</span>
+          <span className="text-amber-300 font-bold">
+            Subproblem Dependency
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-[#10b98133] border border-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
-          <span className="text-emerald-400 font-bold">Picked for Solution</span>
+          <span className="text-emerald-400 font-bold">
+            Picked for Solution
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-[#ef444433] border border-[#ef4444]" />

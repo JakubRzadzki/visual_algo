@@ -17,9 +17,17 @@ export default function BackgroundGrid() {
       aria-hidden="true"
     >
       {/* === Grid Pattern === */}
-      <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+      <svg
+        className="absolute inset-0 w-full h-full"
+        xmlns="http://www.w3.org/2000/svg"
+      >
         <defs>
-          <pattern id="cyber-grid" width="64" height="64" patternUnits="userSpaceOnUse">
+          <pattern
+            id="cyber-grid"
+            width="64"
+            height="64"
+            patternUnits="userSpaceOnUse"
+          >
             <path
               d="M 64 0 L 0 0 0 64"
               fill="none"
@@ -35,7 +43,8 @@ export default function BackgroundGrid() {
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[800px] h-[600px] md:w-[1200px] md:h-[800px]"
         style={{
-          background: 'radial-gradient(ellipse at center, rgba(34,211,238,0.06) 0%, transparent 70%)',
+          background:
+            "radial-gradient(ellipse at center, rgba(34,211,238,0.06) 0%, transparent 70%)",
         }}
       />
 
@@ -43,7 +52,8 @@ export default function BackgroundGrid() {
       <div
         className="absolute top-1/3 right-0 translate-x-1/4 w-[600px] h-[600px] md:w-[800px] md:h-[800px]"
         style={{
-          background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.05) 0%, transparent 70%)',
+          background:
+            "radial-gradient(ellipse at center, rgba(139,92,246,0.05) 0%, transparent 70%)",
         }}
       />
 
@@ -51,7 +61,8 @@ export default function BackgroundGrid() {
       <div
         className="absolute bottom-0 left-1/3 translate-y-1/4 w-[700px] h-[500px] md:w-[1000px] md:h-[700px]"
         style={{
-          background: 'radial-gradient(ellipse at center, rgba(59,130,246,0.04) 0%, transparent 70%)',
+          background:
+            "radial-gradient(ellipse at center, rgba(59,130,246,0.04) 0%, transparent 70%)",
         }}
       />
 
@@ -59,7 +70,8 @@ export default function BackgroundGrid() {
       <div
         className="absolute inset-0"
         style={{
-          background: 'radial-gradient(ellipse 70% 60% at 50% 50%, transparent 40%, rgba(2,6,23,0.6) 100%)',
+          background:
+            "radial-gradient(ellipse 70% 60% at 50% 50%, transparent 40%, rgba(2,6,23,0.6) 100%)",
         }}
       />
     </div>

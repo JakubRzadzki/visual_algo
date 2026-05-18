@@ -10,7 +10,7 @@
  * Space Complexity: O(1) auxiliary (O(n²) frames stored for playback)
  */
 
-import type { SortFrame, SortResult } from '../types';
+import type { SortFrame, SortResult } from "../types";
 
 /**
  * Generates all visualization frames for a Bubble Sort execution.
@@ -46,7 +46,7 @@ export function generateBubbleSortFrames(input: number[]): SortResult {
   };
 
   // Initial state
-  snap([], [], null, 'Starting Bubble Sort');
+  snap([], [], null, "Starting Bubble Sort");
 
   // Phase: Outer pass loop — each pass bubbles the largest unsorted element to the end
   for (let i = 0; i < n - 1; i++) {
@@ -57,7 +57,12 @@ export function generateBubbleSortFrames(input: number[]): SortResult {
       // Record comparison
       comparisons++;
       arrayAccesses += 2;
-      snap([j, j + 1], [], null, `Comparing arr[${j}]=${arr[j]} and arr[${j + 1}]=${arr[j + 1]}`);
+      snap(
+        [j, j + 1],
+        [],
+        null,
+        `Comparing arr[${j}]=${arr[j]} and arr[${j + 1}]=${arr[j + 1]}`,
+      );
 
       if (arr[j] > arr[j + 1]) {
         // Record swap
@@ -70,20 +75,30 @@ export function generateBubbleSortFrames(input: number[]): SortResult {
         swapped = true;
 
         // Post-swap state
-        snap([], [j, j + 1], null, `Swapped → arr[${j}]=${arr[j]}, arr[${j + 1}]=${arr[j + 1]}`);
+        snap(
+          [],
+          [j, j + 1],
+          null,
+          `Swapped → arr[${j}]=${arr[j]}, arr[${j + 1}]=${arr[j + 1]}`,
+        );
       }
     }
 
     // Mark the last unsorted position as sorted
     sortedIndices.push(n - 1 - i);
-    snap([], [], null, `Pass ${i + 1} complete — element ${arr[n - 1 - i]} is in place`);
+    snap(
+      [],
+      [],
+      null,
+      `Pass ${i + 1} complete — element ${arr[n - 1 - i]} is in place`,
+    );
 
     // Early exit if no swaps occurred (array already sorted)
     if (!swapped) {
       for (let k = 0; k < n - i - 1; k++) {
         if (!sortedIndices.includes(k)) sortedIndices.push(k);
       }
-      snap([], [], null, 'Array is already sorted — early exit');
+      snap([], [], null, "Array is already sorted — early exit");
       break;
     }
   }
@@ -92,16 +107,16 @@ export function generateBubbleSortFrames(input: number[]): SortResult {
   for (let i = 0; i < n; i++) {
     if (!sortedIndices.includes(i)) sortedIndices.push(i);
   }
-  snap([], [], null, 'Bubble Sort complete!');
+  snap([], [], null, "Bubble Sort complete!");
 
   return {
     frames,
     info: {
-      name: 'Bubble Sort',
-      timeComplexity: 'O(n²)',
-      spaceComplexity: 'O(1)',
-      bestCase: 'O(n)',
-      averageCase: 'O(n²)',
+      name: "Bubble Sort",
+      timeComplexity: "O(n²)",
+      spaceComplexity: "O(1)",
+      bestCase: "O(n)",
+      averageCase: "O(n²)",
     },
   };
 }

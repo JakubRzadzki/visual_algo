@@ -14,16 +14,16 @@
  * 4. Synchronizes local playback speed with the global engine to speed up terminal logs and editor highlights.
  */
 
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useSortingPlayback } from '../hooks/useSortingPlayback';
-import { ALGORITHM_REGISTRY, resolveAlgorithmId } from '../algorithms/registry';
-import type { SortAlgorithmInfo } from '../types';
-import SortingBars from './SortingBars';
-import AlgorithmStats from './AlgorithmStats';
-import SortingPlaybackControls from './SortingPlaybackControls';
-import { useUIStore } from '../../store/uiStore';
-import { globalEngine } from '../../core/AnimationEngine';
-import type { ArrayInput } from '../../types';
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useSortingPlayback } from "../hooks/useSortingPlayback";
+import { ALGORITHM_REGISTRY, resolveAlgorithmId } from "../algorithms/registry";
+import type { SortAlgorithmInfo } from "../types";
+import SortingBars from "./SortingBars";
+import AlgorithmStats from "./AlgorithmStats";
+import SortingPlaybackControls from "./SortingPlaybackControls";
+import { useUIStore } from "../../store/uiStore";
+import { globalEngine } from "../../core/AnimationEngine";
+import type { ArrayInput } from "../../types";
 
 /** Default array size for initial render. */
 const DEFAULT_ARRAY_SIZE = 25;
@@ -49,52 +49,62 @@ function generateRandomArray(size: number): number[] {
   const set = new Set<number>();
   const maxPossible = MAX_VALUE - MIN_VALUE + 1;
   const actualSize = Math.min(size, maxPossible);
-  
+
   while (set.size < actualSize) {
     set.add(Math.floor(Math.random() * maxPossible) + MIN_VALUE);
   }
-  
+
   return Array.from(set);
 }
 
-export default function SortingVisualizer({ algorithmName }: SortingVisualizerProps) {
+export default function SortingVisualizer({
+  algorithmName,
+}: SortingVisualizerProps) {
   const [arraySize, setArraySize] = useState(DEFAULT_ARRAY_SIZE);
-  const [algorithmInfo, setAlgorithmInfo] = useState<SortAlgorithmInfo | null>(null);
+  const [algorithmInfo, setAlgorithmInfo] = useState<SortAlgorithmInfo | null>(
+    null,
+  );
   const playback = useSortingPlayback();
 
   // Get parsed array values from global store (synced by Monaco from source files)
-  const visualizationData = useUIStore(state => state.visualizationData);
-  const isAnimating = useUIStore(state => state.isAnimating);
+  const visualizationData = useUIStore((state) => state.visualizationData);
+  const isAnimating = useUIStore((state) => state.isAnimating);
 
   /** Resolve the algorithm ID from the display name. */
-  const algorithmId = useMemo(() => resolveAlgorithmId(algorithmName), [algorithmName]);
+  const algorithmId = useMemo(
+    () => resolveAlgorithmId(algorithmName),
+    [algorithmName],
+  );
 
   // Extract values if available
   const parsedValues = useMemo(() => {
-    if (visualizationData && 'values' in visualizationData) {
+    if (visualizationData && "values" in visualizationData) {
       return (visualizationData as ArrayInput).values;
     }
     return null;
   }, [visualizationData]);
 
   // Prevent recursive trigger loops using a ref
-  const lastLoadedArrayRef = useRef<string>('');
+  const lastLoadedArrayRef = useRef<string>("");
 
   /** Eagerly compute frames for a specific array. */
-  const loadArrayForSorting = useCallback((arr: number[]) => {
-    if (!algorithmId || !(algorithmId in ALGORITHM_REGISTRY)) return;
+  const loadArrayForSorting = useCallback(
+    (arr: number[]) => {
+      if (!algorithmId || !(algorithmId in ALGORITHM_REGISTRY)) return;
 
-    const arrayKey = `${algorithmId}-${arr.join(',')}`;
-    if (lastLoadedArrayRef.current === arrayKey) return;
-    lastLoadedArrayRef.current = arrayKey;
+      const arrayKey = `${algorithmId}-${arr.join(",")}`;
+      if (lastLoadedArrayRef.current === arrayKey) return;
+      lastLoadedArrayRef.current = arrayKey;
 
-    const generator = ALGORITHM_REGISTRY[algorithmId];
-    const result = generator(arr);
+      const generator = ALGORITHM_REGISTRY[algorithmId];
+      const result = generator(arr);
 
-    setAlgorithmInfo(result.info);
-    playback.loadFrames(result.frames);
-    setArraySize(arr.length);
-  }, [algorithmId, playback]);
+      setAlgorithmInfo(result.info);
+      playback.loadFrames(result.frames);
+      setArraySize(arr.length);
+    },
+    [algorithmId, playback],
+  );
 
   // Sync with parsed array from editor/source files
   useEffect(() => {

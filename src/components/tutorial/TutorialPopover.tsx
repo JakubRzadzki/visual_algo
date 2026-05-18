@@ -6,12 +6,19 @@
  * highlight bounds, markdown rendering for description, and playback controls.
  */
 
-import React, { useRef, useEffect } from 'react';
-import { useFloating, autoUpdate, offset, flip, shift, arrow } from '@floating-ui/react';
-import { motion, useReducedMotion } from 'motion/react';
-import ReactMarkdown from 'react-markdown';
-import { X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
-import { useTutorialStore } from '../../store/tutorialStore';
+import React, { useRef, useEffect } from "react";
+import {
+  useFloating,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  arrow,
+} from "@floating-ui/react";
+import { motion, useReducedMotion } from "motion/react";
+import ReactMarkdown from "react-markdown";
+import { X, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { useTutorialStore } from "../../store/tutorialStore";
 
 /**
  * Renders the popover containing the instructions for the active tutorial step.
@@ -31,19 +38,22 @@ export const TutorialPopover: React.FC = () => {
   } = useTutorialStore();
 
   const popoverRef = useRef<HTMLDivElement>(null);
-  const arrowRef = useRef<HTMLDivElement>(null);
+  const [arrowElement, setArrowElement] = React.useState<HTMLDivElement | null>(
+    null,
+  );
   const currentStep = steps[currentStepIndex];
 
   // Configure Floating UI hook
-  const preferredPosition = currentStep?.position || 'auto';
+  const preferredPosition = currentStep?.position || "auto";
   const { x, y, strategy, refs, placement, middlewareData } = useFloating({
-    placement: preferredPosition === 'auto' ? undefined : (preferredPosition as any),
+    placement:
+      preferredPosition === "auto" ? undefined : (preferredPosition as any),
     whileElementsMounted: autoUpdate,
     middleware: [
       offset(14),
-      flip({ fallbackAxisSideDirection: 'start' }),
+      flip({ fallbackAxisSideDirection: "start" }),
       shift({ padding: 12 }),
-      arrow({ element: arrowRef }),
+      arrow({ element: arrowElement }),
     ],
   });
 
@@ -63,17 +73,20 @@ export const TutorialPopover: React.FC = () => {
 
   // Trap keyboard focus inside the popover dialog for accessibility (a11y)
   useEffect(() => {
-    if (status !== 'running') return;
+    if (status !== "running") return;
 
     const handleFocusTrap = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+      if (e.key !== "Tab") return;
 
       const popoverElement = popoverRef.current;
       if (!popoverElement) return;
 
       // Select all standard focusable HTML elements
-      const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-      const focusableElements = Array.from(popoverElement.querySelectorAll<HTMLElement>(focusableSelector));
+      const focusableSelector =
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      const focusableElements = Array.from(
+        popoverElement.querySelectorAll<HTMLElement>(focusableSelector),
+      );
 
       if (focusableElements.length === 0) return;
 
@@ -97,7 +110,9 @@ export const TutorialPopover: React.FC = () => {
 
     // Auto-focus the primary interaction button (Next/Finish) when step changes
     const focusTimer = setTimeout(() => {
-      const nextBtn = popoverRef.current?.querySelector<HTMLButtonElement>('button:last-of-type');
+      const nextBtn = popoverRef.current?.querySelector<HTMLButtonElement>(
+        "button:last-of-type",
+      );
       if (nextBtn) {
         nextBtn.focus();
       } else {
@@ -105,14 +120,14 @@ export const TutorialPopover: React.FC = () => {
       }
     }, 120);
 
-    window.addEventListener('keydown', handleFocusTrap);
+    window.addEventListener("keydown", handleFocusTrap);
     return () => {
       clearTimeout(focusTimer);
-      window.removeEventListener('keydown', handleFocusTrap);
+      window.removeEventListener("keydown", handleFocusTrap);
     };
   }, [status, currentStepIndex]);
 
-  if (status !== 'running' || !currentStep) return null;
+  if (status !== "running" || !currentStep) return null;
 
   const totalSteps = steps.length;
   const isFirstStep = currentStepIndex === 0;
@@ -122,37 +137,38 @@ export const TutorialPopover: React.FC = () => {
   const arrowX = middlewareData.arrow?.x;
   const arrowY = middlewareData.arrow?.y;
 
-  const staticSide = {
-    top: 'bottom',
-    right: 'left',
-    bottom: 'top',
-    left: 'right',
-  }[placement.split('-')[0]] || 'top';
+  const staticSide =
+    {
+      top: "bottom",
+      right: "left",
+      bottom: "top",
+      left: "right",
+    }[placement.split("-")[0]] || "top";
 
   const arrowStyle: React.CSSProperties = {
-    position: 'absolute',
-    left: arrowX != null ? `${arrowX}px` : '',
-    top: arrowY != null ? `${arrowY}px` : '',
-    right: '',
-    bottom: '',
-    [staticSide]: '-6px',
-    width: '12px',
-    height: '12px',
-    transform: 'rotate(45deg)',
+    position: "absolute",
+    left: arrowX != null ? `${arrowX}px` : "",
+    top: arrowY != null ? `${arrowY}px` : "",
+    right: "",
+    bottom: "",
+    [staticSide]: "-6px",
+    width: "12px",
+    height: "12px",
+    transform: "rotate(45deg)",
   };
 
   // Determine popover position: floating relative to element vs centered fallback
   const popoverStyle: React.CSSProperties = highlightRect
     ? {
         position: strategy,
-        left: x != null ? `${x}px` : '',
-        top: y != null ? `${y}px` : '',
+        left: x != null ? `${x}px` : "",
+        top: y != null ? `${y}px` : "",
       }
     : {
-        position: 'fixed',
-        left: '50%',
-        top: '50%',
-        transform: 'translate(-50%, -50%)',
+        position: "fixed",
+        left: "50%",
+        top: "50%",
+        transform: "translate(-50%, -50%)",
       };
 
   // Animate presence parameters updated to support reduced motion preference
@@ -167,7 +183,7 @@ export const TutorialPopover: React.FC = () => {
         initial: { opacity: 0, scale: 0.95, y: highlightRect ? 10 : 0 },
         animate: { opacity: 1, scale: 1, y: 0 },
         exit: { opacity: 0, scale: 0.95 },
-        transition: { type: 'spring', stiffness: 350, damping: 28 },
+        transition: { type: "spring" as const, stiffness: 350, damping: 28 },
       };
 
   return (
@@ -209,12 +225,24 @@ export const TutorialPopover: React.FC = () => {
       </div>
 
       {/* Popover Description */}
-      <div id="tutorial-popover-desc" className="px-5 py-4 text-sm text-slate-300 leading-relaxed overflow-y-auto max-h-[250px] scrollbar-thin">
+      <div
+        id="tutorial-popover-desc"
+        className="px-5 py-4 text-sm text-slate-300 leading-relaxed overflow-y-auto max-h-[250px] scrollbar-thin"
+      >
         <ReactMarkdown
           components={{
-            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-            strong: ({ node, ...props }) => <strong className="font-semibold text-blue-300" {...props} />,
-            code: ({ node, ...props }) => <code className="bg-slate-800/80 border border-slate-700/30 rounded px-1.5 py-0.5 text-xs text-indigo-200 font-mono" {...props} />,
+            p: ({ node, ...props }) => (
+              <p className="mb-2 last:mb-0" {...props} />
+            ),
+            strong: ({ node, ...props }) => (
+              <strong className="font-semibold text-blue-300" {...props} />
+            ),
+            code: ({ node, ...props }) => (
+              <code
+                className="bg-slate-800/80 border border-slate-700/30 rounded px-1.5 py-0.5 text-xs text-indigo-200 font-mono"
+                {...props}
+              />
+            ),
           }}
         >
           {currentStep.content}
@@ -234,10 +262,10 @@ export const TutorialPopover: React.FC = () => {
                 key={idx}
                 className={`h-1 rounded-full transition-all duration-300 ${
                   idx === currentStepIndex
-                    ? 'w-4 bg-blue-500'
+                    ? "w-4 bg-blue-500"
                     : idx < currentStepIndex
-                    ? 'w-2 bg-indigo-600/70'
-                    : 'w-1 bg-slate-700'
+                      ? "w-2 bg-indigo-600/70"
+                      : "w-1 bg-slate-700"
                 }`}
               />
             ))}
@@ -263,8 +291,8 @@ export const TutorialPopover: React.FC = () => {
             className={`flex items-center gap-1 px-4 py-1.5 text-xs font-bold text-white rounded-lg shadow-md active:scale-95 transition-all
               ${
                 isLastStep
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 hover:shadow-emerald-950/20'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 hover:shadow-blue-950/20'
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 hover:shadow-emerald-950/20"
+                  : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 hover:shadow-blue-950/20"
               }`}
           >
             {isLastStep ? (
@@ -285,7 +313,7 @@ export const TutorialPopover: React.FC = () => {
       {/* Floating Arrow Element */}
       {highlightRect && (
         <div
-          ref={arrowRef}
+          ref={setArrowElement}
           style={arrowStyle}
           className="bg-slate-900/80 border-r border-b border-slate-700/50 pointer-events-none"
         />

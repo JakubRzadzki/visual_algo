@@ -1,25 +1,31 @@
 /**
  * @file TopoSortPlugin.ts
  * @description Plugin for the Topological Sort algorithm.
- * 
+ *
  * Implements Kahn's algorithm for linear ordering of vertices in a DAG.
  * Time Complexity: O(V + E)
  * Space Complexity: O(V)
  */
 
-import type { AlgorithmPlugin, ExecutionTrace, GraphInput, VisualizationEvent, EventPayload } from '../../../types';
+import type {
+  AlgorithmPlugin,
+  ExecutionTrace,
+  GraphInput,
+  VisualizationEvent,
+  EventPayload,
+} from "../../../types";
 
 /**
  * TopoSortPlugin — Implements the Topological Sort algorithm.
  */
 export class TopoSortPlugin implements AlgorithmPlugin<GraphInput> {
-  id = 'topo-sort';
-  name = 'Topological Sort';
-  category = 'graph' as const;
+  id = "topo-sort";
+  name = "Topological Sort";
+  category = "graph" as const;
 
   /**
    * Executes Kahn's algorithm to compute topological order.
-   * 
+   *
    * @param data - The graph input data including nodes and edges.
    * @returns An ExecutionTrace with in-degree reduction and node selection events.
    */
@@ -39,16 +45,20 @@ export class TopoSortPlugin implements AlgorithmPlugin<GraphInput> {
     };
 
     if (nodes.length === 0) {
-      push({ type: 'SYSTEM_LOG', level: 'ERROR', message: 'No nodes provided to Topological Sort.' });
-      return { 
-        events, 
-        metadata: { 
-          timeComplexity: 'O(V + E)', 
-          spaceComplexity: 'O(V)', 
-          executionTimeMs: 0, 
-          nodeCount: 0, 
-          algorithmName: this.name 
-        } 
+      push({
+        type: "SYSTEM_LOG",
+        level: "ERROR",
+        message: "No nodes provided to Topological Sort.",
+      });
+      return {
+        events,
+        metadata: {
+          timeComplexity: "O(V + E)",
+          spaceComplexity: "O(V)",
+          executionTimeMs: 0,
+          nodeCount: 0,
+          algorithmName: this.name,
+        },
       };
     }
 
@@ -82,13 +92,13 @@ export class TopoSortPlugin implements AlgorithmPlugin<GraphInput> {
       result.push(u);
 
       // Highlight the node being added to the topological order
-      push({ type: 'GRAPH_NODE_HIGHLIGHT', nodeId: u });
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: u });
 
       for (const { to: v, edgeId } of adj[u] ?? []) {
         inDegree[v]--;
 
         // Highlight the edge as processed
-        push({ type: 'GRAPH_EDGE_HIGHLIGHT', edgeId, accepted: true });
+        push({ type: "GRAPH_EDGE_HIGHLIGHT", edgeId, accepted: true });
 
         if (inDegree[v] === 0) {
           queue.push(v);
@@ -100,18 +110,18 @@ export class TopoSortPlugin implements AlgorithmPlugin<GraphInput> {
 
     const hasCycle = result.length !== nodes.length;
     push({
-      type: 'SYSTEM_LOG',
-      level: hasCycle ? 'WARN' : 'INFO',
+      type: "SYSTEM_LOG",
+      level: hasCycle ? "WARN" : "INFO",
       message: hasCycle
         ? `Topological Sort incomplete — cycle detected. Ordered ${result.length} of ${nodes.length} nodes.`
-        : `Topological Sort complete. Order: ${result.join(' → ')}.`,
+        : `Topological Sort complete. Order: ${result.join(" → ")}.`,
     });
 
     return {
       events,
       metadata: {
-        timeComplexity: 'O(V + E)',
-        spaceComplexity: 'O(V)',
+        timeComplexity: "O(V + E)",
+        spaceComplexity: "O(V)",
         executionTimeMs: endTime - startTime,
         nodeCount: nodes.length,
         algorithmName: this.name,

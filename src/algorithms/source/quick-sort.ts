@@ -1,4 +1,8 @@
-export function quickSort(arr: number[], low: number = 0, high: number = arr.length - 1): number[] {
+export function quickSort(
+  arr: number[],
+  low: number = 0,
+  high: number = arr.length - 1,
+): number[] {
   if (low < high) {
     const pi = partition(arr, low, high);
     quickSort(arr, low, pi - 1);

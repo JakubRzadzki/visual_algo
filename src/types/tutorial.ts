@@ -10,23 +10,23 @@
  * The side of the target element where the popover should be rendered.
  * If 'auto', the positioning engine (floating-ui) will automatically choose the best side.
  */
-export type PopoverSide = 'top' | 'bottom' | 'left' | 'right' | 'auto';
+export type PopoverSide = "top" | "bottom" | "left" | "right" | "auto";
 
 /**
  * The geometric shape of the spotlight cutout overlay around the highlighted element.
  */
-export type SpotlightShape = 'rect' | 'rounded' | 'circle';
+export type SpotlightShape = "rect" | "rounded" | "circle";
 
 /**
  * Custom scroll options to control how the target element is scrolled into view.
  */
 export interface ScrollOptions {
   /** The scroll behavior transition. */
-  behavior: 'smooth' | 'instant';
+  behavior: "smooth" | "instant";
   /** Vertical alignment. */
-  block: 'start' | 'center' | 'end' | 'nearest';
+  block: "start" | "center" | "end" | "nearest";
   /** Horizontal alignment. */
-  inline: 'start' | 'center' | 'end' | 'nearest';
+  inline: "start" | "center" | "end" | "nearest";
 }
 
 /**

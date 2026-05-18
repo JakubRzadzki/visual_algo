@@ -1,15 +1,23 @@
-import { useEffect, useState } from 'react';
-import { globalEventBus } from '../../core/EventBus';
-import { useUIStore } from '../../store/uiStore';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Copy, Download, Check } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { globalEventBus } from "../../core/EventBus";
+import { useUIStore } from "../../store/uiStore";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { Copy, Download, Check } from "lucide-react";
 
 // Use Vite's raw imports to load the real .ts files at build time
-const modules = import.meta.glob('../../algorithms/source/*.ts', { query: '?raw', import: 'default', eager: true });
+const modules = import.meta.glob("../../algorithms/source/*.ts", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+});
 
 export default function SourceCodeViewer() {
-  const globalAlgo = useUIStore(state => state.activeMode === 'sorting' ? state.activeSortingAlgorithm : state.activeGraphAlgorithm);
+  const globalAlgo = useUIStore((state) =>
+    state.activeMode === "sorting"
+      ? state.activeSortingAlgorithm
+      : state.activeGraphAlgorithm,
+  );
   const [algoName, setAlgoName] = useState<string>(globalAlgo);
   const [copied, setCopied] = useState(false);
 
@@ -19,7 +27,7 @@ export default function SourceCodeViewer() {
 
   useEffect(() => {
     const unsubscribe = globalEventBus.subscribe((e) => {
-      if (e.type === 'TRACE_LOADED') {
+      if (e.type === "TRACE_LOADED") {
         setAlgoName(e.metadata.algorithmName);
       }
     });
@@ -28,14 +36,16 @@ export default function SourceCodeViewer() {
 
   // Map algorithm name to filename
   const algoIdToFilename: Record<string, string> = {
-    'Merge Sort': 'merge-sort.ts',
-    'Quick Sort': 'quick-sort.ts',
-    "Dijkstra's Path": 'dijkstra.ts',
-    "Kruskal's MST": 'kruskal.ts',
+    "Merge Sort": "merge-sort.ts",
+    "Quick Sort": "quick-sort.ts",
+    "Dijkstra's Path": "dijkstra.ts",
+    "Kruskal's MST": "kruskal.ts",
   };
 
-  const filename = algoIdToFilename[algoName] || 'merge-sort.ts';
-  const rawCode = (modules[`../../algorithms/source/${filename}`] as string) || '// Code not found';
+  const filename = algoIdToFilename[algoName] || "merge-sort.ts";
+  const rawCode =
+    (modules[`../../algorithms/source/${filename}`] as string) ||
+    "// Code not found";
 
   const handleCopy = async () => {
     try {
@@ -43,14 +53,14 @@ export default function SourceCodeViewer() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy text: ', err);
+      console.error("Failed to copy text: ", err);
     }
   };
 
   const handleDownload = () => {
-    const blob = new Blob([rawCode], { type: 'text/typescript' });
+    const blob = new Blob([rawCode], { type: "text/typescript" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = filename;
     document.body.appendChild(a);
@@ -74,8 +84,12 @@ export default function SourceCodeViewer() {
             onClick={handleCopy}
             className="flex items-center gap-2 px-3 py-1.5 rounded text-xs font-semibold text-slate-400 hover:text-ice-blue hover:bg-white/5 transition-all"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-green-400" />
+            ) : (
+              <Copy className="w-3.5 h-3.5" />
+            )}
+            {copied ? "Copied" : "Copy"}
           </button>
           <button
             onClick={handleDownload}
@@ -94,17 +108,17 @@ export default function SourceCodeViewer() {
           style={vscDarkPlus}
           customStyle={{
             margin: 0,
-            padding: '1.5rem',
-            background: 'transparent',
-            fontSize: '0.85rem',
-            lineHeight: '1.5',
+            padding: "1.5rem",
+            background: "transparent",
+            fontSize: "0.85rem",
+            lineHeight: "1.5",
           }}
           showLineNumbers={true}
           lineNumberStyle={{
-            minWidth: '2.5em',
-            paddingRight: '1em',
-            color: '#475569',
-            textAlign: 'right',
+            minWidth: "2.5em",
+            paddingRight: "1em",
+            color: "#475569",
+            textAlign: "right",
           }}
         >
           {rawCode}

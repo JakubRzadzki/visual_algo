@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { globalEventBus } from '../../core/EventBus';
-import type { VisualizationEvent } from '../../types';
+import { useEffect, useState } from "react";
+import { globalEventBus } from "../../core/EventBus";
+import type { VisualizationEvent } from "../../types";
 
 export default function AriaLiveRegion() {
   const [messages, setMessages] = useState<string[]>([]);
@@ -8,15 +8,15 @@ export default function AriaLiveRegion() {
   useEffect(() => {
     const textifyEvent = (e: VisualizationEvent): string | null => {
       switch (e.type) {
-        case 'SYSTEM_LOG':
+        case "SYSTEM_LOG":
           return `System message: ${e.message}`;
-        case 'ARRAY_COMPARE':
+        case "ARRAY_COMPARE":
           return `Comparing array elements at indices ${e.indices[0]} and ${e.indices[1]}`;
-        case 'ARRAY_SWAP':
+        case "ARRAY_SWAP":
           return `Swapping array values ${e.values[0]} and ${e.values[1]}`;
-        case 'ARRAY_SET':
+        case "ARRAY_SET":
           return `Setting array index ${e.index} to ${e.value}`;
-        case 'TRACE_LOADED':
+        case "TRACE_LOADED":
           return `Algorithm data loaded for ${e.metadata.algorithmName}`;
         default:
           return null;
@@ -26,10 +26,12 @@ export default function AriaLiveRegion() {
     const unsubscribe = globalEventBus.subscribe((e) => {
       const msg = textifyEvent(e);
       if (msg) {
-        setMessages(prev => {
+        setMessages((prev) => {
           // Keep only the latest few messages to prevent massive DOM growth
           const updated = [...prev, msg];
-          return updated.length > 5 ? updated.slice(updated.length - 5) : updated;
+          return updated.length > 5
+            ? updated.slice(updated.length - 5)
+            : updated;
         });
       }
     });

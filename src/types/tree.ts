@@ -14,7 +14,7 @@ export interface AVLNode extends TreeNode {
 }
 
 export interface RBNode extends TreeNode {
-  color: 'RED' | 'BLACK';
+  color: "RED" | "BLACK";
   parent: RBNode | null;
 }
 
@@ -28,7 +28,14 @@ export interface TrieNode {
 }
 
 export interface AnimationStep {
-  type: 'VISIT' | 'COMPARE' | 'INSERT' | 'DELETE' | 'ROTATE' | 'RECOLOR' | 'PATH';
+  type:
+    | "VISIT"
+    | "COMPARE"
+    | "INSERT"
+    | "DELETE"
+    | "ROTATE"
+    | "RECOLOR"
+    | "PATH";
   nodeIds: string[];
   edgeIds?: string[];
   description: string;

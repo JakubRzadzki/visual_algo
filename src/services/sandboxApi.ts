@@ -1,4 +1,9 @@
-import type { ExecutionTrace, VisualizationEvent, TraceMetadata, GraphInput } from '../types';
+import type {
+  ExecutionTrace,
+  VisualizationEvent,
+  TraceMetadata,
+  GraphInput,
+} from "../types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,7 +16,7 @@ export interface RunResponse {
 
 // ─── API Client ───────────────────────────────────────────────────────────────
 
-const API_RUN_URL = '/api/run';
+const API_RUN_URL = "/api/run";
 
 /**
  * Send user code to the Docker sandbox for execution.
@@ -29,13 +34,13 @@ export async function executeInSandbox(
 
   try {
     res = await fetch(API_RUN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code, language }),
     });
   } catch {
     throw new Error(
-      'Network error — is the backend running? Check Docker Compose is up.',
+      "Network error — is the backend running? Check Docker Compose is up.",
     );
   }
 
@@ -43,7 +48,8 @@ export async function executeInSandbox(
     // Try to extract a JSON error message from the backend
     let detail = `HTTP ${res.status}`;
     if (res.status === 502) {
-      detail = 'HTTP 502: Go backend is unreachable. Please ensure the backend is running (e.g., "docker compose up").';
+      detail =
+        'HTTP 502: Go backend is unreachable. Please ensure the backend is running (e.g., "docker compose up").';
     } else {
       try {
         const body = await res.json();
@@ -82,7 +88,7 @@ export function buildExecutionTrace(
   let initialGraph: GraphInput | undefined;
 
   const filtered = rawTrace.filter((raw) => {
-    if (raw.type === 'INIT') {
+    if (raw.type === "INIT") {
       if (Array.isArray(raw.array)) initialState = raw.array as number[];
       if (raw.graph) initialGraph = raw.graph as GraphInput;
       return false; // Don't include INIT in playback events
@@ -90,21 +96,19 @@ export function buildExecutionTrace(
     return true;
   });
 
-  const events: VisualizationEvent[] = filtered.map(
-    (raw, index) => {
-      return {
-        id: crypto.randomUUID(),
-        timestamp: Date.now() + index,
-        step: index,
-        ...raw,
-      } as VisualizationEvent;
-    },
-  );
+  const events: VisualizationEvent[] = filtered.map((raw, index) => {
+    return {
+      id: crypto.randomUUID(),
+      timestamp: Date.now() + index,
+      step: index,
+      ...raw,
+    } as VisualizationEvent;
+  });
 
   const metadata: TraceMetadata = {
     algorithmName,
-    timeComplexity: 'N/A (sandbox)',
-    spaceComplexity: 'N/A (sandbox)',
+    timeComplexity: "N/A (sandbox)",
+    spaceComplexity: "N/A (sandbox)",
     executionTimeMs: executionMs,
     nodeCount: events.length,
     initialState,
@@ -116,17 +120,19 @@ export function buildExecutionTrace(
 
 // ─── Persistence Subsystem (Step 4) ───────────────────────────────────────────
 
-const API_SNAPSHOTS_URL = '/api/snapshots';
+const API_SNAPSHOTS_URL = "/api/snapshots";
 
 /**
  * Saves a visualization snapshot to the backend.
  * @param payload - The snapshot data (graph, code, language, algorithm)
  * @returns The generated UUID link for sharing
  */
-export async function saveSnapshot(payload: Record<string, unknown>): Promise<string> {
+export async function saveSnapshot(
+  payload: Record<string, unknown>,
+): Promise<string> {
   const res = await fetch(API_SNAPSHOTS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
@@ -143,7 +149,9 @@ export async function saveSnapshot(payload: Record<string, unknown>): Promise<st
  * @param id - The UUID of the snapshot
  * @returns The parsed snapshot data
  */
-export async function getSnapshot(id: string): Promise<Record<string, unknown>> {
+export async function getSnapshot(
+  id: string,
+): Promise<Record<string, unknown>> {
   const res = await fetch(`${API_SNAPSHOTS_URL}/${id}`);
 
   if (!res.ok) {

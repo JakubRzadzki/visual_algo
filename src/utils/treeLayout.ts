@@ -1,7 +1,9 @@
-import * as d3 from 'd3';
-import type { TreeNode } from '../types/tree';
+import * as d3 from "d3";
+import type { TreeNode } from "../types/tree";
 
-export function computeLayoutD3(root: TreeNode | null): Map<string, { x: number; y: number }> {
+export function computeLayoutD3(
+  root: TreeNode | null,
+): Map<string, { x: number; y: number }> {
   if (!root) return new Map();
 
   // Convert custom structure to d3 format
@@ -16,7 +18,8 @@ export function computeLayoutD3(root: TreeNode | null): Map<string, { x: number;
   }
 
   const hierarchy = toD3(root);
-  const treeLayout = d3.tree<TreeNode>()
+  const treeLayout = d3
+    .tree<TreeNode>()
     .nodeSize([80, 100]) // [horizontal, vertical] spacing
     .separation((a, b) => (a.parent === b.parent ? 1 : 1.5));
 

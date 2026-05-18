@@ -1,25 +1,31 @@
 /**
  * @file BFSPlugin.ts
  * @description Plugin for the Breadth-First Search (BFS) algorithm.
- * 
+ *
  * Explores a graph level by level using a queue.
  * Time Complexity: O(V + E)
  * Space Complexity: O(V)
  */
 
-import type { AlgorithmPlugin, ExecutionTrace, GraphInput, VisualizationEvent, EventPayload } from '../../../types';
+import type {
+  AlgorithmPlugin,
+  ExecutionTrace,
+  GraphInput,
+  VisualizationEvent,
+  EventPayload,
+} from "../../../types";
 
 /**
  * BFSPlugin — Implements the Breadth-First Search algorithm.
  */
 export class BFSPlugin implements AlgorithmPlugin<GraphInput> {
-  id = 'bfs';
-  name = 'Breadth-First Search';
-  category = 'graph' as const;
+  id = "bfs";
+  name = "Breadth-First Search";
+  category = "graph" as const;
 
   /**
    * Executes BFS starting from a given source node.
-   * 
+   *
    * @param data - The graph input data including nodes, edges, and optional startNodeId.
    * @returns An ExecutionTrace containing node highlighting and edge exploration events.
    */
@@ -40,16 +46,20 @@ export class BFSPlugin implements AlgorithmPlugin<GraphInput> {
 
     const source = startNodeId ?? nodes[0]?.id;
     if (!source) {
-      push({ type: 'SYSTEM_LOG', level: 'ERROR', message: 'No nodes provided to BFS.' });
-      return { 
-        events, 
-        metadata: { 
-          timeComplexity: 'O(V + E)', 
-          spaceComplexity: 'O(V)', 
-          executionTimeMs: 0, 
-          nodeCount: 0, 
-          algorithmName: this.name 
-        } 
+      push({
+        type: "SYSTEM_LOG",
+        level: "ERROR",
+        message: "No nodes provided to BFS.",
+      });
+      return {
+        events,
+        metadata: {
+          timeComplexity: "O(V + E)",
+          spaceComplexity: "O(V)",
+          executionTimeMs: 0,
+          nodeCount: 0,
+          algorithmName: this.name,
+        },
       };
     }
 
@@ -67,7 +77,7 @@ export class BFSPlugin implements AlgorithmPlugin<GraphInput> {
     visited.add(source);
 
     // Initial event: highlight source node
-    push({ type: 'GRAPH_NODE_HIGHLIGHT', nodeId: source, distance: 0 });
+    push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: source, distance: 0 });
 
     // Phase: Main BFS loop using a Queue
     while (queue.length > 0) {
@@ -75,13 +85,17 @@ export class BFSPlugin implements AlgorithmPlugin<GraphInput> {
 
       for (const { to: v, edgeId } of adj[u] ?? []) {
         // Record edge exploration
-        push({ type: 'GRAPH_EDGE_HIGHLIGHT', edgeId, accepted: !visited.has(v) });
+        push({
+          type: "GRAPH_EDGE_HIGHLIGHT",
+          edgeId,
+          accepted: !visited.has(v),
+        });
 
         if (!visited.has(v)) {
           visited.add(v);
           queue.push(v);
           // Record node discovery
-          push({ type: 'GRAPH_NODE_HIGHLIGHT', nodeId: v });
+          push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: v });
         }
       }
     }
@@ -89,16 +103,16 @@ export class BFSPlugin implements AlgorithmPlugin<GraphInput> {
     const endTime = performance.now();
 
     push({
-      type: 'SYSTEM_LOG',
-      level: 'INFO',
+      type: "SYSTEM_LOG",
+      level: "INFO",
       message: `BFS complete from "${source}". Visited ${visited.size} of ${nodes.length} nodes.`,
     });
 
     return {
       events,
       metadata: {
-        timeComplexity: 'O(V + E)',
-        spaceComplexity: 'O(V)',
+        timeComplexity: "O(V + E)",
+        spaceComplexity: "O(V)",
         executionTimeMs: endTime - startTime,
         nodeCount: nodes.length,
         algorithmName: this.name,

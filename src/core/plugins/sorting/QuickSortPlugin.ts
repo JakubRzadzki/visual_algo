@@ -1,24 +1,30 @@
 /**
  * @file QuickSortPlugin.ts
  * @description Plugin for the Quick Sort algorithm.
- * 
+ *
  * Implements a divide-and-conquer approach using a pivot element.
  * Average time complexity O(n log n), worst case O(n²).
  */
 
-import type { AlgorithmPlugin, ExecutionTrace, EventPayload, VisualizationEvent, ArrayInput } from '../../../types';
+import type {
+  AlgorithmPlugin,
+  ExecutionTrace,
+  EventPayload,
+  VisualizationEvent,
+  ArrayInput,
+} from "../../../types";
 
 /**
  * QuickSortPlugin — Implements the Quick Sort algorithm.
  */
 export class QuickSortPlugin implements AlgorithmPlugin<ArrayInput> {
-  id = 'quick-sort';
-  name = 'Quick Sort';
-  category = 'sorting' as const;
+  id = "quick-sort";
+  name = "Quick Sort";
+  category = "sorting" as const;
 
   /**
    * Executes the Quick Sort algorithm on the input array.
-   * 
+   *
    * @param input - The input data containing the array values.
    * @returns An ExecutionTrace with comparison and swap events.
    */
@@ -33,13 +39,13 @@ export class QuickSortPlugin implements AlgorithmPlugin<ArrayInput> {
         ...event,
         id: crypto.randomUUID(),
         timestamp: performance.now(),
-        step: step++
+        step: step++,
       } as VisualizationEvent);
     };
 
     /**
      * Swaps two elements and records the event.
-     * 
+     *
      * @param i - First index.
      * @param j - Second index.
      */
@@ -47,16 +53,16 @@ export class QuickSortPlugin implements AlgorithmPlugin<ArrayInput> {
       const temp = arr[i];
       arr[i] = arr[j];
       arr[j] = temp;
-      pushEvent({ 
-        type: 'ARRAY_SWAP', 
-        indices: [i, j], 
-        values: [arr[i], arr[j]] 
+      pushEvent({
+        type: "ARRAY_SWAP",
+        indices: [i, j],
+        values: [arr[i], arr[j]],
       });
     };
 
     /**
      * Lomuto partition scheme.
-     * 
+     *
      * @param low - Lower bound.
      * @param high - Higher bound (pivot).
      * @returns The partition index.
@@ -67,8 +73,8 @@ export class QuickSortPlugin implements AlgorithmPlugin<ArrayInput> {
 
       // Phase: Iterating and comparing elements against pivot
       for (let j = low; j < high; j++) {
-        pushEvent({ type: 'ARRAY_COMPARE', indices: [j, high] });
-        
+        pushEvent({ type: "ARRAY_COMPARE", indices: [j, high] });
+
         if (arr[j] < pivot) {
           i++;
           if (i !== j) {
@@ -76,7 +82,7 @@ export class QuickSortPlugin implements AlgorithmPlugin<ArrayInput> {
           }
         }
       }
-      
+
       // Phase: Placing pivot in correct position
       if (i + 1 !== high) {
         swap(i + 1, high);
@@ -86,7 +92,7 @@ export class QuickSortPlugin implements AlgorithmPlugin<ArrayInput> {
 
     /**
      * Recursive Quick Sort function.
-     * 
+     *
      * @param low - Lower bound.
      * @param high - Higher bound.
      */
@@ -105,13 +111,13 @@ export class QuickSortPlugin implements AlgorithmPlugin<ArrayInput> {
     return {
       events,
       metadata: {
-        timeComplexity: 'O(n log n)',
-        spaceComplexity: 'O(log n)',
+        timeComplexity: "O(n log n)",
+        spaceComplexity: "O(log n)",
         executionTimeMs: endTime - startTime,
         nodeCount: arr.length,
         algorithmName: this.name,
-        initialState: [...input.values]
-      }
+        initialState: [...input.values],
+      },
     };
   }
 }

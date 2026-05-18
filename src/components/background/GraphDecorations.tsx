@@ -10,14 +10,14 @@
  * and are hidden on screens < 768px to avoid visual clutter on mobile.
  */
 
-import { motion } from 'motion/react';
+import { motion } from "motion/react";
 
 /** Reusable pulsing node circle. */
 function PulsingNode({
   cx,
   cy,
   r = 4,
-  color = '#22d3ee',
+  color = "#22d3ee",
   delay = 0,
 }: {
   cx: number;
@@ -34,7 +34,7 @@ function PulsingNode({
       fill={color}
       initial={{ opacity: 0.3, scale: 1 }}
       animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.3, 1] }}
-      transition={{ duration: 3, repeat: Infinity, delay, ease: 'easeInOut' }}
+      transition={{ duration: 3, repeat: Infinity, delay, ease: "easeInOut" }}
     />
   );
 }
@@ -45,7 +45,7 @@ function AnimatedEdge({
   y1,
   x2,
   y2,
-  color = '#3b82f6',
+  color = "#3b82f6",
   duration = 4,
   delay = 0,
 }: {
@@ -68,7 +68,7 @@ function AnimatedEdge({
       strokeDasharray="6 4"
       initial={{ strokeDashoffset: 0 }}
       animate={{ strokeDashoffset: -40 }}
-      transition={{ duration, repeat: Infinity, ease: 'linear', delay }}
+      transition={{ duration, repeat: Infinity, ease: "linear", delay }}
     />
   );
 }
@@ -89,19 +89,105 @@ export default function GraphDecorations() {
         style={{ opacity: 0.12 }}
       >
         {/* Regular edges */}
-        <AnimatedEdge x1={40} y1={40} x2={120} y2={30} color="#6366f1" duration={5} />
-        <AnimatedEdge x1={120} y1={30} x2={200} y2={60} color="#6366f1" duration={6} delay={0.5} />
-        <AnimatedEdge x1={40} y1={40} x2={80} y2={120} color="#3b82f6" duration={4} delay={1} />
-        <AnimatedEdge x1={80} y1={120} x2={160} y2={140} color="#3b82f6" duration={5} delay={0.8} />
-        <AnimatedEdge x1={200} y1={60} x2={240} y2={140} color="#6366f1" duration={4.5} delay={0.3} />
-        <AnimatedEdge x1={160} y1={140} x2={240} y2={140} color="#3b82f6" duration={5} delay={1.2} />
-        <AnimatedEdge x1={240} y1={140} x2={220} y2={200} color="#6366f1" duration={4} delay={0.6} />
+        <AnimatedEdge
+          x1={40}
+          y1={40}
+          x2={120}
+          y2={30}
+          color="#6366f1"
+          duration={5}
+        />
+        <AnimatedEdge
+          x1={120}
+          y1={30}
+          x2={200}
+          y2={60}
+          color="#6366f1"
+          duration={6}
+          delay={0.5}
+        />
+        <AnimatedEdge
+          x1={40}
+          y1={40}
+          x2={80}
+          y2={120}
+          color="#3b82f6"
+          duration={4}
+          delay={1}
+        />
+        <AnimatedEdge
+          x1={80}
+          y1={120}
+          x2={160}
+          y2={140}
+          color="#3b82f6"
+          duration={5}
+          delay={0.8}
+        />
+        <AnimatedEdge
+          x1={200}
+          y1={60}
+          x2={240}
+          y2={140}
+          color="#6366f1"
+          duration={4.5}
+          delay={0.3}
+        />
+        <AnimatedEdge
+          x1={160}
+          y1={140}
+          x2={240}
+          y2={140}
+          color="#3b82f6"
+          duration={5}
+          delay={1.2}
+        />
+        <AnimatedEdge
+          x1={240}
+          y1={140}
+          x2={220}
+          y2={200}
+          color="#6366f1"
+          duration={4}
+          delay={0.6}
+        />
 
         {/* Highlighted shortest path — cyan/violet */}
-        <AnimatedEdge x1={40} y1={40} x2={120} y2={30} color="#22d3ee" duration={3} />
-        <AnimatedEdge x1={120} y1={30} x2={200} y2={60} color="#8b5cf6" duration={3} delay={0.3} />
-        <AnimatedEdge x1={200} y1={60} x2={240} y2={140} color="#22d3ee" duration={3} delay={0.6} />
-        <AnimatedEdge x1={240} y1={140} x2={220} y2={200} color="#8b5cf6" duration={3} delay={0.9} />
+        <AnimatedEdge
+          x1={40}
+          y1={40}
+          x2={120}
+          y2={30}
+          color="#22d3ee"
+          duration={3}
+        />
+        <AnimatedEdge
+          x1={120}
+          y1={30}
+          x2={200}
+          y2={60}
+          color="#8b5cf6"
+          duration={3}
+          delay={0.3}
+        />
+        <AnimatedEdge
+          x1={200}
+          y1={60}
+          x2={240}
+          y2={140}
+          color="#22d3ee"
+          duration={3}
+          delay={0.6}
+        />
+        <AnimatedEdge
+          x1={240}
+          y1={140}
+          x2={220}
+          y2={200}
+          color="#8b5cf6"
+          duration={3}
+          delay={0.9}
+        />
 
         {/* Nodes */}
         <PulsingNode cx={40} cy={40} color="#22d3ee" delay={0} />
@@ -120,17 +206,80 @@ export default function GraphDecorations() {
         height="240"
         viewBox="0 0 200 240"
         fill="none"
-        style={{ opacity: 0.10 }}
+        style={{ opacity: 0.1 }}
       >
         {/* Tree edges */}
-        <AnimatedEdge x1={100} y1={20} x2={50} y2={80} color="#8b5cf6" duration={4} />
-        <AnimatedEdge x1={100} y1={20} x2={150} y2={80} color="#8b5cf6" duration={4} delay={0.5} />
-        <AnimatedEdge x1={50} y1={80} x2={25} y2={150} color="#6366f1" duration={5} delay={1} />
-        <AnimatedEdge x1={50} y1={80} x2={75} y2={150} color="#6366f1" duration={5} delay={0.8} />
-        <AnimatedEdge x1={150} y1={80} x2={125} y2={150} color="#3b82f6" duration={5} delay={1.2} />
-        <AnimatedEdge x1={150} y1={80} x2={175} y2={150} color="#3b82f6" duration={5} delay={0.6} />
-        <AnimatedEdge x1={25} y1={150} x2={12} y2={220} color="#22d3ee" duration={4} delay={1.5} />
-        <AnimatedEdge x1={25} y1={150} x2={38} y2={220} color="#22d3ee" duration={4} delay={1.8} />
+        <AnimatedEdge
+          x1={100}
+          y1={20}
+          x2={50}
+          y2={80}
+          color="#8b5cf6"
+          duration={4}
+        />
+        <AnimatedEdge
+          x1={100}
+          y1={20}
+          x2={150}
+          y2={80}
+          color="#8b5cf6"
+          duration={4}
+          delay={0.5}
+        />
+        <AnimatedEdge
+          x1={50}
+          y1={80}
+          x2={25}
+          y2={150}
+          color="#6366f1"
+          duration={5}
+          delay={1}
+        />
+        <AnimatedEdge
+          x1={50}
+          y1={80}
+          x2={75}
+          y2={150}
+          color="#6366f1"
+          duration={5}
+          delay={0.8}
+        />
+        <AnimatedEdge
+          x1={150}
+          y1={80}
+          x2={125}
+          y2={150}
+          color="#3b82f6"
+          duration={5}
+          delay={1.2}
+        />
+        <AnimatedEdge
+          x1={150}
+          y1={80}
+          x2={175}
+          y2={150}
+          color="#3b82f6"
+          duration={5}
+          delay={0.6}
+        />
+        <AnimatedEdge
+          x1={25}
+          y1={150}
+          x2={12}
+          y2={220}
+          color="#22d3ee"
+          duration={4}
+          delay={1.5}
+        />
+        <AnimatedEdge
+          x1={25}
+          y1={150}
+          x2={38}
+          y2={220}
+          color="#22d3ee"
+          duration={4}
+          delay={1.8}
+        />
 
         {/* Tree nodes */}
         <PulsingNode cx={100} cy={20} color="#8b5cf6" r={5} delay={0} />

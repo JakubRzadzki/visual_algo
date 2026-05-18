@@ -1,10 +1,10 @@
-import React, { useMemo, useEffect, useState } from 'react';
-import { useTreeStore } from '../../store/treeStore';
-import { computeLayoutD3, flattenTree } from '../../utils/treeLayout';
-import { TreeEdge } from './TreeEdge';
-import { TreeNodeComponent } from './TreeNodeComponent';
-import { globalEventBus } from '../../core/EventBus';
-import type { RBNode } from '../../types/tree';
+import React, { useMemo, useEffect, useState } from "react";
+import { useTreeStore } from "../../store/treeStore";
+import { computeLayoutD3, flattenTree } from "../../utils/treeLayout";
+import { TreeEdge } from "./TreeEdge";
+import { TreeNodeComponent } from "./TreeNodeComponent";
+import { globalEventBus } from "../../core/EventBus";
+import type { RBNode } from "../../types/tree";
 
 export const TreeCanvas: React.FC = () => {
   const { steps, currentStepIndex, root } = useTreeStore();
@@ -14,12 +14,12 @@ export const TreeCanvas: React.FC = () => {
   // Subscribe to Sandbox events for real-time visualization
   useEffect(() => {
     const unsubscribe = globalEventBus.subscribe((e) => {
-      if (e.type === 'TRACE_LOADED' || e.type === 'SYSTEM_PLAYBACK_STATE') {
-        if (e.type === 'TRACE_LOADED') setActiveSandboxStep(null);
+      if (e.type === "TRACE_LOADED" || e.type === "SYSTEM_PLAYBACK_STATE") {
+        if (e.type === "TRACE_LOADED") setActiveSandboxStep(null);
         return;
       }
-      
-      if (e.type === 'VISIT' || e.type === 'COMPARE' || e.type === 'INSERT') {
+
+      if (e.type === "VISIT" || e.type === "COMPARE" || e.type === "INSERT") {
         setActiveSandboxStep(e);
       }
     });
@@ -35,12 +35,12 @@ export const TreeCanvas: React.FC = () => {
       if (entries[0]) {
         setDimensions({
           width: entries[0].contentRect.width,
-          height: entries[0].contentRect.height
+          height: entries[0].contentRect.height,
         });
       }
     });
-    
-    const container = document.getElementById('tree-canvas-container');
+
+    const container = document.getElementById("tree-canvas-container");
     if (container) observer.observe(container);
     return () => observer.disconnect();
   }, []);
@@ -54,13 +54,13 @@ export const TreeCanvas: React.FC = () => {
   }, [currentTree]);
 
   const getNodeStatus = (nodeId: string, step: any) => {
-    if (!step) return 'default';
+    if (!step) return "default";
     if (step.nodeIds && step.nodeIds.includes(nodeId)) {
-      if (step.type === 'VISIT') return 'visiting';
-      if (step.type === 'COMPARE') return 'comparing';
-      if (step.type === 'INSERT') return 'inserting';
+      if (step.type === "VISIT") return "visiting";
+      if (step.type === "COMPARE") return "comparing";
+      if (step.type === "INSERT") return "inserting";
     }
-    return 'default';
+    return "default";
   };
 
   // Center horizontally based on container width, margin top 150px
@@ -79,7 +79,9 @@ export const TreeCanvas: React.FC = () => {
                 key={`${fromId}-${toId}`}
                 from={from}
                 to={to}
-                isHighlighted={currentStep?.edgeIds?.includes(`${fromId}-${toId}`) ?? false}
+                isHighlighted={
+                  currentStep?.edgeIds?.includes(`${fromId}-${toId}`) ?? false
+                }
               />
             );
           })}
@@ -88,7 +90,7 @@ export const TreeCanvas: React.FC = () => {
             const pos = positions.get(node.id);
             if (!pos) return null;
             const status = getNodeStatus(node.id, currentStep);
-            
+
             return (
               <TreeNodeComponent
                 key={node.id}

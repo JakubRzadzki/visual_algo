@@ -7,8 +7,8 @@
  * Compact horizontal layout on desktop, stacked on mobile.
  */
 
-import { Activity, Layers, Cpu, Zap } from 'lucide-react';
-import type { SortFrame, SortAlgorithmInfo } from '../types';
+import { Activity, Layers, Cpu, Zap } from "lucide-react";
+import type { SortFrame, SortAlgorithmInfo } from "../types";
 
 interface AlgorithmStatsProps {
   /** Current frame snapshot (null if not loaded). */
@@ -34,8 +34,12 @@ function StatTile({
     <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/50 border border-white/[0.05]">
       <div className={`${color}`}>{icon}</div>
       <div className="flex flex-col">
-        <span className="text-[10px] text-slate-500 uppercase tracking-wider leading-none">{label}</span>
-        <span className="text-sm font-bold text-slate-200 font-mono">{value}</span>
+        <span className="text-[10px] text-slate-500 uppercase tracking-wider leading-none">
+          {label}
+        </span>
+        <span className="text-sm font-bold text-slate-200 font-mono">
+          {value}
+        </span>
       </div>
     </div>
   );

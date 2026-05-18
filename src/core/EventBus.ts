@@ -1,10 +1,10 @@
-import type { VisualizationEvent } from '../types';
+import type { VisualizationEvent } from "../types";
 
 type EventListener = (event: VisualizationEvent) => void;
 
 export class AnimationEventBus {
   private listeners: EventListener[] = [];
-  
+
   public emit(event: VisualizationEvent): void {
     // Synchronously dispatch to all listeners
     for (const listener of this.listeners) {
@@ -16,7 +16,7 @@ export class AnimationEventBus {
     this.listeners.push(listener);
     // Return unsubscribe callback
     return () => {
-      this.listeners = this.listeners.filter(l => l !== listener);
+      this.listeners = this.listeners.filter((l) => l !== listener);
     };
   }
 

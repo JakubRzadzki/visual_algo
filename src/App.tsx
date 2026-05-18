@@ -1,32 +1,32 @@
-import { useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
-import { useUIStore } from './store/uiStore';
-import Navbar from './components/layout/Navbar';
-import AmbientGraph from './components/background/AmbientGraph';
-import AriaLiveRegion from './components/a11y/AriaLiveRegion';
-import Dashboard from './components/dashboard/Dashboard';
-import AlgorithmViewer from './components/viewer/AlgorithmViewer';
-import { ToastProvider } from './components/hud/Toast';
-import ShareLoader from './pages/ShareLoader';
+import { useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { useUIStore } from "./store/uiStore";
+import Navbar from "./components/layout/Navbar";
+import AmbientGraph from "./components/background/AmbientGraph";
+import AriaLiveRegion from "./components/a11y/AriaLiveRegion";
+import Dashboard from "./components/dashboard/Dashboard";
+import AlgorithmViewer from "./components/viewer/AlgorithmViewer";
+import { ToastProvider } from "./components/hud/Toast";
+import ShareLoader from "./pages/ShareLoader";
 
 // Interactive Tutorial onboarding imports
-import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
-import { useTutorialStore } from './store/tutorialStore';
-import { tutorialSteps } from './data/tutorialSteps';
+import { TutorialOverlay } from "./components/tutorial/TutorialOverlay";
+import { useTutorialStore } from "./store/tutorialStore";
+import { tutorialSteps } from "./data/tutorialSteps";
 
 // Presentation Mode imports
-import { PresentationOverlay } from './components/presentation/PresentationOverlay';
+import { PresentationOverlay } from "./components/presentation/PresentationOverlay";
 
 export default function App() {
-  const theme = useUIStore(state => state.theme);
+  const theme = useUIStore((state) => state.theme);
   const location = useLocation();
   const { isActive, startTutorial, stopTutorial } = useTutorialStore();
 
   useEffect(() => {
-    if (theme === 'light') {
-      document.body.classList.add('light-mode');
+    if (theme === "light") {
+      document.body.classList.add("light-mode");
     } else {
-      document.body.classList.remove('light-mode');
+      document.body.classList.remove("light-mode");
     }
   }, [theme]);
 
@@ -39,12 +39,12 @@ export default function App() {
 
   // Onboarding: Automatically launch the quick tour for fresh new visualizer users
   useEffect(() => {
-    const hasSeen = localStorage.getItem('visual-algo-has-seen-tutorial');
+    const hasSeen = localStorage.getItem("visual-algo-has-seen-tutorial");
     if (!hasSeen) {
       const onboardTimer = setTimeout(() => {
         startTutorial(tutorialSteps);
         // Mark as seen so we don't re-trigger automatically on subsequent loads
-        localStorage.setItem('visual-algo-has-seen-tutorial', 'true');
+        localStorage.setItem("visual-algo-has-seen-tutorial", "true");
       }, 1000);
       return () => clearTimeout(onboardTimer);
     }

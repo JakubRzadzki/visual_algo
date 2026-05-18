@@ -1,9 +1,15 @@
-import type { AlgorithmPlugin, ExecutionTrace, GraphInput, VisualizationEvent, EventPayload } from '../../../types';
+import type {
+  AlgorithmPlugin,
+  ExecutionTrace,
+  GraphInput,
+  VisualizationEvent,
+  EventPayload,
+} from "../../../types";
 
 export class KruskalPlugin implements AlgorithmPlugin<GraphInput> {
-  id = 'kruskal';
-  name = 'Kruskal MST';
-  category = 'graph' as const;
+  id = "kruskal";
+  name = "Kruskal MST";
+  category = "graph" as const;
 
   execute(data: GraphInput): ExecutionTrace {
     const { nodes, edges } = data;
@@ -40,9 +46,14 @@ export class KruskalPlugin implements AlgorithmPlugin<GraphInput> {
       if (px === py) return false; // already in the same component
 
       // Union by rank to keep tree shallow
-      if (rank[px] < rank[py]) { parent[px] = py; }
-      else if (rank[px] > rank[py]) { parent[py] = px; }
-      else { parent[py] = px; rank[px]++; }
+      if (rank[px] < rank[py]) {
+        parent[px] = py;
+      } else if (rank[px] > rank[py]) {
+        parent[py] = px;
+      } else {
+        parent[py] = px;
+        rank[px]++;
+      }
       return true;
     };
     // ─────────────────────────────────────────────────────────────────────────
@@ -57,7 +68,7 @@ export class KruskalPlugin implements AlgorithmPlugin<GraphInput> {
       const accepted = union(edge.from, edge.to);
 
       // Emit highlight — green if accepted into MST, red if cycle would form
-      push({ type: 'GRAPH_EDGE_HIGHLIGHT', edgeId: edge.id, accepted });
+      push({ type: "GRAPH_EDGE_HIGHLIGHT", edgeId: edge.id, accepted });
 
       if (accepted) {
         mstWeight += edge.weight;
@@ -71,16 +82,16 @@ export class KruskalPlugin implements AlgorithmPlugin<GraphInput> {
     const endTime = performance.now();
 
     push({
-      type: 'SYSTEM_LOG',
-      level: 'INFO',
+      type: "SYSTEM_LOG",
+      level: "INFO",
       message: `Kruskal MST complete. Total weight: ${mstWeight}. Edges in tree: ${edgesAdded}.`,
     });
 
     return {
       events,
       metadata: {
-        timeComplexity: 'O(E log E)',
-        spaceComplexity: 'O(V)',
+        timeComplexity: "O(E log E)",
+        spaceComplexity: "O(V)",
         executionTimeMs: endTime - startTime,
         nodeCount: nodes.length,
         algorithmName: this.name,

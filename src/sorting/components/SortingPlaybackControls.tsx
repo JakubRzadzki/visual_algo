@@ -6,15 +6,17 @@
  * Renders Play/Pause, Step Forward/Back, Reset controls, and a speed slider.
  */
 
-import { Play, Pause, SkipBack, SkipForward, RotateCcw } from 'lucide-react';
-import type { PlaybackControls } from '../hooks/useSortingPlayback';
+import { Play, Pause, SkipBack, SkipForward, RotateCcw } from "lucide-react";
+import type { PlaybackControls } from "../hooks/useSortingPlayback";
 
 interface SortingPlaybackControlsProps {
   /** All playback controls from the useSortingPlayback hook. */
   playback: PlaybackControls;
 }
 
-export default function SortingPlaybackControls({ playback }: SortingPlaybackControlsProps) {
+export default function SortingPlaybackControls({
+  playback,
+}: SortingPlaybackControlsProps) {
   const { isPlaying, frameIndex, totalFrames, speed } = playback;
   const progress = totalFrames > 0 ? (frameIndex / (totalFrames - 1)) * 100 : 0;
 
@@ -56,7 +58,7 @@ export default function SortingPlaybackControls({ playback }: SortingPlaybackCon
             disabled={totalFrames === 0}
             className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed
               bg-cyan-500/15 border-cyan-400/40 text-cyan-400 hover:bg-cyan-500/25 hover:shadow-[0_0_25px_rgba(34,211,238,0.3)]"
-            title={isPlaying ? 'Pause' : 'Play'}
+            title={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
               <Pause className="w-5 h-5 fill-current" />
@@ -83,14 +85,16 @@ export default function SortingPlaybackControls({ playback }: SortingPlaybackCon
 
         {/* ── Speed Slider ── */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500 font-mono w-8 text-right">{speed}x</span>
+          <span className="text-xs text-slate-500 font-mono w-8 text-right">
+            {speed}x
+          </span>
           <input
             type="range"
             min={1}
             max={10}
             step={1}
             value={speed}
-            onChange={e => playback.setSpeed(parseInt(e.target.value))}
+            onChange={(e) => playback.setSpeed(parseInt(e.target.value))}
             className="cyber-range w-24 sm:w-36 accent-cyan-400"
             title="Playback speed"
           />

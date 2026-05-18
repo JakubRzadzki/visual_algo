@@ -1,9 +1,11 @@
 import json
 
+
 def emit(event_type, **kwargs):
     event = {"type": event_type}
     event.update(kwargs)
     print(json.dumps(event))
+
 
 def heapify(arr, n, i):
     largest = i
@@ -25,6 +27,7 @@ def heapify(arr, n, i):
         emit("ARRAY_SWAP", indices=[i, largest], values=[arr[i], arr[largest]])
         heapify(arr, n, largest)
 
+
 def heap_sort(arr):
     n = len(arr)
     for i in range(n // 2 - 1, -1, -1):
@@ -35,6 +38,7 @@ def heap_sort(arr):
         emit("ARRAY_SWAP", indices=[0, i], values=[arr[0], arr[i]])
         heapify(arr, i, 0)
     return arr
+
 
 if __name__ == "__main__":
     arr = [12, 11, 13, 5, 6, 7]

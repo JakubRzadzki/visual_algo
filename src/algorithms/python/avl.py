@@ -1,6 +1,7 @@
 # AVL Tree Insertion
 # An AVL tree is a self-balancing binary search tree.
 
+
 class AVLNode:
     def __init__(self, key):
         self.key = key
@@ -8,15 +9,18 @@ class AVLNode:
         self.right = None
         self.height = 1
 
+
 def get_height(root):
     if not root:
         return 0
     return root.height
 
+
 def get_balance(root):
     if not root:
         return 0
     return get_height(root.left) - get_height(root.right)
+
 
 def right_rotate(y):
     x = y.left
@@ -27,6 +31,7 @@ def right_rotate(y):
     x.height = 1 + max(get_height(x.left), get_height(x.right))
     return x
 
+
 def left_rotate(x):
     y = x.right
     T2 = y.left
@@ -35,6 +40,7 @@ def left_rotate(x):
     x.height = 1 + max(get_height(x.left), get_height(x.right))
     y.height = 1 + max(get_height(y.left), get_height(y.right))
     return y
+
 
 def insert(root, key):
     if not root:
@@ -63,6 +69,7 @@ def insert(root, key):
         return left_rotate(root)
 
     return root
+
 
 arr = [10, 20, 30, 40, 50, 25]
 root = None
