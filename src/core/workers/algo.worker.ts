@@ -40,7 +40,7 @@ import { AStarPlugin } from "../plugins/grid/AStarPlugin";
 import { FloodFillPlugin } from "../plugins/grid/FloodFillPlugin";
 
 // Registry: algorithm id → plugin instance
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
   dijkstra: new DijkstraPlugin(),
   kruskal: new KruskalPlugin(),

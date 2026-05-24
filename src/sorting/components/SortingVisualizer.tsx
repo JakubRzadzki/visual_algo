@@ -128,7 +128,7 @@ export default function SortingVisualizer({
     } else if (!isAnimating && playback.isPlaying) {
       playback.pause();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [isAnimating]);
 
   // Sync local play/pause with global isAnimating state and globalEngine (so terminal/logs pause/play in sync!)
