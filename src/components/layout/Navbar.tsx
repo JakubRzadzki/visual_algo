@@ -23,7 +23,14 @@ export default function Navbar() {
   const isVisualizer = location.pathname.startsWith("/algo");
 
   return (
-    <nav className="fixed top-0 left-0 right-0 h-16 bg-glacier-surface backdrop-blur-xl z-50 flex items-center px-6 justify-between border-b border-glacier-border-bright shadow-xl transition-all duration-500">
+    <nav
+      className="fixed top-0 left-0 right-0 h-16 backdrop-blur-xl z-50 flex items-center px-6 justify-between shadow-xl"
+      style={{
+        backgroundColor: "var(--navbar-bg)",
+        borderBottom: "1px solid var(--navbar-border)",
+        transition: "background-color 0.3s ease, border-color 0.3s ease",
+      }}
+    >
       <div className="flex items-center gap-4">
         {isVisualizer && (
           <button
@@ -31,8 +38,9 @@ export default function Navbar() {
             className={`p-2 rounded-lg transition-all border ${
               isSidebarOpen
                 ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"
-                : "border-white/5 text-slate-400 hover:text-white hover:bg-white/5"
+                : "border-transparent hover:bg-white/5"
             }`}
+            style={{ color: isSidebarOpen ? undefined : "var(--text-secondary)" }}
             title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
           >
             <Menu className="w-5 h-5" />
@@ -43,8 +51,15 @@ export default function Navbar() {
           data-tutorial-step="navbar-home"
           className="font-bold text-lg luminous-text flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
-          <Zap className="w-5 h-5 text-cyan-400 animate-pulse" />
-          <span className="bg-gradient-to-r from-white via-slate-100 to-cyan-400 bg-clip-text text-transparent">
+          <Zap className="w-5 h-5 animate-pulse" style={{ color: "var(--accent-cyan)" }} />
+          <span
+            className="bg-gradient-to-r bg-clip-text text-transparent"
+            style={{
+              backgroundImage: theme === "dark"
+                ? "linear-gradient(to right, #fff, #e2e8f0, #22d3ee)"
+                : "linear-gradient(to right, #0d1117, #334155, #0891b2)",
+            }}
+          >
             {language === "en"
               ? "Algorithm Visualizer EDVR"
               : "Wizualizator Algorytmów EDVR"}
@@ -56,7 +71,8 @@ export default function Navbar() {
         {/* Help & Tutorial Onboarding Trigger */}
         <button
           onClick={() => startTutorial(tutorialSteps)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-500/30 transition-all shadow-[0_0_10px_rgba(6,182,212,0.15)] active:scale-95 cursor-pointer mr-1"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-500/30 transition-all shadow-[0_0_10px_rgba(6,182,212,0.15)] active:scale-95 cursor-pointer mr-1"
+          style={{ color: "var(--accent-cyan)" }}
           title={
             language === "en"
               ? "Start Interactive Tour"
@@ -89,20 +105,32 @@ export default function Navbar() {
         {isVisualizer && (
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent hover:border-white/5 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-transparent transition-all"
+            style={{ color: "var(--text-secondary)" }}
           >
             <Home className="w-3.5 h-3.5" />
             <span>{language === "en" ? "Catalog" : "Katalog"}</span>
           </button>
         )}
 
-        <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5 ml-2">
+        <div
+          className="flex items-center gap-2 p-1 rounded-xl border ml-2"
+          style={{
+            backgroundColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+            borderColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)",
+          }}
+        >
           {/* Creative Theme Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             whileHover={{ scale: 1.1 }}
             onClick={toggleTheme}
-            className="relative w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 border border-white/5 hover:border-cyan-500/30 text-slate-400 hover:text-cyan-400 transition-colors cursor-pointer overflow-hidden group"
+            className="relative w-10 h-10 flex items-center justify-center rounded-lg cursor-pointer overflow-hidden group"
+            style={{
+              backgroundColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+              border: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)"}`,
+              color: "var(--text-secondary)",
+            }}
             title={
               theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"
             }
@@ -116,16 +144,21 @@ export default function Navbar() {
                 transition={{ duration: 0.2 }}
               >
                 {theme === "dark" ? (
-                  <Moon className="w-5 h-5" />
-                ) : (
                   <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
                 )}
               </motion.div>
             </AnimatePresence>
-            <div className="absolute inset-0 bg-cyan-500/0 group-hover:bg-cyan-500/5 transition-colors" />
+            <div
+              className="absolute inset-0 transition-colors"
+              style={{ backgroundColor: "rgba(8, 145, 178, 0)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(8, 145, 178, 0.08)")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(8, 145, 178, 0)")}
+            />
           </motion.button>
 
-          <div className="w-[1px] h-6 bg-white/10 mx-1" />
+          <div className="w-[1px] h-6 mx-1" style={{ backgroundColor: theme === "dark" ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)" }} />
 
           <div className="flex items-center gap-1">
             <button
@@ -133,8 +166,9 @@ export default function Navbar() {
               className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
                 language === "en"
                   ? "bg-cyan-500 text-white shadow-[0_0_10px_rgba(6,182,212,0.4)]"
-                  : "text-slate-500 hover:text-slate-300"
+                  : ""
               }`}
+              style={language !== "en" ? { color: "var(--text-muted)" } : undefined}
             >
               EN
             </button>
@@ -143,8 +177,9 @@ export default function Navbar() {
               className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
                 language === "pl"
                   ? "bg-cyan-500 text-white shadow-[0_0_10px_rgba(6,182,212,0.4)]"
-                  : "text-slate-500 hover:text-slate-300"
+                  : ""
               }`}
+              style={language !== "pl" ? { color: "var(--text-muted)" } : undefined}
             >
               PL
             </button>

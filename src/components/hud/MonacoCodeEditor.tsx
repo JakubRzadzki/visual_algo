@@ -212,8 +212,8 @@ export default function MonacoCodeEditor() {
         else if (e.type === "SEARCH_NARROW") targetPattern = "mid";
 
         if (targetPattern) {
-          const idx = lines.findIndex((l) =>
-            l.toLowerCase().includes(targetPattern),
+          const idx = lines.findIndex((lineStr: string) =>
+            lineStr.toLowerCase().includes(targetPattern),
           );
           if (idx !== -1) setActiveLine(idx + 1);
         }
@@ -867,7 +867,7 @@ export default function MonacoCodeEditor() {
       </div>
 
       {/* ── Monaco Editor ────────────────────────────────────────── */}
-      <div className="flex-1 overflow-hidden rounded-b-lg bg-[#0a0e1a] relative z-0">
+      <div className="flex-1 overflow-hidden rounded-b-lg bg-glacier-bg relative z-0">
         {/* Running overlay pulse */}
         {isRunning && (
           <div className="absolute inset-0 z-10 pointer-events-none">

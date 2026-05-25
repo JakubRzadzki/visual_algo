@@ -47,12 +47,35 @@ import ChartDecorations from "../background/ChartDecorations";
  */
 const STAGGER_DELAY = 0.08;
 
+const getAlgorithmCountLabel = (count: number, lang: "en" | "pl") => {
+  if (lang === "en") return count === 1 ? "algo" : "algos";
+  if (count === 1) return "algorytm";
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+    return "algorytmy";
+  }
+  return "algorytmów";
+};
+
+const getReadyLabel = (count: number, lang: "en" | "pl") => {
+  if (lang === "en") return "ready to visualize";
+  if (count === 1) return "gotowy do wizualizacji";
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+    return "gotowe do wizualizacji";
+  }
+  return "gotowych do wizualizacji";
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredAlgo, setHoveredAlgo] = useState<string | null>(null);
 
   const language = useUIStore((state) => state.language);
+  const theme = useUIStore((state) => state.theme);
   const t = getTranslation(language);
 
   // Filter categories & algorithms based on search
@@ -89,7 +112,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="relative min-h-screen bg-glacier-bg text-slate-200 overflow-y-auto overflow-x-hidden">
+    <div className="relative min-h-screen overflow-y-auto overflow-x-hidden" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       {/* ──────── Background Layers (z-0 through z-2) ──────── */}
       <BackgroundGrid />
       <NeuralNetworkBackground />
@@ -99,11 +122,12 @@ export default function Dashboard() {
 
       {/* Overlay gradient for depth */}
       <div
-        className="fixed inset-0 z-[3] pointer-events-none"
+        className="fixed inset-0 z-[3] pointer-events-none transition-colors duration-500"
         aria-hidden="true"
         style={{
-          background:
-            "linear-gradient(135deg, rgba(2,6,23,0.5) 0%, rgba(3,7,18,0.3) 50%, rgba(5,8,22,0.5) 100%)",
+          background: theme === "dark"
+            ? "linear-gradient(135deg, rgba(2,6,23,0.5) 0%, rgba(3,7,18,0.3) 50%, rgba(5,8,22,0.5) 100%)"
+            : "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(240,249,255,0.2) 50%, rgba(224,242,254,0.4) 100%)",
         }}
       />
 
@@ -138,8 +162,7 @@ export default function Dashboard() {
             <span
               className="bg-clip-text text-transparent animate-gradient-shift"
               style={{
-                backgroundImage:
-                  "linear-gradient(90deg, #22d3ee, #3b82f6, #8b5cf6, #6366f1, #22d3ee)",
+                backgroundImage: "var(--title-gradient)",
                 backgroundSize: "300% 100%",
               }}
             >
@@ -158,7 +181,7 @@ export default function Dashboard() {
             }}
           />
 
-          <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
             {language === "en" ? (
               <>
                 Explore {totalAlgorithms} algorithms across{" "}
@@ -170,11 +193,9 @@ export default function Dashboard() {
                 kategoriach.
               </>
             )}{" "}
-            <span className="text-cyan-400 font-semibold">
+            <span className="font-semibold" style={{ color: 'var(--accent-cyan)' }}>
               {availableCount}{" "}
-              {language === "en"
-                ? "ready to visualize"
-                : "gotowych do wizualizacji"}
+              {getReadyLabel(availableCount, language)}
             </span>
             , {t.comingSoon}.
           </p>
@@ -208,7 +229,13 @@ export default function Dashboard() {
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="relative w-full pl-14 pr-6 py-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-white/[0.08] text-slate-200 text-base placeholder:text-slate-500 focus:outline-none focus:border-cyan-400/30 focus:shadow-[0_0_40px_rgba(34,211,238,0.08)] transition-all duration-300 z-10"
+              className="relative w-full pl-14 pr-6 py-3.5 rounded-2xl backdrop-blur-xl text-base focus:outline-none focus:shadow-[0_0_40px_rgba(34,211,238,0.08)] transition-all duration-300 z-10"
+              style={{
+                backgroundColor: 'var(--search-bg)',
+                border: '1px solid var(--search-border)',
+                color: 'var(--search-text)',
+                boxShadow: theme === 'light' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
+              }}
             />
             {searchQuery && (
               <button
@@ -268,7 +295,8 @@ export default function Dashboard() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.0 }}
-          className="text-center mt-14 sm:mt-20 pb-8 text-slate-600 text-sm"
+          className="text-center mt-14 sm:mt-20 pb-8 text-sm"
+          style={{ color: 'var(--text-muted)' }}
         >
           <p>Algorithm Visualizer EDVR • Event-Driven Visualization Runtime</p>
         </motion.footer>
@@ -378,6 +406,9 @@ function AnimatedCategoryCard({
   setHoveredAlgo,
   onAlgoClick,
 }: AnimatedCategoryCardProps) {
+  const language = useUIStore((state) => state.language);
+  const theme = useUIStore((state) => state.theme);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 25, scale: 0.96, filter: "blur(6px)" }}
@@ -389,10 +420,10 @@ function AnimatedCategoryCard({
         ease: [0.22, 1, 0.36, 1],
       }}
       layout
-      className={`hover-card group relative rounded-2xl glacier-border glass-panel p-4 sm:p-5 transition-all duration-300 overflow-visible h-full flex flex-col justify-between ${getCategoryHoverClasses(
+      className={`hover-card group relative rounded-2xl glass-panel p-4 sm:p-5 transition-all duration-300 overflow-visible h-full flex flex-col justify-between ${getCategoryHoverClasses(
         cat.id,
       )}`}
-      style={{ willChange: "transform, opacity" }}
+      style={{ willChange: "transform, opacity", boxShadow: 'var(--shadow-card)' }}
     >
       {/* Gradient top-border accent */}
       <div
@@ -417,8 +448,7 @@ function AnimatedCategoryCard({
         className="absolute inset-0 rounded-2xl pointer-events-none"
         aria-hidden="true"
         style={{
-          boxShadow:
-            "inset 0 1px 1px rgba(255,255,255,0.04), inset 0 -1px 2px rgba(0,0,0,0.3)",
+          boxShadow: 'var(--card-inset-shadow)',
         }}
       />
 
@@ -426,22 +456,24 @@ function AnimatedCategoryCard({
         {/* Category Header */}
         <div className="relative flex items-center gap-3 mb-5">
           <div
-            className={`p-2 rounded-xl bg-gradient-to-br ${cat.color} border border-white/[0.08] flex items-center justify-center text-slate-200`}
+            className={`p-2 rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-white`}
+            style={{ border: '1px solid var(--icon-container-border)' }}
             aria-hidden="true"
           >
             {getCategoryIcon(cat.id)}
           </div>
-          <h2 className="text-base sm:text-lg font-bold text-slate-200 tracking-wide">
-            {useUIStore.getState().language === "en" ? cat.label : cat.label_pl}
+          <h2 className="text-base sm:text-lg font-bold tracking-wide" style={{ color: 'var(--text-primary)' }}>
+            {language === "en" ? cat.label : cat.label_pl}
           </h2>
-          <span className="ml-auto text-[10px] text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
+          <span
+            className="ml-auto text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
+            style={{ color: 'var(--text-muted)', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
+          >
             {cat.algorithms.length}{" "}
-            {useUIStore.getState().language === "en" ? "algo" : "algorytm"}
-            {cat.algorithms.length !== 1
-              ? useUIStore.getState().language === "en"
-                ? "s"
-                : "ów"
-              : ""}
+            {getAlgorithmCountLabel(
+              cat.algorithms.length,
+              language,
+            )}
           </span>
         </div>
 
@@ -458,21 +490,24 @@ function AnimatedCategoryCard({
                 disabled={!algo.available}
                 whileHover={algo.available ? { scale: 1.05 } : {}}
                 whileTap={algo.available ? { scale: 0.97 } : {}}
-                className={`relative px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
+                className={`relative px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
                   algo.available
-                    ? `border-white/[0.08] text-slate-200 cursor-pointer ${getPillHoverStyles(
-                        cat.id,
-                      )}`
-                    : "border-white/[0.03] text-slate-500 cursor-not-allowed opacity-50"
+                    ? `cursor-pointer ${getPillHoverStyles(cat.id)}`
+                    : "cursor-not-allowed opacity-50"
                 }`}
+                style={{
+                  backgroundColor: algo.available ? 'var(--pill-bg)' : 'transparent',
+                  color: algo.available ? 'var(--pill-text)' : 'var(--text-muted)',
+                  border: `1px solid var(--pill-border)`,
+                }}
               >
                 <span className="flex items-center gap-1.5">
-                  {algo.shortName}
+                  {language === "en" ? algo.shortName : algo.shortName_pl}
                   {algo.available && (
                     <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" />
                   )}
                   {!algo.available && (
-                    <span className="text-[10px] text-slate-600">soon</span>
+                    <span className="text-[10px] text-slate-600">{language === "en" ? "soon" : "wkrótce"}</span>
                   )}
                 </span>
 
@@ -484,20 +519,25 @@ function AnimatedCategoryCard({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-cyan-400/15 shadow-2xl shadow-black/50 pointer-events-none"
+                      className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 rounded-xl backdrop-blur-xl shadow-2xl pointer-events-none"
+                      style={{
+                        backgroundColor: theme === 'dark' ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.97)',
+                        border: '1px solid var(--border-subtle)',
+                        boxShadow: theme === 'dark' ? '0 25px 50px -12px rgba(0,0,0,0.5)' : '0 25px 50px -12px rgba(0,0,0,0.15)',
+                      }}
                     >
-                      <p className="font-bold text-slate-200 text-sm mb-1">
-                        {useUIStore.getState().language === "en"
+                      <p className="font-bold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>
+                        {language === "en"
                           ? algo.name
                           : algo.name_pl}
                       </p>
-                      <p className="text-slate-400 text-xs mb-3">
-                        {useUIStore.getState().language === "en"
+                      <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
+                        {language === "en"
                           ? algo.description
                           : algo.description_pl}
                       </p>
                       <div className="flex gap-4 text-[11px]">
-                        <span className="flex items-center gap-1 text-cyan-400">
+                        <span className="flex items-center gap-1" style={{ color: 'var(--accent-cyan)' }}>
                           <Clock className="w-3 h-3" /> {algo.timeComplexity}
                         </span>
                         <span className="flex items-center gap-1 text-violet-400">
@@ -506,7 +546,7 @@ function AnimatedCategoryCard({
                         </span>
                       </div>
                       {/* Arrow */}
-                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900/95 border-r border-b border-cyan-400/15 rotate-45" />
+                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45" style={{ backgroundColor: theme === 'dark' ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.97)', border: '1px solid var(--border-subtle)', borderTop: 'none', borderLeft: 'none' }} />
                     </motion.div>
                   )}
                 </AnimatePresence>

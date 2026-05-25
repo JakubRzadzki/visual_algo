@@ -50,8 +50,11 @@ interface UIState {
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  theme:
-    (localStorage.getItem("visual-algo-theme") as "dark" | "light") || "dark",
+  theme: (() => {
+    const stored = localStorage.getItem("edvr-theme") as "dark" | "light" | null;
+    if (stored) return stored;
+    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  })(),
   animationSpeed: 1.0,
   isSidebarOpen: true,
   isDebugVisible: false,
@@ -105,14 +108,17 @@ export const useUIStore = create<UIState>((set) => ({
   toggleTheme: () =>
     set((state) => {
       const newTheme = state.theme === "dark" ? "light" : "dark";
-      localStorage.setItem("visual-algo-theme", newTheme);
+      localStorage.setItem("edvr-theme", newTheme);
 
-      // Apply class to body for global CSS targeting
-      if (newTheme === "light") {
-        document.body.classList.add("light-mode");
-      } else {
-        document.body.classList.remove("light-mode");
-      }
+      // Apply class to both <html> and <body> for global CSS targeting
+      const els = [document.documentElement, document.body];
+      els.forEach((el) => {
+        if (newTheme === "light") {
+          el.classList.add("light-mode");
+        } else {
+          el.classList.remove("light-mode");
+        }
+      });
 
       return { theme: newTheme };
     }),
