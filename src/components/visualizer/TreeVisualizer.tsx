@@ -4,10 +4,12 @@ import { useTreeStore } from "../../store/treeStore";
 import { TreeCanvas } from "./TreeCanvas";
 import { TreeControlPanel } from "./TreeControlPanel";
 import { Info } from "lucide-react";
+import { useUIStore } from "../../store/uiStore";
 
 export default function TreeVisualizer(): React.ReactElement {
   const { isPlaying, currentStepIndex, steps, nextStep, speed, pause } =
     useTreeStore();
+  const language = useUIStore((state) => state.language);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -32,10 +34,10 @@ export default function TreeVisualizer(): React.ReactElement {
           </div>
           <div>
             <h3 className="font-semibold text-sm text-slate-200">
-              Tree Visualizer
+              {language === "pl" ? "Wizualizacja Drzewa" : "Tree Visualizer"}
             </h3>
             <p className="text-[10px] text-slate-400">
-              Drag to Pan • Scroll to Zoom
+              {language === "pl" ? "Przeciągaj aby przesuwać • Użyj scrolla aby powiększać" : "Drag to Pan • Scroll to Zoom"}
             </p>
           </div>
         </div>

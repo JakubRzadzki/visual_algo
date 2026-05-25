@@ -43,6 +43,7 @@ export default function GridStage() {
   // Global State
   const { id: activeAlgorithmId } = useParams<{ id: string }>();
   const isAnimating = useUIStore((state) => state.isAnimating);
+  const language = useUIStore((state) => state.language);
 
   // Local Grid State
   const [grid, setGrid] = useState<GridCell[][]>(() =>
@@ -309,7 +310,7 @@ export default function GridStage() {
           </div>
           <div>
             <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
-              Visited Cells
+              {language === "pl" ? "Odwiedzone Komórki" : "Visited Cells"}
             </div>
             <div className="text-xl font-mono text-cyan-500">
               {stats.visitedCount}
@@ -323,7 +324,7 @@ export default function GridStage() {
           </div>
           <div>
             <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
-              Path Length
+              {language === "pl" ? "Długość Ścieżki" : "Path Length"}
             </div>
             <div className="text-xl font-mono text-emerald-500">
               {stats.pathLength}
@@ -335,7 +336,7 @@ export default function GridStage() {
           <div className="flex items-center gap-6">
             <div className="flex flex-col">
               <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
-                Active Cell
+                {language === "pl" ? "Aktywna Komórka" : "Active Cell"}
               </span>
               <span className="text-lg font-mono text-amber-400">
                 {stats.activeCoord
@@ -347,7 +348,7 @@ export default function GridStage() {
               <div className="flex gap-4 border-l border-white/5 pl-6">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
-                    f-score
+                    {language === "pl" ? "koszt f (f-score)" : "f-score"}
                   </span>
                   <span className="text-sm font-mono text-white">
                     {stats.currentF || "—"}
@@ -355,7 +356,7 @@ export default function GridStage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
-                    g-score
+                    {language === "pl" ? "koszt g (g-score)" : "g-score"}
                   </span>
                   <span className="text-sm font-mono text-slate-400">
                     {stats.currentG || "—"}
@@ -368,14 +369,14 @@ export default function GridStage() {
             <button
               onClick={clearWalls}
               className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 transition-colors"
-              title="Clear Walls"
+              title={language === "pl" ? "Wyczyść Ściany" : "Clear Walls"}
             >
               <Trash2 size={16} />
             </button>
             <button
               onClick={resetGrid}
               className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 transition-colors"
-              title="Reset Grid"
+              title={language === "pl" ? "Resetuj Siatkę" : "Reset Grid"}
             >
               <RotateCcw size={16} />
             </button>
@@ -415,23 +416,23 @@ export default function GridStage() {
       <div className="flex justify-center gap-8 text-[10px] text-slate-500 uppercase font-bold tracking-widest py-2">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-          <span>Start</span>
+          <span>{language === "pl" ? "Start" : "Start"}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-          <span>Target</span>
+          <span>{language === "pl" ? "Cel" : "Target"}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-slate-500" />
-          <span>Wall</span>
+          <span>{language === "pl" ? "Ściana" : "Wall"}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-cyan-500/40 border border-cyan-400/50" />
-          <span>Explored</span>
+          <span>{language === "pl" ? "Zbadane" : "Explored"}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-          <span>Shortest Path</span>
+          <span>{language === "pl" ? "Najkrótsza Ścieżka" : "Shortest Path"}</span>
         </div>
       </div>
     </div>

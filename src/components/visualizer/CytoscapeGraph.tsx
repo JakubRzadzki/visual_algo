@@ -6,6 +6,7 @@ import { useParams } from "react-router-dom";
 import { globalEventBus } from "../../core/EventBus";
 import { globalEngine } from "../../core/AnimationEngine";
 import { useUIStore } from "../../store/uiStore";
+import { translateGraphDescription } from "../../sorting/utils/translationHelper";
 import type {
   GraphInput,
   GraphNode,
@@ -32,6 +33,7 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
   const activeGraphAlgorithm = useUIStore(
     (state) => state.activeGraphAlgorithm,
   );
+  const language = useUIStore((state) => state.language);
   // Layout selector
   const [layoutName, setLayoutName] = useState<"preset" | "cose" | "dagre">(
     "cose",
@@ -355,7 +357,7 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
                 : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
             }`}
           >
-            Auto (COSE)
+            {language === "pl" ? "Automatyczny (COSE)" : "Auto (COSE)"}
           </button>
           <button
             onClick={() => setLayoutName("preset")}
@@ -365,7 +367,7 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
                 : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
             }`}
           >
-            Preset
+            {language === "pl" ? "Szablon" : "Preset"}
           </button>
         </div>
 
@@ -440,19 +442,19 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
         <div className="absolute bottom-4 left-4 glass-panel px-4 py-3 rounded-xl text-[10px] sm:text-xs space-y-1 bg-slate-900/40 backdrop-blur-md border border-white/10 text-slate-400 z-20">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#1f2937] border border-[#4b5563]" />
-            <span>Node</span>
+            <span>{language === "pl" ? "Wierzchołek" : "Node"}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-emerald-500" />
-            <span>Start</span>
+            <span>{language === "pl" ? "Start" : "Start"}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span>Visited</span>
+            <span>{language === "pl" ? "Odwiedzony" : "Visited"}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-1 h-3 bg-slate-600" />
-            <span>Edge Weight</span>
+            <span>{language === "pl" ? "Waga Krawędzi" : "Edge Weight"}</span>
           </div>
         </div>
       </div>
@@ -460,12 +462,12 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
       {/* Modern Algorithm Sidebar Panel */}
       <div className="w-64 h-full border-l border-white/10 p-3 sm:p-4 flex flex-col gap-4 bg-[#0a0f1d]/70 backdrop-blur overflow-y-auto select-none z-10 text-slate-200">
         <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          Algorithm State
+          {language === "pl" ? "Stan Algorytmu" : "Algorithm State"}
         </h4>
 
         {msg && (
           <div className="bg-ice-blue/10 border border-ice-blue/25 rounded-xl p-3 text-xs text-slate-300 font-medium leading-relaxed">
-            {msg}
+            {translateGraphDescription(msg, language)}
           </div>
         )}
 
@@ -473,7 +475,7 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
         {activeAlgo === "dijkstra" && (
           <div className="flex flex-col gap-2">
             <label className="text-xs text-slate-400">
-              Tentative Distances
+              {language === "pl" ? "Szacowane Odległości" : "Tentative Distances"}
             </label>
             <div className="flex flex-col gap-1.5">
               {graph.nodes.map((n) => {
@@ -485,7 +487,7 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
                     className="flex justify-between items-center text-xs bg-white/5 border border-white/5 px-3 py-1.5 rounded-lg"
                   >
                     <span className="font-mono text-slate-400">
-                      Node {n.label || n.id}
+                      {language === "pl" ? `Wierzchołek ${n.label || n.id}` : `Node ${n.label || n.id}`}
                     </span>
                     <span className="font-bold text-ice-blue">{dist}</span>
                   </div>
@@ -499,7 +501,9 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
         {(activeAlgo === "bfs" || activeAlgo === "dfs") && (
           <div className="flex flex-col gap-2">
             <label className="text-xs text-slate-400">
-              {activeAlgo === "bfs" ? "Queue" : "Stack"} Buffer
+              {activeAlgo === "bfs"
+                ? (language === "pl" ? "Bufor Kolejki" : "Queue Buffer")
+                : (language === "pl" ? "Bufor Stosu" : "Stack Buffer")}
             </label>
             <div className="flex flex-wrap gap-1.5">
               {queue.length > 0 ? (
@@ -516,7 +520,9 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
                   );
                 })
               ) : (
-                <span className="text-xs text-slate-500 italic">Empty</span>
+                <span className="text-xs text-slate-500 italic">
+                  {language === "pl" ? "Pusty" : "Empty"}
+                </span>
               )}
             </div>
           </div>
@@ -525,7 +531,9 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
         {/* Kruskal's & Prim's edges in MST */}
         {(activeAlgo === "kruskal" || activeAlgo === "prim") && (
           <div className="flex flex-col gap-2">
-            <label className="text-xs text-slate-400">MST Selected Edges</label>
+            <label className="text-xs text-slate-400">
+              {language === "pl" ? "Wybrane Krawędzie MST" : "MST Selected Edges"}
+            </label>
             <div className="flex flex-col gap-1.5">
               {mstEdges.length > 0 ? (
                 mstEdges.map((id) => {
@@ -552,7 +560,7 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
                 })
               ) : (
                 <span className="text-xs text-slate-500 italic font-mono">
-                  No MST edges
+                  {language === "pl" ? "Brak krawędzi MST" : "No MST edges"}
                 </span>
               )}
             </div>
@@ -562,7 +570,9 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
         {/* Kahn's Topological Sort - Node inDegree dependencies */}
         {activeAlgo === "topo-sort" && (
           <div className="flex flex-col gap-2">
-            <label className="text-xs text-slate-400">In-Degrees</label>
+            <label className="text-xs text-slate-400">
+              {language === "pl" ? "Stopnie wejściowe (In-Degrees)" : "In-Degrees"}
+            </label>
             <div className="flex flex-col gap-1.5">
               {graph.nodes.map((n) => (
                 <div
@@ -570,7 +580,7 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
                   className="flex justify-between items-center text-xs bg-white/5 border border-white/5 px-3 py-1.5 rounded-lg"
                 >
                   <span className="font-mono text-slate-400">
-                    Node {n.label || n.id}
+                    {language === "pl" ? `Wierzchołek ${n.label || n.id}` : `Node ${n.label || n.id}`}
                   </span>
                   <span className="font-bold text-amber-400">
                     {indegree[n.id] ?? 0}
@@ -584,3 +594,4 @@ export default function CytoscapeGraph({ graph }: { graph: GraphInput }) {
     </div>
   );
 }
+

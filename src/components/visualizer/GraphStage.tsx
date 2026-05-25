@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import CytoscapeGraph from "./CytoscapeGraph";
 import type { GraphNode, GraphEdge, GraphInput } from "../../types";
+import { useUIStore } from "../../store/uiStore";
 
 interface GraphStageProps {
   nodes: GraphNode[];
@@ -18,6 +19,8 @@ export default function GraphStage({
   edges,
   isDirected = true,
 }: GraphStageProps) {
+  const language = useUIStore((state) => state.language);
+
   // Memoize graph input to prevent unnecessary re-renders
   const graph: GraphInput = useMemo(
     () => ({
@@ -33,8 +36,12 @@ export default function GraphStage({
     <div className="flex-1 w-full h-full relative">
       {/* Stage label */}
       <div className="absolute top-4 left-4 z-10 glass-panel px-4 py-2 rounded-lg">
-        <h3 className="font-medium text-slate-200">Graph Visualization</h3>
-        <p className="text-xs text-slate-400">Powered by Cytoscape.js</p>
+        <h3 className="font-medium text-slate-200">
+          {language === "pl" ? "Wizualizacja Grafu" : "Graph Visualization"}
+        </h3>
+        <p className="text-xs text-slate-400">
+          {language === "pl" ? "Oparte na Cytoscape.js" : "Powered by Cytoscape.js"}
+        </p>
       </div>
 
       {/* Cytoscape Graph */}
@@ -42,3 +49,4 @@ export default function GraphStage({
     </div>
   );
 }
+

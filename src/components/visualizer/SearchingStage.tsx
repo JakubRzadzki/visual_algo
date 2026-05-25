@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useUIStore } from "../../store/uiStore";
 
 export default function SearchingStage() {
-  const { visualizationData, activeSearchingAlgorithm } = useUIStore();
+  const { visualizationData, activeSearchingAlgorithm, language } = useUIStore();
   const [array, setArray] = useState<number[]>(() => {
     if (visualizationData && "values" in visualizationData) {
       return [...(visualizationData as ArrayInput).values];
@@ -50,7 +50,7 @@ export default function SearchingStage() {
   const activeIndices: number[] = [];
   let isFound = false;
   let target: number | null = null;
-  let statusMessage = "Ready to scan";
+  let statusMessage = language === "pl" ? "Gotowy do skanowania" : "Ready to scan";
 
   if (trace && trace.events.length > 0) {
     if (trace.metadata?.initialState && array.length === 0) {
@@ -140,15 +140,23 @@ export default function SearchingStage() {
         !ev.type?.toUpperCase().includes("NOT")
       ) {
         const index = "index" in ev ? (ev as { index: number }).index : "?";
-        statusMessage = `SUCCESS: Target found at index [${index}]`;
+        statusMessage = language === "pl"
+          ? `SUKCES: Znaleziono szukaną wartość pod indeksem [${index}]`
+          : `SUCCESS: Target found at index [${index}]`;
       } else if (ev.type?.toUpperCase().includes("NOT_FOUND")) {
-        statusMessage = `ERROR: Element not found in array`;
+        statusMessage = language === "pl"
+          ? `BŁĄD: Szukana wartość nie została znaleziona w tablicy`
+          : `ERROR: Element not found in array`;
       } else if (activeIndices.length > 0) {
-        statusMessage = `Comparing element ${array[activeIndices[0]]} with target...`;
+        statusMessage = language === "pl"
+          ? `Porównywanie elementu ${array[activeIndices[0]]} z wartością szukaną...`
+          : `Comparing element ${array[activeIndices[0]]} with target...`;
       } else if (ev.type?.toUpperCase().includes("NARROW")) {
         const left = "left" in ev ? (ev as { left: number }).left : "?";
         const right = "right" in ev ? (ev as { right: number }).right : "?";
-        statusMessage = `Narrowing search window to indices [${left} - ${right}]`;
+        statusMessage = language === "pl"
+          ? `Zawężanie okna wyszukiwania do indeksów [${left} - ${right}]`
+          : `Narrowing search window to indices [${left} - ${right}]`;
       }
     }
   }
@@ -159,7 +167,7 @@ export default function SearchingStage() {
       <div className="flex flex-col md:flex-row items-center justify-between w-full select-none border-b border-ice-blue/10 gap-2">
         <div className="flex flex-col">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none">
-            Searching Process
+            {language === "pl" ? "Proces wyszukiwania" : "Searching Process"}
           </h2>
           <div className="text-lg font-bold font-sans mt-1">
             {isFound ? (
@@ -186,7 +194,7 @@ export default function SearchingStage() {
         {target !== null && (
           <div className="flex items-center gap-3 bg-pink-500/10 border border-pink-400/30 p-2 px-4 rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.2)]">
             <span className="text-xs font-semibold text-pink-300 uppercase tracking-wide">
-              Target
+              {language === "pl" ? "Szukana" : "Target"}
             </span>
             <motion.div
               layout
@@ -305,7 +313,7 @@ export default function SearchingStage() {
                           <div
                             className={`${count > 20 ? "text-[8px]" : "text-[10px]"} font-black bg-purple-600 border border-purple-300 text-white rounded-full px-2 py-0.5 tracking-tighter select-none shadow-lg shadow-purple-500/40 uppercase`}
                           >
-                            {count > 25 ? "S" : "SCAN"}
+                            {count > 25 ? (language === "pl" ? "S" : "S") : (language === "pl" ? "SKAN" : "SCAN")}
                           </div>
                         </motion.div>
                       )}
@@ -324,7 +332,7 @@ export default function SearchingStage() {
                           <div
                             className={`${count > 20 ? "text-[8px]" : "text-[10px]"} font-black bg-emerald-500 border border-emerald-300 text-white rounded-full px-2 py-0.5 tracking-tighter select-none shadow-lg shadow-emerald-500/40 uppercase`}
                           >
-                            {count > 25 ? "F" : "FOUND"}
+                            {count > 25 ? (language === "pl" ? "Z" : "F") : (language === "pl" ? "ZNAJDZIONO" : "FOUND")}
                           </div>
                         </motion.div>
                       )}

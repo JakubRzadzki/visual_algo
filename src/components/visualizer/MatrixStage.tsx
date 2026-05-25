@@ -47,15 +47,28 @@ function FormulaHUDPanel({
   colHeaders: string[];
   cells: CellState[][];
 }) {
+  const language = useUIStore((state) => state.language);
+
+  // translate algorithm names dynamically in the standby badge
+  const mappedAlgoNames: Record<string, string> = {
+    "0/1 Knapsack": "Problem plecakowy 0/1",
+    "Longest Common Subsequence": "Najdłuższy wspólny podciąg",
+  };
+  const translatedAlgoName = language === "pl" ? (mappedAlgoNames[algoName] || algoName) : algoName;
+
   if (!activeCell) {
     return (
       <div className="w-full glass-panel px-6 py-4 rounded-xl border border-ice-blue/10 flex items-center justify-between text-slate-400 text-xs">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-cyan-500/40 animate-pulse" />
-          <span>Algorithm standby: awaiting frame step trigger...</span>
+          <span>
+            {language === "pl"
+              ? "Stan oczekiwania: oczekiwanie na rozpoczęcie algorytmu..."
+              : "Algorithm standby: awaiting frame step trigger..."}
+          </span>
         </div>
         <span className="font-mono text-[10px] bg-white/5 px-2 py-1 rounded text-slate-500">
-          {algoName}
+          {translatedAlgoName}
         </span>
       </div>
     );
@@ -103,7 +116,7 @@ function FormulaHUDPanel({
         <div className="flex items-center justify-between border-b border-white/5 pb-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
-              Knapsack Decision Matrix
+              {language === "pl" ? "Macierz decyzyjna problemu plecakowego" : "Knapsack Decision Matrix"}
             </span>
             <span className="text-slate-600 text-xs">/</span>
             <span className="font-mono text-xs text-slate-300">
@@ -114,7 +127,7 @@ function FormulaHUDPanel({
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end gap-1">
               <span className="text-[10px] text-slate-500 uppercase font-bold leading-none">
-                Current Capacity
+                {language === "pl" ? "Bieżący Udźwig" : "Current Capacity"}
               </span>
               <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
                 <motion.div
@@ -133,7 +146,7 @@ function FormulaHUDPanel({
                 <>
                   <span className="text-slate-600">|</span>
                   <span className="text-slate-400">
-                    Item {r} (w:{weight}, v:{itemVal})
+                    {language === "pl" ? `Przedmiot ${r} (w:${weight}, v:${itemVal})` : `Item ${r} (w:${weight}, v:${itemVal})`}
                   </span>
                 </>
               )}
@@ -146,16 +159,19 @@ function FormulaHUDPanel({
           <div className="text-xs text-slate-400 italic py-1 flex items-center gap-2">
             <span className="text-lg">ℹ️</span>
             <span>
-              Base Case: With 0 items or 0 capacity, the maximum value we can
-              carry is 0.
+              {language === "pl"
+                ? "Przypadek bazowy: Przy 0 przedmiotach lub pojemności 0 maksymalna wartość wynosi 0."
+                : "Base Case: With 0 items or 0 capacity, the maximum value we can carry is 0."}
             </span>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             <div className="text-[11px] text-slate-400 font-medium">
-              Decision:{" "}
+              {language === "pl" ? "Decyzja: " : "Decision: "}{" "}
               <span className="text-white">
-                Should we include Item {r} in a knapsack of capacity {capacity}?
+                {language === "pl"
+                  ? `Czy powinniśmy dodać Przedmiot ${r} do plecaka o pojemności ${capacity}?`
+                  : `Should we include Item ${r} in a knapsack of capacity ${capacity}?`}
               </span>
             </div>
 
@@ -170,16 +186,16 @@ function FormulaHUDPanel({
               >
                 <div className="flex items-center justify-between text-[11px] mb-1.5">
                   <span className="font-semibold uppercase tracking-wider">
-                    NO: Leave Item {r}
+                    {language === "pl" ? `NIE: Zostaw Przedmiot ${r}` : `NO: Leave Item ${r}`}
                   </span>
                   {optimalChoice === "EXCLUDE" && (
                     <span className="bg-cyan-500 text-cyan-950 font-bold px-1.5 py-0.5 rounded text-[9px] animate-pulse">
-                      CHOSEN
+                      {language === "pl" ? "WYBRANO" : "CHOSEN"}
                     </span>
                   )}
                 </div>
                 <div className="font-mono text-xs text-slate-300 flex items-center justify-between bg-black/20 px-2.5 py-1.5 rounded">
-                  <span>Value from previous items at same capacity</span>
+                  <span>{language === "pl" ? "Wartość z poprzednich przedmiotów" : "Value from previous items at same capacity"}</span>
                   <strong className="text-sm text-cyan-300">{valExcl}</strong>
                 </div>
               </div>
@@ -196,15 +212,15 @@ function FormulaHUDPanel({
               >
                 <div className="flex items-center justify-between text-[11px] mb-1.5">
                   <span className="font-semibold uppercase tracking-wider">
-                    YES: Take Item {r}
+                    {language === "pl" ? `TAK: Weź Przedmiot ${r}` : `YES: Take Item ${r}`}
                   </span>
                   {!canInclude ? (
                     <span className="text-red-400 font-bold text-[9px]">
-                      TOO HEAVY
+                      {language === "pl" ? "ZA CIĘŻKI" : "TOO HEAVY"}
                     </span>
                   ) : optimalChoice === "INCLUDE" ? (
                     <span className="bg-emerald-500 text-emerald-950 font-bold px-1.5 py-0.5 rounded text-[9px] animate-pulse">
-                      CHOSEN
+                      {language === "pl" ? "WYBRANO" : "CHOSEN"}
                     </span>
                   ) : null}
                 </div>
@@ -212,8 +228,9 @@ function FormulaHUDPanel({
                   {canInclude ? (
                     <>
                       <span className="text-slate-400">
-                        Value({itemVal}) + Previous value at capacity(
-                        {subproblemCapacity})
+                        {language === "pl"
+                          ? `Wartość(${itemVal}) + Poprzednia wartość przy udźwigu(${subproblemCapacity})`
+                          : `Value(${itemVal}) + Previous value at capacity(${subproblemCapacity})`}
                       </span>
                       <strong className="text-sm text-emerald-400">
                         {itemVal} + {valSubproblem} = {valIncl}
@@ -221,7 +238,9 @@ function FormulaHUDPanel({
                     </>
                   ) : (
                     <span className="text-slate-500 italic text-[11px]">
-                      Item weight {weight} &gt; capacity {capacity}
+                      {language === "pl"
+                        ? `Waga przedmiotu ${weight} > pojemność ${capacity}`
+                        : `Item weight ${weight} > capacity ${capacity}`}
                     </span>
                   )}
                 </div>
@@ -234,14 +253,14 @@ function FormulaHUDPanel({
         <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[10px] text-slate-500 uppercase font-bold tracking-widest">
           <div className="flex gap-4">
             <span>
-              Formula:{" "}
+              {language === "pl" ? "Formuła: " : "Formula: "}{" "}
               <code className="text-cyan-400 lowercase">
                 max(above, left_offset + value)
               </code>
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span>Resulting Value:</span>
+            <span>{language === "pl" ? "Wartość wynikowa:" : "Resulting Value:"}</span>
             <span className="text-white bg-white/10 px-2 py-0.5 rounded font-mono text-xs border border-white/10">
               {computedVal}
             </span>
@@ -285,7 +304,7 @@ function FormulaHUDPanel({
         <div className="flex items-center justify-between border-b border-white/5 pb-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-pink-400 uppercase tracking-wider">
-              LCS Decision Logic
+              {language === "pl" ? "Logika decyzji LCS" : "LCS Decision Logic"}
             </span>
             <span className="text-slate-600 text-xs">/</span>
             <span className="font-mono text-xs text-slate-300">
@@ -297,7 +316,7 @@ function FormulaHUDPanel({
               <>
                 <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5">
                   <span className="text-slate-400 text-[10px] uppercase font-bold">
-                    Comparing
+                    {language === "pl" ? "Porównywanie" : "Comparing"}
                   </span>
                   <span className="text-cyan-300 font-mono font-bold">
                     '{char1}'
@@ -314,12 +333,12 @@ function FormulaHUDPanel({
                       : "bg-slate-800 text-slate-400 border border-white/5"
                   }`}
                 >
-                  {isMatch ? "MATCH FOUND" : "MISMATCH"}
+                  {isMatch ? (language === "pl" ? "ZGODNOŚĆ" : "MATCH FOUND") : (language === "pl" ? "BRAK ZGODNOŚCI" : "MISMATCH")}
                 </span>
               </>
             ) : (
               <span className="text-[10px] text-slate-500 uppercase font-bold">
-                Base Case Analysis
+                {language === "pl" ? "Analiza Przypadku Bazowego" : "Base Case Analysis"}
               </span>
             )}
           </div>
@@ -330,30 +349,32 @@ function FormulaHUDPanel({
           <div className="text-xs text-slate-400 italic py-1 flex items-center gap-2">
             <span className="text-lg">ℹ️</span>
             <span>
-              If one string is empty, the Longest Common Subsequence must be of
-              length 0.
+              {language === "pl"
+                ? "Jeśli jeden z napisów jest pusty, to najdłuższy wspólny podciąg musi mieć długość 0."
+                : "If one string is empty, the Longest Common Subsequence must be of length 0."}
             </span>
           </div>
         ) : isMatch ? (
           /* Match Pathway */
           <div className="flex flex-col gap-2">
             <div className="text-[11px] text-slate-400 font-medium">
-              Decision:{" "}
+              {language === "pl" ? "Decyzja: " : "Decision: "}{" "}
               <span className="text-white font-semibold italic">
-                A match is found! Increment the LCS length of the previous
-                subproblem.
+                {language === "pl"
+                  ? "Znaleziono zgodność znaków! Zwiększamy długość LCS z poprzedniego podproblemu."
+                  : "A match is found! Increment the LCS length of the previous subproblem."}
               </span>
             </div>
             <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-200">
               <div className="flex items-center justify-between text-[11px] mb-1.5 font-semibold uppercase tracking-wider">
-                <span>Diagonal Dependency (dp[i-1][j-1]) + 1</span>
+                <span>{language === "pl" ? "Zależność przekątnej (dp[i-1][j-1]) + 1" : "Diagonal Dependency (dp[i-1][j-1]) + 1"}</span>
                 <span className="bg-emerald-500 text-emerald-950 font-bold px-1.5 py-0.5 rounded text-[9px] animate-pulse">
-                  OPTIMAL PATH
+                  {language === "pl" ? "ŚCIEŻKA OPTYMALNA" : "OPTIMAL PATH"}
                 </span>
               </div>
               <div className="font-mono text-xs flex items-center justify-between bg-black/20 px-3 py-2 rounded">
                 <span className="text-slate-300 italic">
-                  Previous LCS length + 1
+                  {language === "pl" ? "Poprzednia długość LCS + 1" : "Previous LCS length + 1"}
                 </span>
                 <strong className="text-sm text-emerald-400">
                   {valPrevDiag} + 1 = {computedVal}
@@ -365,10 +386,11 @@ function FormulaHUDPanel({
           /* Mismatch Branching */
           <div className="flex flex-col gap-3">
             <div className="text-[11px] text-slate-400 font-medium">
-              Decision:{" "}
+              {language === "pl" ? "Decyzja: " : "Decision: "}{" "}
               <span className="text-white">
-                Characters don't match. Taking the maximum LCS from excluding
-                either character.
+                {language === "pl"
+                  ? "Znaki są różne. Bierzemy maksimum z wykluczenia jednego bądź drugiego znaku."
+                  : "Characters don't match. Taking the maximum LCS from excluding either character."}
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -380,10 +402,10 @@ function FormulaHUDPanel({
                 }`}
               >
                 <div className="flex items-center justify-between text-[11px] mb-1.5 font-semibold uppercase tracking-wider">
-                  <span>Exclude '{char1}'</span>
+                  <span>{language === "pl" ? `Wyklucz '${char1}'` : `Exclude '${char1}'`}</span>
                   {(valExcludeT1 || 0) >= (valExcludeT2 || 0) && (
                     <span className="bg-pink-500 text-pink-950 font-bold px-1.5 py-0.5 rounded text-[9px] animate-pulse">
-                      CHOSEN
+                      {language === "pl" ? "WYBRANO" : "CHOSEN"}
                     </span>
                   )}
                 </div>
@@ -403,10 +425,10 @@ function FormulaHUDPanel({
                 }`}
               >
                 <div className="flex items-center justify-between text-[11px] mb-1.5 font-semibold uppercase tracking-wider">
-                  <span>Exclude '{char2}'</span>
+                  <span>{language === "pl" ? `Wyklucz '${char2}'` : `Exclude '${char2}'`}</span>
                   {(valExcludeT2 || 0) > (valExcludeT1 || 0) && (
                     <span className="bg-pink-500 text-pink-950 font-bold px-1.5 py-0.5 rounded text-[9px] animate-pulse">
-                      CHOSEN
+                      {language === "pl" ? "WYBRANO" : "CHOSEN"}
                     </span>
                   )}
                 </div>
@@ -425,14 +447,14 @@ function FormulaHUDPanel({
         <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[10px] text-slate-500 uppercase font-bold tracking-widest">
           <div className="flex gap-4">
             <span>
-              Formula:{" "}
+              {language === "pl" ? "Formuła: " : "Formula: "}{" "}
               <code className="text-pink-400 lowercase">
                 {isMatch ? "diag + 1" : "max(above, left)"}
               </code>
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span>Resulting Value:</span>
+            <span>{language === "pl" ? "Wartość wynikowa:" : "Resulting Value:"}</span>
             <span className="text-white bg-white/10 px-2 py-0.5 rounded font-mono text-xs border border-white/10">
               {computedVal}
             </span>
@@ -446,10 +468,10 @@ function FormulaHUDPanel({
   return (
     <div className="w-full glass-panel px-6 py-4 rounded-xl border border-ice-blue/10 flex items-center justify-between text-slate-300 text-xs font-mono">
       <span>
-        Updating cell table[{r}][{c}]
+        {language === "pl" ? `Aktualizacja komórki tabela[${r}][${c}]` : `Updating cell table[${r}][${c}]`}
       </span>
       <span className="text-cyan-400 font-bold">
-        Value: {cells[r]?.[c]?.value !== null ? cells[r][c].value : "—"}
+        {language === "pl" ? "Wartość: " : "Value: "}{cells[r]?.[c]?.value !== null ? cells[r][c].value : "—"}
       </span>
     </div>
   );
@@ -465,6 +487,7 @@ function ItemInventory({
   items: any[];
   pickedIndices: number[];
 }) {
+  const language = useUIStore((state) => state.language);
   if (!items || items.length === 0) return null;
 
   return (
@@ -474,7 +497,7 @@ function ItemInventory({
       className="w-64 glass-panel p-4 flex flex-col gap-3 border border-ice-blue/10 overflow-y-auto max-h-full"
     >
       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-white/5 pb-2">
-        Available Items
+        {language === "pl" ? "Dostępne Przedmioty" : "Available Items"}
       </h3>
       <div className="flex flex-col gap-2">
         {items.map((item, idx) => {
@@ -492,22 +515,22 @@ function ItemInventory({
             >
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                  Item {idx + 1}
+                  {language === "pl" ? `Przedmiot ${idx + 1}` : `Item ${idx + 1}`}
                 </span>
                 {isPicked && (
                   <span className="text-[9px] bg-emerald-500 text-emerald-950 font-bold px-1.5 py-0.5 rounded leading-none">
-                    PICKED
+                    {language === "pl" ? "WYBRANY" : "PICKED"}
                   </span>
                 )}
               </div>
               <div className="flex justify-between items-end">
                 <div className="flex flex-col">
                   <span className="text-xs text-slate-300 font-mono">
-                    Value:{" "}
+                    {language === "pl" ? "Wartość: " : "Value: "}{" "}
                     <strong className="text-emerald-400">{item.value}</strong>
                   </span>
                   <span className="text-xs text-slate-300 font-mono">
-                    Weight:{" "}
+                    {language === "pl" ? "Waga: " : "Weight: "}{" "}
                     <strong className="text-cyan-400">{item.weight}</strong>
                   </span>
                 </div>
@@ -546,6 +569,7 @@ export default function MatrixStage() {
   const [colHeaders, setColHeaders] = useState<string[]>([]);
   const [items, setItems] = useState<any[]>([]);
   const [pickedIndices, setPickedIndices] = useState<number[]>([]);
+  const language = useUIStore((state) => state.language);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -576,14 +600,14 @@ export default function MatrixStage() {
       setCols(c);
       setCells(newCells);
       setRowHeaders(
-        customRowHeaders || Array.from({ length: r }, (_, i) => `Row ${i}`),
+        customRowHeaders || Array.from({ length: r }, (_, i) => language === "pl" ? `Wiersz ${i}` : `Row ${i}`),
       );
       setColHeaders(
-        customColHeaders || Array.from({ length: c }, (_, i) => `Col ${i}`),
+        customColHeaders || Array.from({ length: c }, (_, i) => language === "pl" ? `Kolumna ${i}` : `Col ${i}`),
       );
       setPickedIndices([]);
     },
-    [],
+    [language],
   );
 
   /** Listen to standard global event dispatches to drive frame-by-frame progression */
@@ -963,23 +987,27 @@ export default function MatrixStage() {
       <div className="flex flex-wrap justify-center gap-6 text-[11px] text-slate-400 font-medium uppercase tracking-wider">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-cyan-500/30 border border-cyan-400/60 shadow-[0_0_8px_rgba(6,182,212,0.4)]" />
-          <span className="text-cyan-300 font-bold">Active Evaluation</span>
+          <span className="text-cyan-300 font-bold">
+            {language === "pl" ? "Aktywna Ewaluacja" : "Active Evaluation"}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-amber-500/20 border border-amber-400/50" />
           <span className="text-amber-300 font-bold">
-            Subproblem Dependency
+            {language === "pl" ? "Zależność Podproblemu" : "Subproblem Dependency"}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-[#10b98133] border border-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
           <span className="text-emerald-400 font-bold">
-            Picked for Solution
+            {language === "pl" ? "Wybrany do Rozwiązania" : "Picked for Solution"}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-[#ef444433] border border-[#ef4444]" />
-          <span className="text-red-400 font-bold">Skipped (Backtrack)</span>
+          <span className="text-red-400 font-bold">
+            {language === "pl" ? "Pominięty (Backtrack)" : "Skipped (Backtrack)"}
+          </span>
         </div>
       </div>
     </div>

@@ -9,6 +9,9 @@
 
 import { Activity, Layers, Cpu, Zap } from "lucide-react";
 import type { SortFrame, SortAlgorithmInfo } from "../types";
+import { useUIStore } from "../../store/uiStore";
+import { getTranslation } from "../../data/translations";
+import { findAlgorithmByName } from "../../data/algorithmCatalog";
 
 interface AlgorithmStatsProps {
   /** Current frame snapshot (null if not loaded). */
@@ -46,14 +49,20 @@ function StatTile({
 }
 
 export default function AlgorithmStats({ frame, info }: AlgorithmStatsProps) {
+  const language = useUIStore((state) => state.language);
+  const t = getTranslation(language);
+
   if (!info) return null;
+
+  const catalogAlgo = findAlgorithmByName(info.name);
+  const displayName = language === "pl" && catalogAlgo ? catalogAlgo.algorithm.name_pl : info.name;
 
   return (
     <div className="w-full flex flex-wrap items-center gap-2 px-3 sm:px-5 py-2.5 bg-slate-900/40 backdrop-blur-md border-b border-white/[0.04]">
       {/* Algorithm name */}
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500/10 to-violet-500/10 border border-cyan-400/15 mr-2">
         <Cpu className="w-4 h-4 text-cyan-400" />
-        <span className="text-sm font-bold text-cyan-300">{info.name}</span>
+        <span className="text-sm font-bold text-cyan-300">{displayName}</span>
       </div>
 
       {/* Complexity badge */}
@@ -70,13 +79,13 @@ export default function AlgorithmStats({ frame, info }: AlgorithmStatsProps) {
         <div className="flex items-center gap-2 flex-wrap">
           <StatTile
             icon={<Activity className="w-3.5 h-3.5" />}
-            label="Comparisons"
+            label={t.comparisons}
             value={frame.comparisons}
             color="text-fuchsia-400"
           />
           <StatTile
             icon={<Layers className="w-3.5 h-3.5" />}
-            label="Array Accesses"
+            label={t.arrayAccesses}
             value={frame.arrayAccesses}
             color="text-cyan-400"
           />
@@ -85,3 +94,4 @@ export default function AlgorithmStats({ frame, info }: AlgorithmStatsProps) {
     </div>
   );
 }
+

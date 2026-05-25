@@ -24,6 +24,7 @@ import SortingPlaybackControls from "./SortingPlaybackControls";
 import { useUIStore } from "../../store/uiStore";
 import { globalEngine } from "../../core/AnimationEngine";
 import type { ArrayInput } from "../../types";
+import { translateSortingDescription } from "../utils/translationHelper";
 
 /** Default array size for initial render. */
 const DEFAULT_ARRAY_SIZE = 25;
@@ -69,6 +70,7 @@ export default function SortingVisualizer({
   // Get parsed array values from global store (synced by Monaco from source files)
   const visualizationData = useUIStore((state) => state.visualizationData);
   const isAnimating = useUIStore((state) => state.isAnimating);
+  const language = useUIStore((state) => state.language);
 
   /** Resolve the algorithm ID from the display name. */
   const algorithmId = useMemo(
@@ -167,7 +169,7 @@ export default function SortingVisualizer({
       {/* ── Operation description ── */}
       {playback.currentFrame && (
         <div className="px-4 py-1.5 text-xs font-mono text-slate-400 bg-slate-900/30 border-b border-white/[0.03] truncate">
-          {playback.currentFrame.description}
+          {translateSortingDescription(playback.currentFrame.description, language)}
         </div>
       )}
 
