@@ -70,7 +70,7 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
                     <BookOpen className="w-4 h-4" />
                     {t.formalDescription}
                   </h4>
-                  <p className="text-slate-300 leading-relaxed text-sm">
+                  <p className="text-slate-300 leading-relaxed text-sm whitespace-pre-line">
                     {data.theory}
                   </p>
                 </div>
@@ -87,7 +87,7 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
                       </motion.span>
                       {t.originsHistory}
                     </h4>
-                    <p className="text-slate-400 leading-relaxed text-xs italic bg-white/5 p-3 rounded-lg border border-white/5">
+                    <p className="text-slate-400 leading-relaxed text-xs italic bg-white/5 p-3 rounded-lg border border-white/5 whitespace-pre-line">
                       {data.history}
                     </p>
                   </div>
@@ -105,7 +105,7 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
                   <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:opacity-10 transition-opacity">
                     <GraduationCap className="w-12 h-12 text-cyan-400" />
                   </div>
-                  <p className="text-slate-300 italic leading-relaxed text-sm relative z-10">
+                  <p className="text-slate-300 italic leading-relaxed text-sm relative z-10 whitespace-pre-line">
                     "{data.forDummies}"
                   </p>
                 </div>
