@@ -1,63 +1,159 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ice-blue: var(--ice-blue);
+  /* ── Map CSS variables to Tailwind color tokens ── */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-card: var(--bg-card);
+  --color-bg-card-hover: var(--bg-card-hover);
+  --color-border-subtle: var(--border-subtle);
+  --color-t-primary: var(--text-primary);
+  --color-t-secondary: var(--text-secondary);
+  --color-t-muted: var(--text-muted);
+  --color-accent-cyan: var(--accent-cyan);
+  --color-accent-blue: var(--accent-blue);
+  --color-pill-bg: var(--pill-bg);
+  --color-pill-text: var(--pill-text);
+
+  /* ── Legacy glacier tokens (kept for existing component compatibility) ── */
+  --color-ice-blue: var(--accent-cyan);
   --color-ice-lavender: #c8a0f0;
-  --color-glacier-bg: var(--glacier-bg);
+  --color-glacier-bg: var(--bg-primary);
   --color-glacier-surface: var(--glacier-surface);
   --color-glacier-surface-elevated: var(--glacier-surface-elevated);
-  --color-glacier-border: var(--glacier-border);
+  --color-glacier-border: var(--border-subtle);
   --color-glacier-border-bright: var(--glacier-border-bright);
+
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 }
 
+/* ────────────────────────────────────────────────────
+ * Dark Mode (Default)
+ * ──────────────────────────────────────────────────── */
 :root {
-  --ice-blue: #7dd3fc;
-  --glacier-bg: #020617;
+  --bg-primary: #0a0f1e;
+  --bg-secondary: #111827;
+  --bg-card: #1a2035;
+  --bg-card-hover: #1f2a45;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #475569;
+  --accent-cyan: #22d3ee;
+  --accent-blue: #3b82f6;
+  --star-color: rgba(255, 255, 255, 0.6);
+  --shadow-card: none;
+  --pill-bg: rgba(255, 255, 255, 0.06);
+  --pill-text: #cbd5e1;
+  --pill-border: rgba(255, 255, 255, 0.08);
+
+  /* Legacy glacier variables */
   --glacier-surface: rgba(15, 21, 36, 0.6);
   --glacier-surface-elevated: rgba(15, 21, 36, 0.75);
-  --glacier-border: rgba(125, 211, 252, 0.1);
   --glacier-border-bright: rgba(125, 211, 252, 0.2);
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
+
+  /* Navbar */
+  --navbar-bg: rgba(10, 15, 30, 0.75);
+  --navbar-border: rgba(255, 255, 255, 0.06);
+
+  /* Search */
+  --search-bg: rgba(17, 24, 39, 0.7);
+  --search-border: rgba(255, 255, 255, 0.08);
+  --search-text: #e2e8f0;
+  --search-placeholder: #64748b;
+
+  /* Title gradient */
+  --title-gradient: linear-gradient(90deg, #22d3ee, #3b82f6, #8b5cf6, #6366f1, #22d3ee);
+
+  /* Card internals */
+  --card-inset-shadow: inset 0 1px 1px rgba(255,255,255,0.04), inset 0 -1px 2px rgba(0,0,0,0.3);
+  --icon-container-border: rgba(255, 255, 255, 0.08);
 }
 
+/* ────────────────────────────────────────────────────
+ * Light Mode
+ * ──────────────────────────────────────────────────── */
 .light-mode {
-  --ice-blue: #0ea5e9;
-  --glacier-bg: #f8fafc;
+  --bg-primary: #f0f4ff;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f5f8ff;
+  --border-subtle: rgba(0, 0, 0, 0.10);
+  --text-primary: #0d1117;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+  --accent-cyan: #0891b2;
+  --accent-blue: #2563eb;
+  --star-color: rgba(100, 120, 180, 0.25);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --pill-bg: #e8f0fe;
+  --pill-text: #1d4ed8;
+  --pill-border: rgba(0, 0, 0, 0.06);
+
+  /* Legacy glacier variables */
   --glacier-surface: rgba(255, 255, 255, 0.7);
   --glacier-surface-elevated: rgba(255, 255, 255, 0.9);
-  --glacier-border: rgba(14, 165, 233, 0.1);
   --glacier-border-bright: rgba(14, 165, 233, 0.2);
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
+
+  /* Navbar */
+  --navbar-bg: rgba(240, 244, 255, 0.85);
+  --navbar-border: rgba(0, 0, 0, 0.08);
+
+  /* Search */
+  --search-bg: #ffffff;
+  --search-border: rgba(0, 0, 0, 0.12);
+  --search-text: #1e293b;
+  --search-placeholder: #94a3b8;
+
+  /* Title gradient — slightly darker for readability on light bg */
+  --title-gradient: linear-gradient(90deg, #0891b2, #2563eb, #7c3aed, #4f46e5, #0891b2);
+
+  /* Card internals */
+  --card-inset-shadow: none;
+  --icon-container-border: rgba(0, 0, 0, 0.06);
 }
 
+/* ────────────────────────────────────────────────────
+ * Base Styles
+ * ──────────────────────────────────────────────────── */
 @layer base {
   body {
-    @apply bg-glacier-bg text-slate-200 antialiased selection:bg-ice-blue/30 selection:text-ice-blue transition-colors duration-500;
-  }
-
-  .light-mode body {
-    @apply text-slate-900;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    @apply antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
+/* ────────────────────────────────────────────────────
+ * Component Tokens
+ * ──────────────────────────────────────────────────── */
 @layer components {
   .glass-panel {
-    @apply bg-glacier-surface backdrop-blur-lg border border-glacier-border rounded-xl transition-all duration-500;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-card);
+    @apply backdrop-blur-lg rounded-xl;
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   }
   .glass-panel-elevated {
-    @apply bg-glacier-surface-elevated backdrop-blur-xl border border-glacier-border-bright rounded-2xl transition-all duration-500;
+    @apply backdrop-blur-xl rounded-2xl;
+    background: var(--glacier-surface-elevated);
+    border: 1px solid var(--glacier-border-bright);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
   }
   .luminous-text {
-    @apply text-ice-blue drop-shadow-[0_0_8px_rgba(125,211,252,0.4)] transition-all duration-500;
+    color: var(--accent-cyan);
+    filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.4));
+    transition: color 0.3s ease, filter 0.3s ease;
   }
   .light-mode .luminous-text {
-    @apply drop-shadow-[0_0_4px_rgba(14,165,233,0.2)];
+    filter: drop-shadow(0 0 4px rgba(8, 145, 178, 0.2));
   }
   .luminous-border {
-    @apply border-ice-blue/30 shadow-[0_0_15px_rgba(125,211,252,0.1)] transition-all duration-500;
+    border-color: rgba(34, 211, 238, 0.3);
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.1);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
   }
 }
 
@@ -65,15 +161,9 @@
  * Animated gradient for the title text
  * ──────────────────────────────────────────────────── */
 @keyframes gradient-shift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .animate-gradient-shift {
@@ -84,37 +174,23 @@
  * Category Card Hover Effects
  * ──────────────────────────────────────────────────── */
 @keyframes shine-sweep {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @media (hover: hover) {
   .hover-card {
-    transition:
-      transform 0.3s ease,
-      border-color 0.3s ease,
-      box-shadow 0.3s ease,
-      background-color 0.5s ease;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
   }
-
   .hover-card:hover {
     transform: translateY(-4px) scale(1.01);
     border-color: rgba(34, 211, 238, 0.15);
-    box-shadow:
-      0 0 30px rgba(34, 211, 238, 0.06),
-      0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 30px rgba(34, 211, 238, 0.06), 0 8px 32px rgba(0, 0, 0, 0.3);
   }
-
   .light-mode .hover-card:hover {
-    box-shadow:
-      0 0 30px rgba(34, 211, 238, 0.1),
-      0 8px 32px rgba(0, 0, 0, 0.1);
+    background-color: var(--bg-card-hover);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10), 0 0 20px rgba(34, 211, 238, 0.06);
   }
-
   .hover-card:hover .shine-sweep {
     animation: shine-sweep 1.2s ease-in-out;
   }
@@ -123,13 +199,8 @@
 /* ────────────────────────────────────────────────────
  * Scrollbar Hiding Utility
  * ──────────────────────────────────────────────────── */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* ────────────────────────────────────────────────────
  * Cyber Range Slider
@@ -143,28 +214,25 @@
   outline: none;
   cursor: pointer;
 }
-
 .cyber-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: var(--ice-blue);
+  background: var(--accent-cyan);
   border: 2px solid white;
   box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
   cursor: pointer;
   transition: box-shadow 0.2s ease;
 }
-
 .cyber-range::-webkit-slider-thumb:hover {
   box-shadow: 0 0 16px rgba(34, 211, 238, 0.6);
 }
-
 .light-mode .cyber-range {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.08);
 }
-
 .light-mode .cyber-range::-webkit-slider-thumb {
-  box-shadow: 0 0 8px rgba(14, 165, 233, 0.2);
+  border-color: var(--bg-card);
+  box-shadow: 0 0 8px rgba(8, 145, 178, 0.3);
 }

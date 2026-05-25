@@ -1,4 +1,13 @@
+/**
+ * @file AmbientGraph.tsx
+ * @description Floating particle mesh background — adapts colors based on theme.
+ *
+ * Reads --star-color CSS variable for particle/line color so both dark and
+ * light modes look polished without hardcoded RGBA values.
+ */
+
 import { useRef, useEffect } from "react";
+import { useUIStore } from "../../store/uiStore";
 
 interface Point {
   x: number;
@@ -17,8 +26,19 @@ interface Bit {
   opacity: number;
 }
 
+/**
+ * Reads the --star-color CSS variable from the root element.
+ * Falls back to a sensible default if not set.
+ */
+function getStarColor(): string {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue("--star-color")
+    .trim() || "rgba(255, 255, 255, 0.6)";
+}
+
 export default function AmbientGraph() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const theme = useUIStore((state) => state.theme);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -50,6 +70,15 @@ export default function AmbientGraph() {
 
     let animationId: number;
 
+    /** Parse the star-color into r,g,b for alpha manipulation */
+    const starColorRaw = getStarColor();
+    // Extract rgba values — support both rgba() and plain color formats
+    const rgbaMatch = starColorRaw.match(/[\d.]+/g);
+    const sr = rgbaMatch ? parseFloat(rgbaMatch[0]) : 125;
+    const sg = rgbaMatch ? parseFloat(rgbaMatch[1]) : 211;
+    const sb = rgbaMatch ? parseFloat(rgbaMatch[2]) : 252;
+    const baseAlpha = rgbaMatch && rgbaMatch[3] ? parseFloat(rgbaMatch[3]) : 0.6;
+
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
 
@@ -61,7 +90,7 @@ export default function AmbientGraph() {
           bit.y = -20;
           bit.x = Math.random() * width;
         }
-        ctx.fillStyle = `rgba(125, 211, 252, ${bit.opacity})`;
+        ctx.fillStyle = `rgba(${sr}, ${sg}, ${sb}, ${bit.opacity * baseAlpha})`;
         ctx.fillText(bit.val, bit.x, bit.y);
       });
 
@@ -79,9 +108,9 @@ export default function AmbientGraph() {
         // Draw Pulsing Node
         const size = 1 + p1.pulse * 1.5;
         const glow = p1.pulse * 5;
-        ctx.fillStyle = `rgba(125, 211, 252, ${0.2 + p1.pulse * 0.3})`;
+        ctx.fillStyle = `rgba(${sr}, ${sg}, ${sb}, ${(0.2 + p1.pulse * 0.3) * baseAlpha})`;
         ctx.shadowBlur = glow;
-        ctx.shadowColor = "#7dd3fc";
+        ctx.shadowColor = `rgba(${sr}, ${sg}, ${sb}, ${baseAlpha})`;
         ctx.beginPath();
         ctx.arc(p1.x, p1.y, size, 0, Math.PI * 2);
         ctx.fill();
@@ -96,8 +125,8 @@ export default function AmbientGraph() {
           if (distSq < 40000) {
             // 200 squared
             const dist = Math.sqrt(distSq);
-            const opacity = (1 - dist / 200) * 0.3;
-            ctx.strokeStyle = `rgba(125, 211, 252, ${opacity})`;
+            const opacity = (1 - dist / 200) * 0.3 * baseAlpha;
+            ctx.strokeStyle = `rgba(${sr}, ${sg}, ${sb}, ${opacity})`;
             ctx.lineWidth = 0.5;
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
@@ -124,13 +153,13 @@ export default function AmbientGraph() {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);
     };
-  }, []);
+  }, [theme]); // Re-init canvas when theme changes to pick up new star-color
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 z-[1] pointer-events-none opacity-60 mix-blend-screen"
-      style={{ willChange: "transform" }}
+      className={`fixed inset-0 z-[1] pointer-events-none transition-opacity duration-500 ${theme === "dark" ? "opacity-60" : "opacity-40"}`}
+      style={{ willChange: "transform", mixBlendMode: theme === "dark" ? "screen" : "multiply" }}
     />
   );
 }

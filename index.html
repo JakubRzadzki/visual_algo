@@ -6,6 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Interactive Algorithm Visualizer — Explore sorting, graph, tree, DP, and pathfinding algorithms with stunning real-time visualizations." />
     <title>Algorithm Visualizer EDVR</title>
+    <!-- FOUC prevention: apply theme class before first paint -->
+    <script>
+      (function() {
+        var stored = localStorage.getItem('edvr-theme');
+        var theme = stored || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        if (theme === 'light') document.documentElement.classList.add('light-mode');
+        document.body && document.body.classList.toggle('light-mode', theme === 'light');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

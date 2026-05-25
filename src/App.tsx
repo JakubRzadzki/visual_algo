@@ -22,12 +22,16 @@ export default function App() {
   const location = useLocation();
   const { isActive, startTutorial, stopTutorial } = useTutorialStore();
 
+  // Sync light-mode class to <html> and <body> on mount and theme change
   useEffect(() => {
-    if (theme === "light") {
-      document.body.classList.add("light-mode");
-    } else {
-      document.body.classList.remove("light-mode");
-    }
+    const els = [document.documentElement, document.body];
+    els.forEach((el) => {
+      if (theme === "light") {
+        el.classList.add("light-mode");
+      } else {
+        el.classList.remove("light-mode");
+      }
+    });
   }, [theme]);
 
   // Route-cleaner: Stop/reset the tutorial if page/route transitions occur to prevent orphaned spotlight cutouts
@@ -52,11 +56,17 @@ export default function App() {
 
   return (
     <ToastProvider>
-      <div className="relative min-h-screen bg-glacier-bg text-slate-200 selection:bg-ice-blue/30 selection:text-ice-blue cursor-default">
+      <div
+        className="relative min-h-screen cursor-default"
+        style={{
+          backgroundColor: "var(--bg-primary)",
+          color: "var(--text-primary)",
+          transition: "background-color 0.3s ease, color 0.3s ease",
+        }}
+      >
         <AriaLiveRegion />
         {/* Dynamic Floating Mesh */}
         <AmbientGraph />
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#0a0e1a]/80 via-[#0f1524]/60 to-[#0a0e1a]/80 pointer-events-none" />
 
         <Navbar />
         <TutorialOverlay />

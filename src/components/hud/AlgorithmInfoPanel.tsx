@@ -21,6 +21,7 @@ interface AlgorithmInfoPanelProps {
  */
 export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
   const language = useUIStore((state) => state.language);
+  const theme = useUIStore((state) => state.theme);
   const t = getTranslation(language);
   const [activeTab, setActiveTab] = useState<
     "theory" | "dummies" | "pseudocode"
@@ -37,8 +38,9 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
             className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
               activeTab === tabId
                 ? "bg-cyan-500/10 text-cyan-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] border border-cyan-500/20"
-                : "text-slate-500 hover:text-slate-300 hover:bg-white/5 border border-transparent"
+                : "border border-transparent"
             }`}
+            style={activeTab !== tabId ? { color: 'var(--text-muted)' } : undefined}
           >
             {tabId === "theory" && <BookOpen className="w-3.5 h-3.5" />}
             {tabId === "dummies" && <GraduationCap className="w-3.5 h-3.5" />}
@@ -53,7 +55,7 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-slate-900/20">
+      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar" style={{ backgroundColor: theme === 'dark' ? 'rgba(15,23,42,0.2)' : 'rgba(255,255,255,0.3)' }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -70,7 +72,7 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
                     <BookOpen className="w-4 h-4" />
                     {t.formalDescription}
                   </h4>
-                  <p className="text-slate-300 leading-relaxed text-sm whitespace-pre-line">
+                  <p className="leading-relaxed text-sm whitespace-pre-line" style={{ color: 'var(--text-secondary)' }}>
                     {data.theory}
                   </p>
                 </div>
@@ -87,7 +89,14 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
                       </motion.span>
                       {t.originsHistory}
                     </h4>
-                    <p className="text-slate-400 leading-relaxed text-xs italic bg-white/5 p-3 rounded-lg border border-white/5 whitespace-pre-line">
+                    <p
+                      className="leading-relaxed text-xs italic p-3 rounded-lg whitespace-pre-line"
+                      style={{
+                        color: 'var(--text-muted)',
+                        backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                        border: '1px solid var(--border-subtle)',
+                      }}
+                    >
                       {data.history}
                     </p>
                   </div>
@@ -105,7 +114,7 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
                   <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:opacity-10 transition-opacity">
                     <GraduationCap className="w-12 h-12 text-cyan-400" />
                   </div>
-                  <p className="text-slate-300 italic leading-relaxed text-sm relative z-10 whitespace-pre-line">
+                  <p className="italic leading-relaxed text-sm relative z-10 whitespace-pre-line" style={{ color: 'var(--text-secondary)' }}>
                     "{data.forDummies}"
                   </p>
                 </div>
@@ -118,7 +127,7 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
                   <Code className="w-4 h-4" />
                   {t.logicBlueprint}
                 </h4>
-                <div className="flex-1 bg-black/40 rounded-xl border border-white/5 p-4 overflow-hidden flex flex-col min-h-[200px]">
+                <div className="flex-1 bg-slate-900 rounded-xl border border-slate-700/50 p-4 overflow-hidden flex flex-col min-h-[200px]">
                   <pre className="text-[11px] font-mono text-emerald-400/90 leading-relaxed overflow-y-auto custom-scrollbar flex-1 whitespace-pre-wrap">
                     <code>{data.pseudocode}</code>
                   </pre>
