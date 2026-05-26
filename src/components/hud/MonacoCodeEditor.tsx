@@ -438,7 +438,7 @@ export default function MonacoCodeEditor() {
 
   // Sync the array in the editor to the visualization canvas directly
   useEffect(() => {
-    if (activeMode !== "sorting" && activeMode !== "searching") return;
+    if (activeMode !== "sorting" && activeMode !== "searching" && activeMode !== "tree") return;
     if (useUIStore.getState().isAnimating) return;
 
     const timeout = setTimeout(() => {
@@ -592,8 +592,12 @@ export default function MonacoCodeEditor() {
         );
       }
 
-      // Build and load trace if events were produced
-      if (response.trace && response.trace.length > 0) {
+      const hasGraphEvents = response.trace?.some(
+        (evt: any) => evt.type === "GRAPH_NODE_ADD" || evt.type === "INIT"
+      );
+
+      // Build and load trace if events were produced and they are valid graph/tree events if in tree mode
+      if (response.trace && response.trace.length > 0 && (activeMode !== "tree" || hasGraphEvents)) {
         const trace = buildExecutionTrace(response, algoName, elapsedMs);
         globalEngine.loadTrace(trace);
         globalEngine.setSpeed(1.0);
@@ -605,8 +609,11 @@ export default function MonacoCodeEditor() {
           "success",
           `Executed in ${elapsedMs}ms via Docker sandbox`,
         );
-      } else if (!response.error || response.error.trim().length === 0) {
-        // No trace events and no error — the script ran but produced no events
+      } else {
+        // No valid graph trace events and no error — fall back if in tree mode
+        if (activeMode === "tree") {
+          throw new Error("No valid graph trace events from Python script. Falling back to native TS engine for tree algorithms.");
+        }
         showToast(
           "No trace events produced",
           "info",

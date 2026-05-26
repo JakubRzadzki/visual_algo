@@ -4,13 +4,14 @@ import { useUIStore } from "../../store/uiStore";
 import { useTreeStore } from "../../store/treeStore";
 import { findAlgorithm } from "../../data/algorithmCatalog";
 import { globalEngine } from "../../core/AnimationEngine";
+import { globalEventBus } from "../../core/EventBus";
 import Sidebar from "../layout/Sidebar";
+import { globalWorkerPool } from "../../core/WorkerPool";
 
 import GraphStage from "../visualizer/GraphStage";
 import SortingStage from "../visualizer/SortingStage";
 import SearchingStage from "../visualizer/SearchingStage";
 import MatrixStage from "../visualizer/MatrixStage";
-import TreeVisualizer from "../visualizer/TreeVisualizer";
 import GridStage from "../visualizer/GridStage";
 import MonacoCodeEditor from "../hud/MonacoCodeEditor";
 import EventLog from "../hud/EventLog";
@@ -138,6 +139,21 @@ export default function AlgorithmViewer(): React.ReactElement {
     } else if (category === "trees") {
       setActiveMode("tree");
       useTreeStore.getState().setTreeType(id as any);
+      
+      // Auto-populate tree graph and load the default trace immediately
+      (async () => {
+        try {
+          const algoId = id === "rbt" ? "rbt" : id === "trie" ? "trie" : id || "";
+          const defaultValues = id === "trie" ? ["cat", "car", "dog"] : [15, 10, 20, 8, 12, 17, 25];
+          const trace = await globalWorkerPool.run(algoId, { values: defaultValues } as any);
+          if (trace && trace.metadata && trace.metadata.initialGraph) {
+            useUIStore.getState().setCurrentGraph(trace.metadata.initialGraph);
+            globalEngine.loadTrace(trace);
+          }
+        } catch (e) {
+          console.error("Failed to pre-populate tree layout:", e);
+        }
+      })();
     } else if (category === "dp") {
       setActiveMode("dp");
     } else {
@@ -153,6 +169,16 @@ export default function AlgorithmViewer(): React.ReactElement {
     setActiveSearchingAlgorithm,
     setActiveGraphAlgorithm,
   ]);
+
+  // Listen for graph updates from the sandbox
+  useEffect(() => {
+    const unsub = globalEventBus.subscribe((e: any) => {
+      if (e.type === "TRACE_LOADED" && e.metadata && e.metadata.initialGraph) {
+        useUIStore.getState().setCurrentGraph(e.metadata.initialGraph);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Handle dragging mouse move and mouse up globally
   useEffect(() => {
@@ -221,6 +247,7 @@ export default function AlgorithmViewer(): React.ReactElement {
                 : activeGraphAlgorithm !== "Kruskal's MST" &&
                   activeGraphAlgorithm !== "Prim's MST"
             }
+            layoutHint={graphToDisplay.layoutHint}
           />
         );
       case "sorting":
@@ -230,7 +257,15 @@ export default function AlgorithmViewer(): React.ReactElement {
       case "dp":
         return <MatrixStage key={id} />;
       case "tree":
-        return <TreeVisualizer key={id} />;
+        return (
+          <GraphStage
+            key={id}
+            nodes={graphToDisplay.nodes}
+            edges={graphToDisplay.edges}
+            isDirected={true}
+            layoutHint={graphToDisplay.layoutHint}
+          />
+        );
       case "grid":
         return <GridStage key={id} />;
       default:
@@ -283,8 +318,8 @@ export default function AlgorithmViewer(): React.ReactElement {
         <EventLog />
       </aside>
 
-      {/* Global Playback Controls (Only rendered if NOT in sorting or tree mode) */}
-      {activeMode !== "sorting" && activeMode !== "tree" && <PlaybackDeck />}
+      {/* Global Playback Controls (Only rendered if NOT in sorting mode) */}
+      {activeMode !== "sorting" && <PlaybackDeck />}
     </div>
   );
 }

@@ -28,10 +28,13 @@ import { QuickSortPlugin } from "../plugins/sorting/QuickSortPlugin";
 import { BinarySearchPlugin } from "../plugins/searching/BinarySearchPlugin";
 import { LinearSearchPlugin } from "../plugins/searching/LinearSearchPlugin";
 
+import { BinaryTreePlugin } from "../plugins/trees/BinaryTreePlugin";
 import { BSTPlugin } from "../plugins/trees/BSTPlugin";
 import { AVLTreePlugin } from "../plugins/trees/AVLTreePlugin";
 import { MaxHeapPlugin } from "../plugins/trees/MaxHeapPlugin";
 import { UnionFindPlugin } from "../plugins/trees/UnionFindPlugin";
+import { RBTPlugin } from "../plugins/trees/RBTPlugin";
+import { TriePlugin } from "../plugins/trees/TriePlugin";
 
 import { KnapsackDPPlugin } from "../plugins/dp/KnapsackDPPlugin";
 import { LCSPlugin } from "../plugins/dp/LCSPlugin";
@@ -57,8 +60,11 @@ const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
   "binary-search": new BinarySearchPlugin(),
   "linear-search": new LinearSearchPlugin(),
 
+  binary: new BinaryTreePlugin(),
   bst: new BSTPlugin(),
   avl: new AVLTreePlugin(),
+  rbt: new RBTPlugin(),
+  trie: new TriePlugin(),
   "max-heap": new MaxHeapPlugin(),
   "union-find": new UnionFindPlugin(),
 

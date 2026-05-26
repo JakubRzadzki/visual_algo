@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUIStore } from "../../store/uiStore";
 import { getTranslation } from "../../data/translations";
-import { BookOpen, GraduationCap, Code } from "lucide-react";
+import { BookOpen, GraduationCap } from "lucide-react";
 import type { TranslatedEducation } from "../../data/algorithmEducation";
 
 /**
@@ -24,14 +24,14 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
   const theme = useUIStore((state) => state.theme);
   const t = getTranslation(language);
   const [activeTab, setActiveTab] = useState<
-    "theory" | "dummies" | "pseudocode"
+    "theory" | "dummies"
   >("theory");
 
   return (
     <div className="flex-1 min-h-0 glass-panel flex flex-col border border-glacier-border-bright rounded-2xl overflow-hidden shadow-2xl shadow-black/50 group/panel">
       {/* Tab Navigation */}
       <div className="flex bg-glacier-surface p-1.5 border-b border-glacier-border-bright gap-1">
-        {(["theory", "dummies", "pseudocode"] as const).map((tabId) => (
+        {(["theory", "dummies"] as const).map((tabId) => (
           <button
             key={tabId}
             onClick={() => setActiveTab(tabId)}
@@ -44,11 +44,9 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
           >
             {tabId === "theory" && <BookOpen className="w-3.5 h-3.5" />}
             {tabId === "dummies" && <GraduationCap className="w-3.5 h-3.5" />}
-            {tabId === "pseudocode" && <Code className="w-3.5 h-3.5" />}
             <span>
               {tabId === "theory" && t.theory}
               {tabId === "dummies" && t.forDummies}
-              {tabId === "pseudocode" && t.pseudocode}
             </span>
           </button>
         ))}
@@ -121,19 +119,6 @@ export default function AlgorithmInfoPanel({ data }: AlgorithmInfoPanelProps) {
               </div>
             )}
 
-            {activeTab === "pseudocode" && (
-              <div className="space-y-4 h-full flex flex-col">
-                <h4 className="text-amber-400 font-bold flex items-center gap-2 text-sm uppercase tracking-wider">
-                  <Code className="w-4 h-4" />
-                  {t.logicBlueprint}
-                </h4>
-                <div className="flex-1 bg-slate-900 rounded-xl border border-slate-700/50 p-4 overflow-hidden flex flex-col min-h-[200px]">
-                  <pre className="text-[11px] font-mono text-emerald-400/90 leading-relaxed overflow-y-auto custom-scrollbar flex-1 whitespace-pre-wrap">
-                    <code>{data.pseudocode}</code>
-                  </pre>
-                </div>
-              </div>
-            )}
           </motion.div>
         </AnimatePresence>
       </div>

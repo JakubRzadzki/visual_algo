@@ -7,6 +7,7 @@ interface GraphStageProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
   isDirected?: boolean;
+  layoutHint?: "cose" | "dagre";
 }
 
 /**
@@ -18,6 +19,7 @@ export default function GraphStage({
   nodes,
   edges,
   isDirected = true,
+  layoutHint,
 }: GraphStageProps) {
   const language = useUIStore((state) => state.language);
 
@@ -28,8 +30,9 @@ export default function GraphStage({
       edges,
       startNodeId: nodes.length > 0 ? nodes[0].id : undefined,
       isDirected,
+      layoutHint,
     }),
-    [nodes, edges, isDirected],
+    [nodes, edges, isDirected, layoutHint],
   );
 
   return (
