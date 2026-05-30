@@ -20,25 +20,10 @@ import EventLog from "../components/hud/EventLog";
 import AlgorithmInfoPanel from "../components/hud/AlgorithmInfoPanel";
 import AriaLiveRegion from "../components/a11y/AriaLiveRegion";
 import { getAlgorithmEducation } from "../data/algorithmEducation";
+import { GRAPH_TEMPLATES } from "../data/graphTemplates";
 import { ArrowLeft } from "lucide-react";
-import type { GraphNode, GraphInput } from "../types";
-
-// Demo graph nodes / edges — will be replaced when user generates a new graph
-const DEMO_NODES: GraphNode[] = Array.from({ length: 8 }, (_, i) => ({
-  id: `n${i}`,
-  label: String(i),
-  x: Math.cos((i / 8) * Math.PI * 2) * 150,
-  y: Math.sin((i / 8) * Math.PI * 2) * 150,
-  vx: 0,
-  vy: 0,
-}));
-const DEMO_EDGES = DEMO_NODES.map((_, i) => ({
-  id: `e${i}`,
-  from: `n${i}`,
-  to: `n${(i + 1) % DEMO_NODES.length}`,
-  weight: Math.floor(Math.random() * 15) + 1,
-}));
-const DEMO_GRAPH = { nodes: DEMO_NODES, edges: DEMO_EDGES, startNodeId: "n0" };
+import type { GraphInput } from "../types";
+import { useTreeStore } from "../store/treeStore";
 
 export default function VisualizerPage() {
   const { category, algoId } = useParams<{
@@ -58,7 +43,9 @@ export default function VisualizerPage() {
     setActiveGridAlgorithm,
     setActiveDPAlgorithm,
   } = useUIStore();
-  const graphToDisplay = currentGraph || DEMO_GRAPH;
+  // Auto-resolve graph: currentGraph (from sidebar preset / worker trace) → first template → empty fallback
+  const defaultTemplate = algoId ? GRAPH_TEMPLATES[algoId]?.[0]?.graph : undefined;
+  const graphToDisplay: GraphInput = currentGraph || defaultTemplate || { nodes: [], edges: [] };
   const educationData = getAlgorithmEducation(algoId || "", language);
 
   // Sync the UI store with the route params
@@ -81,9 +68,34 @@ export default function VisualizerPage() {
     } else if (category === "searching") {
       setActiveMode("searching");
       setActiveSearchingAlgorithm(found.algorithm.name);
-    } else if (category === "graphs" || category === "trees") {
+    } else if (category === "graphs") {
       setActiveMode("graph");
       setActiveGraphAlgorithm(found.algorithm.name);
+
+      // Auto-load the first graph template so the SVG stage is never empty
+      const templates = GRAPH_TEMPLATES[found.algorithm.id];
+      if (templates && templates.length > 0) {
+        const first = templates[0].graph;
+        useUIStore.getState().setCurrentGraph(first);
+      }
+    } else if (category === "trees") {
+      setActiveMode("tree");
+      useTreeStore.getState().setTreeType(algoId as any);
+
+      // Auto-populate tree graph via worker (matches AlgorithmViewer behaviour)
+      (async () => {
+        try {
+          const treeAlgoId = algoId || "";
+          const defaultValues = treeAlgoId === "trie" ? ["cat", "car", "dog"] : [15, 10, 20, 8, 12, 17, 25];
+          const trace = await globalWorkerPool.run(treeAlgoId, { values: defaultValues } as any);
+          if (trace && trace.metadata && trace.metadata.initialGraph) {
+            useUIStore.getState().setCurrentGraph(trace.metadata.initialGraph);
+            globalEngine.loadTrace(trace);
+          }
+        } catch (e) {
+          console.error("Failed to pre-populate tree layout:", e);
+        }
+      })();
     } else if (category === "grid") {
       setActiveMode("grid");
       setActiveGridAlgorithm(found.algorithm.name);
@@ -93,23 +105,24 @@ export default function VisualizerPage() {
     }
 
     // Preload demonstration trace client-side via worker if available
-    if (
-      [
-        "knapsack",
-        "lcs",
-        "dijkstra",
-        "kruskal",
-        "bfs",
-        "dfs",
-        "prim",
-        "topo-sort",
-        "bst",
-        "avl",
-        "max-heap",
-        "union-find",
-      ].includes(found.algorithm.id)
-    ) {
-      // Pass a safe empty object or dummy graph payload
+    const graphAlgos = ["dijkstra", "kruskal", "bfs", "dfs", "prim", "topo-sort"];
+    const treeAlgos = ["bst", "avl", "max-heap", "union-find"];
+    const otherAlgos = ["knapsack", "lcs"];
+
+    if (graphAlgos.includes(found.algorithm.id)) {
+      // Use the actual graph template data — NOT an empty dummy
+      const tpl = GRAPH_TEMPLATES[found.algorithm.id];
+      const graphPayload: GraphInput = tpl?.[0]?.graph ?? { nodes: [], edges: [] };
+      globalWorkerPool
+        .run(found.algorithm.id, graphPayload as any)
+        .then((trace) => {
+          globalEngine.loadTrace(trace);
+          globalEngine.setSpeed(1.0);
+          useUIStore.getState().setIsAnimating(true);
+          globalEngine.play();
+        })
+        .catch((err) => console.error("Auto-simulation preload failed:", err));
+    } else if ([...treeAlgos, ...otherAlgos].includes(found.algorithm.id)) {
       const dummyPayload = { nodes: [], edges: [], values: [] };
       globalWorkerPool
         .run(found.algorithm.id, dummyPayload as any)
@@ -187,7 +200,7 @@ export default function VisualizerPage() {
 
         <div className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated shadow-2xl shadow-ice-blue/5 border border-ice-blue/10">
           {/* Switch between sorting bars, force-directed graph, and css grid */}
-          {activeMode === "graph" ? (
+          {activeMode === "graph" || activeMode === "tree" ? (
             <GraphStage
               key={`${algoId}-${currentGraph?.nodes.length}-${currentGraph?.edges.length}`}
               nodes={graphToDisplay.nodes}

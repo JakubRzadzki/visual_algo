@@ -51,8 +51,8 @@ def generate_graph_payload(graph_adj):
         {
             "id": f"n{i}",
             "label": str(i),
-            "x": (i % 2) * 150 - 75,
-            "y": (i // 2) * 150 - 75,
+            "x": (i % 2) * 200 + 300,
+            "y": (i // 2) * 200 + 150,
         }
         for i in range(len(graph_adj))
     ]

@@ -236,3 +236,16 @@
   border-color: var(--bg-card);
   box-shadow: 0 0 8px rgba(8, 145, 178, 0.3);
 }
+
+/* ────────────────────────────────────────────────────
+ * Native Graph Stage — Flowing-Current Edge Animation
+ * ──────────────────────────────────────────────────── */
+@keyframes edge-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.edge-flow-anim {
+  stroke-dasharray: 8 4;
+  animation: edge-flow 0.6s linear infinite;
+}

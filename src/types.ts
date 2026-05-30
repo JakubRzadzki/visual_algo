@@ -21,6 +21,7 @@ export type EventPayload =
       to: string;
       weight?: number;
     }
+  | { type: "GRAPH_EDGE_REMOVE"; edgeId: string }
   | { type: "GRAPH_RELAX"; edgeId: string; weight: number }
   | {
       type: "GRAPH_NODE_HIGHLIGHT";

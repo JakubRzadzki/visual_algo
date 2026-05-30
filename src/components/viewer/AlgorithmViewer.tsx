@@ -18,28 +18,10 @@ import EventLog from "../hud/EventLog";
 import AlgorithmInfoPanel from "../hud/AlgorithmInfoPanel";
 import PlaybackDeck from "../controls/PlaybackDeck";
 import { getAlgorithmEducation } from "../../data/algorithmEducation";
-import type { GraphInput } from "../../types";
+import type { GraphInput, GraphNode } from "../../types";
+import { applyTreeLayout } from "../../core/plugins/trees/treeLayout";
 
-// Demo graph nodes / edges — will be replaced when user generates a new graph
-const DEMO_NODES = Array.from({ length: 8 }, (_, i) => ({
-  id: `n${i}`,
-  label: String(i),
-  x: Math.cos((i / 8) * Math.PI * 2) * 150,
-  y: Math.sin((i / 8) * Math.PI * 2) * 150,
-  vx: 0,
-  vy: 0,
-}));
-const DEMO_EDGES = DEMO_NODES.map((_, i) => ({
-  id: `e${i}`,
-  from: `n${i}`,
-  to: `n${(i + 1) % DEMO_NODES.length}`,
-  weight: Math.floor(Math.random() * 15) + 1,
-}));
-const DEMO_GRAPH: GraphInput = {
-  nodes: DEMO_NODES,
-  edges: DEMO_EDGES,
-  startNodeId: "n0",
-};
+import { GRAPH_TEMPLATES } from "../../data/graphTemplates";
 
 /** Default width of the Monaco editor panel in pixels. */
 const DEFAULT_EDITOR_WIDTH = 700;
@@ -76,7 +58,8 @@ export default function AlgorithmViewer(): React.ReactElement {
   const language = useUIStore((state) => state.language);
   const educationData = getAlgorithmEducation(id || "", language);
 
-  const graphToDisplay = currentGraph || DEMO_GRAPH;
+  const defaultTemplate = id ? GRAPH_TEMPLATES[id]?.[0]?.graph : undefined;
+  const graphToDisplay = currentGraph || defaultTemplate || { nodes: [], edges: [] };
 
   // Resizable Monaco Code Editor layout state
   const [editorWidth, setEditorWidth] = useState<number>(() => {
@@ -136,6 +119,29 @@ export default function AlgorithmViewer(): React.ReactElement {
     } else if (category === "graphs") {
       setActiveMode("graph");
       setActiveGraphAlgorithm(match?.algorithm.name || "");
+      
+      const templates = GRAPH_TEMPLATES[match?.algorithm.id || ""];
+      if (templates && templates.length > 0) {
+        useUIStore.getState().setCurrentGraph(templates[0].graph);
+      }
+      
+      // Auto-preload graph trace
+      (async () => {
+        try {
+          const algoId = match?.algorithm.id || "";
+          const tpl = GRAPH_TEMPLATES[algoId];
+          const graphPayload = tpl?.[0]?.graph ?? { nodes: [], edges: [] };
+          const trace = await globalWorkerPool.run(algoId, graphPayload as any);
+          if (trace) {
+            globalEngine.loadTrace(trace);
+            globalEngine.setSpeed(1.0);
+            useUIStore.getState().setIsAnimating(true);
+            globalEngine.play();
+          }
+        } catch (e) {
+          console.error("Failed to pre-populate graph trace:", e);
+        }
+      })();
     } else if (category === "trees") {
       setActiveMode("tree");
       useTreeStore.getState().setTreeType(id as any);
@@ -146,8 +152,7 @@ export default function AlgorithmViewer(): React.ReactElement {
           const algoId = id === "rbt" ? "rbt" : id === "trie" ? "trie" : id || "";
           const defaultValues = id === "trie" ? ["cat", "car", "dog"] : [15, 10, 20, 8, 12, 17, 25];
           const trace = await globalWorkerPool.run(algoId, { values: defaultValues } as any);
-          if (trace && trace.metadata && trace.metadata.initialGraph) {
-            useUIStore.getState().setCurrentGraph(trace.metadata.initialGraph);
+          if (trace) {
             globalEngine.loadTrace(trace);
           }
         } catch (e) {
@@ -174,7 +179,35 @@ export default function AlgorithmViewer(): React.ReactElement {
   useEffect(() => {
     const unsub = globalEventBus.subscribe((e: any) => {
       if (e.type === "TRACE_LOADED" && e.metadata && e.metadata.initialGraph) {
-        useUIStore.getState().setCurrentGraph(e.metadata.initialGraph);
+        const newGraph = e.metadata.initialGraph as GraphInput;
+        const current = useUIStore.getState().currentGraph;
+
+        // Apply tree layout calculation for trees before merging
+        if (newGraph.layoutHint === "dagre") {
+          applyTreeLayout(newGraph);
+        } else {
+          // Merge coordinates from current graph to preserve beautiful layouts
+          if (current && current.nodes && current.nodes.length > 0) {
+            newGraph.nodes = newGraph.nodes.map((node: GraphNode) => {
+              const existingNode = current.nodes.find((n: GraphNode) => n.id === node.id);
+              if (existingNode) {
+                return { ...node, x: existingNode.x, y: existingNode.y };
+              }
+              // Fix negative coordinates from python scripts for new nodes
+              let safeX = typeof node.x === "number" ? node.x : Math.random() * 400 + 200;
+              let safeY = typeof node.y === "number" ? node.y : Math.random() * 300 + 150;
+              if (safeX < 0) safeX = (Math.abs(safeX) % 600) + 100;
+              if (safeY < 0) safeY = (Math.abs(safeY) % 400) + 100;
+              return {
+                ...node,
+                x: safeX,
+                y: safeY,
+              };
+            });
+          }
+        }
+
+        useUIStore.getState().setCurrentGraph(newGraph);
       }
     });
     return () => unsub();

@@ -42,7 +42,6 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
       }
     }
 
-    let root: AVLNode | null = null;
     let nextId = 0;
 
     const getHeight = (n: AVLNode | null) => (n ? n.height : 0);
@@ -52,11 +51,61 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
       n.height = Math.max(getHeight(n.left), getHeight(n.right)) + 1;
     };
 
+    // Calculate dynamic layout for current state
+    let lastCoords = new Map<string, {x: number, y: number}>();
+    const updateLayout = (simRoot: AVLNode | null) => {
+      if (!simRoot) return;
+      let currentIndex = 0;
+      const depths = new Map<string, number>();
+      const inOrderIndices = new Map<string, number>();
+
+      const traverse = (n: AVLNode | null, depth: number) => {
+        if (!n) return;
+        depths.set(n.id, depth);
+        traverse(n.left, depth + 1);
+        inOrderIndices.set(n.id, currentIndex++);
+        traverse(n.right, depth + 1);
+      };
+
+      traverse(simRoot, 0);
+
+      const SVG_WIDTH = 800;
+      const SVG_HEIGHT = 600;
+      const paddingX = 60;
+      const paddingY = 80;
+      
+      const totalNodes = currentIndex;
+      const maxDepth = Math.max(0, ...Array.from(depths.values()));
+
+      const stepX = totalNodes > 1 ? (SVG_WIDTH - 2 * paddingX) / (totalNodes - 1) : 0;
+      const stepY = maxDepth > 0 ? (SVG_HEIGHT - 2 * paddingY) / maxDepth : 0;
+
+      for (const [id, idx] of inOrderIndices.entries()) {
+        const d = depths.get(id) || 0;
+        const x = totalNodes === 1 ? SVG_WIDTH / 2 : paddingX + idx * stepX;
+        const y = paddingY + d * Math.min(stepY, 120);
+        
+        const old = lastCoords.get(id);
+        if (!old || old.x !== x || old.y !== y) {
+          push({ type: "GRAPH_NODE_MOVE", nodeId: id, x, y });
+          lastCoords.set(id, { x, y });
+        }
+      }
+    };
+
     const rightRotate = (y: AVLNode): AVLNode => {
       const x = y.left!;
       const T2 = x.right;
+      
+      push({ type: "GRAPH_EDGE_REMOVE", edgeId: `e${y.id}-${x.id}` });
+      if (T2) push({ type: "GRAPH_EDGE_REMOVE", edgeId: `e${x.id}-${T2.id}` });
+      
       x.right = y;
       y.left = T2;
+      
+      push({ type: "GRAPH_EDGE_ADD", edgeId: `e${x.id}-${y.id}`, from: x.id, to: y.id });
+      if (T2) push({ type: "GRAPH_EDGE_ADD", edgeId: `e${y.id}-${T2.id}`, from: y.id, to: T2.id });
+
       updateHeight(y);
       updateHeight(x);
       return x;
@@ -65,83 +114,31 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
     const leftRotate = (x: AVLNode): AVLNode => {
       const y = x.right!;
       const T2 = y.left;
+      
+      push({ type: "GRAPH_EDGE_REMOVE", edgeId: `e${x.id}-${y.id}` });
+      if (T2) push({ type: "GRAPH_EDGE_REMOVE", edgeId: `e${y.id}-${T2.id}` });
+
       y.left = x;
       x.right = T2;
+      
+      push({ type: "GRAPH_EDGE_ADD", edgeId: `e${y.id}-${x.id}`, from: y.id, to: x.id });
+      if (T2) push({ type: "GRAPH_EDGE_ADD", edgeId: `e${x.id}-${T2.id}`, from: x.id, to: T2.id });
+
       updateHeight(x);
       updateHeight(y);
       return y;
     };
 
-    const insert = (node: AVLNode | null, val: number): AVLNode => {
-      if (!node) return new AVLNode(val, `n${nextId++}`);
+    const nodes: { id: string; label: string; hidden: boolean }[] = [];
+    const edges: { id: string; from: string; to: string; hidden: boolean }[] = [];
 
-      if (val < node.value) {
-        node.left = insert(node.left, val);
-      } else if (val > node.value) {
-        node.right = insert(node.right, val);
-      } else {
-        return node;
-      }
-
-      updateHeight(node);
-      const balance = getBalance(node);
-
-      // LL
-      if (balance > 1 && val < node.left!.value) {
-        return rightRotate(node);
-      }
-      // RR
-      if (balance < -1 && val > node.right!.value) {
-        return leftRotate(node);
-      }
-      // LR
-      if (balance > 1 && val > node.left!.value) {
-        node.left = leftRotate(node.left!);
-        return rightRotate(node);
-      }
-      // RL
-      if (balance < -1 && val < node.right!.value) {
-        node.right = rightRotate(node.right!);
-        return leftRotate(node);
-      }
-
-      return node;
-    };
-
-    // 1. Build the final tree to get the static layout
+    // Pre-create node data for the graph
     values.forEach((v) => {
-      root = insert(root, v);
+      if (!nodes.find(n => n.label === String(v))) {
+        nodes.push({ id: `n${nextId++}`, label: String(v), hidden: true });
+      }
     });
 
-    const nodes: { id: string; label: string; hidden: boolean }[] = [];
-    const edges: { id: string; from: string; to: string; hidden: boolean }[] =
-      [];
-
-    const traverse = (n: AVLNode | null) => {
-      if (!n) return;
-      nodes.push({ id: n.id, label: String(n.value), hidden: true });
-      if (n.left) {
-        edges.push({
-          id: `e${n.id}-${n.left.id}`,
-          from: n.id,
-          to: n.left.id,
-          hidden: true,
-        });
-        traverse(n.left);
-      }
-      if (n.right) {
-        edges.push({
-          id: `e${n.id}-${n.right.id}`,
-          from: n.id,
-          to: n.right.id,
-          hidden: true,
-        });
-        traverse(n.right);
-      }
-    };
-    traverse(root);
-
-    // 2. Animate the insertion process (Logical path through the final tree)
     push({
       type: "SYSTEM_LOG",
       level: "INFO",
@@ -159,6 +156,14 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
         const targetId = nodes.find((n) => n.label === String(val))!.id;
         const newNode = new AVLNode(val, targetId);
         push({ type: "GRAPH_NODE_ADD", nodeId: targetId });
+        
+        // Temporarily put it at parent's pos or middle to animate from there
+        const parentPos = parentId ? lastCoords.get(parentId) : null;
+        const startX = parentPos ? parentPos.x : 400;
+        const startY = parentPos ? parentPos.y : 80;
+        push({ type: "GRAPH_NODE_MOVE", nodeId: targetId, x: startX, y: startY });
+        lastCoords.set(targetId, { x: startX, y: startY });
+
         if (parentId) {
           push({
             type: "GRAPH_EDGE_ADD",
@@ -166,6 +171,7 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
             from: parentId,
             to: targetId,
           });
+          edges.push({ id: `e${parentId}-${targetId}`, from: parentId, to: targetId, hidden: true });
         }
         push({
           type: "GRAPH_NODE_HIGHLIGHT",
@@ -271,25 +277,20 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
     values.forEach((val) => {
       push({ type: "SYSTEM_LOG", level: "INFO", message: `Inserting ${val}` });
       simRoot = simInsert(simRoot, val);
+      updateLayout(simRoot); // Animate the layout change after insertion and rotations!
     });
 
     const initialGraph: GraphInput = {
       nodes: nodes.map((n) => ({
         id: n.id,
         label: n.label,
-        x: 0,
-        y: 0,
+        x: lastCoords.get(n.id)?.x || 0,
+        y: lastCoords.get(n.id)?.y || 0,
         vx: 0,
         vy: 0,
         hidden: true,
       })),
-      edges: edges.map((e) => ({
-        id: e.id,
-        from: e.from,
-        to: e.to,
-        weight: 0,
-        hidden: true,
-      })),
+      edges: edges.map(e => ({ ...e, weight: 0 })),
       isDirected: true,
       layoutHint: "dagre",
     };

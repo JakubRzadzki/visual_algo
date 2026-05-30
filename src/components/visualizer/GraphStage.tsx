@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import CytoscapeGraph from "./CytoscapeGraph";
+import NativeGraphStage from "./NativeGraphStage";
 import type { GraphNode, GraphEdge, GraphInput } from "../../types";
 import { useUIStore } from "../../store/uiStore";
 
@@ -12,8 +12,8 @@ interface GraphStageProps {
 
 /**
  * GraphStage
- * React wrapper that mounts CytoscapeGraph for better graph visualization
- * Shows algorithms like Dijkstra and Kruskal elegantly on force-directed layouts
+ * React wrapper that mounts the native SVG graph engine.
+ * Keeps the same prop interface consumed by VisualizerPage & AlgorithmViewer.
  */
 export default function GraphStage({
   nodes,
@@ -43,13 +43,12 @@ export default function GraphStage({
           {language === "pl" ? "Wizualizacja Grafu" : "Graph Visualization"}
         </h3>
         <p className="text-xs text-slate-400">
-          {language === "pl" ? "Oparte na Cytoscape.js" : "Powered by Cytoscape.js"}
+          {language === "pl" ? "Natywny silnik SVG" : "Native SVG Engine"}
         </p>
       </div>
 
-      {/* Cytoscape Graph */}
-      <CytoscapeGraph graph={graph} />
+      {/* Native SVG Graph */}
+      <NativeGraphStage graph={graph} />
     </div>
   );
 }
-
