@@ -22,6 +22,25 @@ The core philosophy of EDVR centers on two main pillars:
 1. **Absolute Security**: Safely executing untrusted user code at scale without risking the host machine.
 2. **Visual Fluidity**: Render-cycle-free, physics-based canvas animations that keep pace with high-frequency execution traces (60FPS+) under a bespoke **"Glacier Glassmorphism" UI** design system.
 
+### 🖼️ Visual Showcase & Engine Capabilities
+
+EDVR includes dedicated real-time visual workspaces tailored to different computational domains. Below is the preview of the live interface layers:
+
+| Sorting Algorithms (`sorting.png`) | Graph Algorithms (`graphs.png`) |
+| :---: | :---: |
+| ![Sorting Showcase](./public/images/categories/sorting.png) | ![Graphs Showcase](./public/images/categories/graphs.png) |
+| **Sorting Stage**: Real-time comparison pointer, swap micro-animations, and bar resizing. | **Graph Stage**: Physics-driven Force-Directed layout, shortest-path node highlight, and weight markers. |
+
+| Grid & Pathfinding (`grid.png`) | Binary Tree Structures (`trees.png`) |
+| :---: | :---: |
+| ![Grid Showcase](./public/images/categories/grid.png) | ![Trees Showcase](./public/images/categories/trees.png) |
+| **Grid Workspace**: Dynamic obstacle wall painting, heuristic weights, path highlights. | **Tree Visualizer**: Smooth node rotations (AVL/BST), parent-child connection springs. |
+
+| Dynamic Programming (`dp.png`) | Linear Searches (`searching.png`) |
+| :---: | :---: |
+| ![DP Showcase](./public/images/categories/dp.png) | ![Searching Showcase](./public/images/categories/searching.png) |
+| **DP Matrix HUD**: Interactive memoization tables, backtracking paths, and cell evaluations. | **Searching Stage**: Dynamic index scanning, key comparison highlights, and step intervals. |
+
 ---
 
 ## 🛠️ 2. Technical Stack & "The Why"
