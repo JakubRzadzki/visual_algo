@@ -124,38 +124,36 @@ Each algorithm has implementations in three forms:
 
 ## Architecture
 
-Full UML documentation originally authored in commit `ef38451`.
+> **System**: Algorithm Visualizer EDVR
+> **Stack**: React 19 + Zustand + Vite (Frontend) · Go + Gin + GORM (Backend) · PostgreSQL + Docker (Infra)
 
-<details>
-<summary>Click to expand the full UML Class Diagram (Mermaid)</summary>
+---
+
+### Class Diagram
 
 ```mermaid
 classDiagram
     direction TB
 
-    %% =================================================================
-    %% DOMAIN TYPES & INTERFACES
-    %% =================================================================
+    %% ── Core Types ──────────────────────────────────────────────────
 
     class BaseEvent {
         <<type>>
         +id: string
         +timestamp: number
         +step: number
-        +eventSource?: string
-        +lineNumber?: number
-        +isReverse?: boolean
+        +eventSource: string
+        +lineNumber: number
+        +isReverse: boolean
     }
 
     class EventPayload {
-        <<discriminated union>>
+        <<union>>
         +type: string
-        +...payload fields
     }
 
     class VisualizationEvent {
-        <<type alias>>
-        BaseEvent & EventPayload
+        <<alias>>
     }
 
     class TraceMetadata {
@@ -165,32 +163,26 @@ classDiagram
         +executionTimeMs: number
         +nodeCount: number
         +algorithmName: string
-        +initialState?: any
+        +initialState: any
     }
 
     class ExecutionTrace {
         <<type>>
-        +events: VisualizationEvent[]
+        +events: list
         +metadata: TraceMetadata
     }
 
-    class AlgorithmPlugin~T~ {
+    %% ── Plugin Interface ────────────────────────────────────────────
+
+    class AlgorithmPlugin {
         <<interface>>
         +id: string
         +name: string
-        +category: sorting | graph | tree | dp
-        +execute(data: T): ExecutionTrace
+        +category: string
+        +execute(data: any): ExecutionTrace
     }
 
-    BaseEvent --> VisualizationEvent : composes
-    EventPayload --> VisualizationEvent : composes
-    VisualizationEvent --> ExecutionTrace : events[]
-    TraceMetadata --> ExecutionTrace : metadata
-    AlgorithmPlugin ..> ExecutionTrace : produces
-
-    %% =================================================================
-    %% DATA INPUT MODELS
-    %% =================================================================
+    %% ── Input / Data Types ──────────────────────────────────────────
 
     class GraphNode {
         <<interface>>
@@ -212,65 +204,55 @@ classDiagram
 
     class GraphInput {
         <<interface>>
-        +nodes: GraphNode[]
-        +edges: GraphEdge[]
-        +startNodeId?: string
+        +nodes: list
+        +edges: list
+        +startNodeId: string
     }
 
     class ArrayInput {
         <<interface>>
-        +values: number[]
+        +values: list
     }
 
     class GridInput {
         <<interface>>
         +width: number
         +height: number
-        +walls: Coord[]
+        +walls: list
     }
 
     class MatrixInput {
         <<interface>>
         +rows: number
         +cols: number
-        +values: number[][]
+        +values: list
     }
 
     class VisualizationData {
-        <<union type>>
-        GraphInput | ArrayInput | GridInput | MatrixInput
+        <<union>>
     }
 
-    GraphNode --> GraphInput : nodes[]
-    GraphEdge --> GraphInput : edges[]
-    GraphInput --> VisualizationData
-    ArrayInput --> VisualizationData
-    GridInput --> VisualizationData
-    MatrixInput --> VisualizationData
-
-    %% =================================================================
-    %% CORE ENGINE LAYER
-    %% =================================================================
+    %% ── Animation Core ──────────────────────────────────────────────
 
     class AnimationEventBus {
-        -listeners: EventListener[]
+        -listeners: list
         +emit(event: VisualizationEvent): void
-        +subscribe(listener: EventListener): UnsubscribeFn
+        +subscribe(listener: any): Function
         +clearSubscribers(): void
     }
 
     class AnimationEngine {
-        -currentTrace: ExecutionTrace | null
+        -currentTrace: ExecutionTrace
         -currentStep: number
         -isPlaying: boolean
         -playbackSpeed: number
-        -rafId: number | null
+        -rafId: number
         -lastFrameTime: number
         -accumulatedTime: number
-        #baseTickMs: number = 500
-        -activeAnimations: Map~string, ActiveAnimation~
+        #baseTickMs: number
+        -activeAnimations: Map
         -animationIdCounter: number
-        +generateTraceWithWatchdog~T~(plugin, input, timeout): Promise~ExecutionTrace~
+        +generateTraceWithWatchdog(plugin: any, input: any, timeout: number): Promise
         +loadTrace(trace: ExecutionTrace): void
         +play(): void
         +pause(): void
@@ -278,7 +260,7 @@ classDiagram
         +stepBackward(): void
         +seekTo(stepIndex: number): void
         +setSpeed(multiplier: number): void
-        +scheduleAnimation(duration, onUpdate, easing, onComplete): string
+        +scheduleAnimation(duration: number, onUpdate: any, easing: any, onComplete: any): string
         +cancelAnimation(id: string): void
         +getState(): PlaybackState
         -updateAnimations(): void
@@ -295,18 +277,20 @@ classDiagram
         +easeInQuad(t: number): number
     }
 
+    %% ── Worker Pool ─────────────────────────────────────────────────
+
     class WorkerPool {
-        -pool: PoolWorker[]
-        -taskQueue: QueuedTask[]
-        -pending: Map~string, PendingTask~
+        -pool: list
+        -taskQueue: list
+        -pending: Map
         #maxWorkers: number
-        +run(algorithmId: string, payload: GraphInput): Promise~ExecutionTrace~
+        +run(algorithmId: string, payload: GraphInput): Promise
         +destroy(): void
         -spawnWorkers(): void
-        -dispatch(pw, message, resolve, reject): void
-        -handleWorkerMessage(pw, response): void
-        -handleWorkerError(pw, error): void
-        -drainQueue(pw): void
+        -dispatch(pw: any, message: any, resolve: any, reject: any): void
+        -handleWorkerMessage(pw: any, response: any): void
+        -handleWorkerError(pw: any, error: any): void
+        -drainQueue(pw: any): void
     }
 
     class WorkerMessage {
@@ -317,142 +301,102 @@ classDiagram
     }
 
     class WorkerResponse {
-        <<discriminated union>>
+        <<union>>
         +taskId: string
-        +status: ok | error
-        +trace?: ExecutionTrace
-        +message?: string
+        +status: string
+        +trace: ExecutionTrace
+        +message: string
     }
 
-    AnimationEngine --> AnimationEventBus : emits via globalEventBus
-    AnimationEngine --> ExecutionTrace : consumes
-    AnimationEngine --> Easing : uses
-    AnimationEngine --> AlgorithmPlugin : executes via watchdog
-    WorkerPool --> WorkerMessage : sends to workers
-    WorkerPool --> WorkerResponse : receives from workers
-    WorkerPool --> ExecutionTrace : resolves promises with
-
-    %% =================================================================
-    %% ZUSTAND STATE MANAGEMENT
-    %% =================================================================
+    %% ── State Management ────────────────────────────────────────────
 
     class useUIStore {
-        <<Zustand Store>>
-        +theme: glacier
+        <<store>>
+        +theme: string
         +animationSpeed: number
         +isSidebarOpen: boolean
         +isDebugVisible: boolean
         +activeCategory: string
         +activeSortingAlgorithm: string
         +activeGraphAlgorithm: string
-        +activeMode: sorting | graph
+        +activeMode: string
         +isAnimating: boolean
-        +visualizationData: VisualizationData | null
-        +currentGraph: GraphInput | null
+        +visualizationData: VisualizationData
+        +currentGraph: GraphInput
         +isLoading: boolean
         +shareLink: string
-        +setAnimationSpeed(speed): void
+        +setAnimationSpeed(speed: number): void
         +toggleSidebar(): void
         +toggleDebug(): void
-        +setActiveCategory(cat): void
-        +setActiveSortingAlgorithm(algo): void
-        +setActiveGraphAlgorithm(algo): void
-        +setActiveMode(mode): void
-        +setIsAnimating(v): void
-        +setVisualizationData(data): void
-        +setCurrentGraph(graph): void
-        +setIsLoading(v): void
-        +setShareLink(link): void
+        +setActiveCategory(cat: string): void
+        +setActiveSortingAlgorithm(algo: string): void
+        +setActiveGraphAlgorithm(algo: string): void
+        +setActiveMode(mode: string): void
+        +setIsAnimating(v: boolean): void
+        +setVisualizationData(data: VisualizationData): void
+        +setCurrentGraph(graph: GraphInput): void
+        +setIsLoading(v: boolean): void
+        +setShareLink(link: string): void
     }
 
-    useUIStore --> VisualizationData : manages
-    useUIStore --> GraphInput : legacy alias
-
-    %% =================================================================
-    %% REACT COMPONENT TREE
-    %% =================================================================
+    %% ── UI Components ───────────────────────────────────────────────
 
     class App {
-        <<React Component>>
+        <<component>>
         +render(): JSX
     }
 
     class Dashboard {
-        <<React Component / Page>>
-        +render(): JSX — algorithm catalog grid
+        <<component>>
+        +render(): JSX
     }
 
     class VisualizerPage {
-        <<React Component / Page>>
-        +render(): JSX — full workspace
+        <<component>>
+        +render(): JSX
     }
 
     class Navbar {
-        <<React Component>>
+        <<component>>
     }
 
     class Sidebar {
-        <<React Component>>
+        <<component>>
     }
 
     class VisualStage {
-        <<React Component>>
-        - sorting bar visualization
+        <<component>>
     }
 
     class GraphStage {
-        <<React Component>>
-        +nodes: GraphNode[]
-        +edges: GraphEdge[]
+        <<component>>
+        +nodes: list
+        +edges: list
     }
 
     class MonacoCodeEditor {
-        <<React Component>>
-        - Monaco Editor integration
-        - GlacierDark custom theme
-        - Language selector: TS / Python / C++
-        - Format & Save to localStorage
+        <<component>>
     }
 
     class EventLog {
-        <<React Component>>
+        <<component>>
     }
 
     class PlaybackDeck {
-        <<React Component>>
+        <<component>>
     }
 
     class AmbientGraph {
-        <<React Component>>
-        - background floating mesh
+        <<component>>
     }
 
-    App --> Navbar : renders
-    App --> Dashboard : route /
-    App --> VisualizerPage : route /algo/:category/:id
-    VisualizerPage --> Sidebar : renders if open
-    VisualizerPage --> VisualStage : sorting mode
-    VisualizerPage --> GraphStage : graph mode
-    VisualizerPage --> MonacoCodeEditor : aside panel
-    VisualizerPage --> EventLog : aside panel
-    VisualizerPage --> PlaybackDeck : bottom bar
-    VisualizerPage --> AmbientGraph : background
-
-    VisualizerPage --> useUIStore : reads / writes
-    MonacoCodeEditor --> useUIStore : reads activeMode & algorithm
-    PlaybackDeck --> AnimationEngine : play/pause/seek
-    VisualStage --> AnimationEventBus : subscribes
-    GraphStage --> AnimationEventBus : subscribes
-
-    %% =================================================================
-    %% ALGORITHM CATALOG (Data Layer)
-    %% =================================================================
+    %% ── Algorithm Catalog ───────────────────────────────────────────
 
     class AlgorithmCatalog {
-        <<Data Module>>
-        +ALGORITHM_CATALOG: CategoryEntry[]
-        +findAlgorithm(categoryId, algoId): Match | null
-        +getAllAlgorithms(): FlatList
+        <<module>>
+        +ALGORITHM_CATALOG: list
+        +findAlgorithm(categoryId: string, algoId: string): any
+        +getAllAlgorithms(): list
     }
 
     class CategoryEntry {
@@ -463,7 +407,7 @@ classDiagram
         +color: string
         +borderColor: string
         +glowColor: string
-        +algorithms: AlgorithmEntry[]
+        +algorithms: list
     }
 
     class AlgorithmEntry {
@@ -477,111 +421,147 @@ classDiagram
         +available: boolean
     }
 
-    AlgorithmEntry --> CategoryEntry : algorithms[]
-    CategoryEntry --> AlgorithmCatalog : ALGORITHM_CATALOG[]
-    Dashboard --> AlgorithmCatalog : reads
-    VisualizerPage --> AlgorithmCatalog : findAlgorithm()
-
-    %% =================================================================
-    %% CONCRETE ALGORITHM PLUGINS
-    %% =================================================================
+    %% ── Plugin Implementations ──────────────────────────────────────
 
     class MergeSortPlugin {
-        +id: merge-sort
-        +name: Merge Sort
-        +category: sorting
+        +id: string
+        +name: string
+        +category: string
         +execute(data: ArrayInput): ExecutionTrace
     }
 
     class QuickSortPlugin {
-        +id: quick-sort
-        +name: Quick Sort
-        +category: sorting
+        +id: string
+        +name: string
+        +category: string
         +execute(data: ArrayInput): ExecutionTrace
     }
 
     class DijkstraPlugin {
-        +id: dijkstra
-        +name: Dijkstra
-        +category: graph
+        +id: string
+        +name: string
+        +category: string
         +execute(data: GraphInput): ExecutionTrace
     }
 
     class KruskalPlugin {
-        +id: kruskal
-        +name: Kruskal
-        +category: graph
+        +id: string
+        +name: string
+        +category: string
         +execute(data: GraphInput): ExecutionTrace
     }
+
+    %% ── Backend ─────────────────────────────────────────────────────
+
+    class GoBackend {
+        <<server>>
+        -db: DB
+        +SaveSnapshot(): void
+        +GetSnapshot(): void
+        +RunCodeInSandbox(): void
+    }
+
+    class Snapshot {
+        <<model>>
+        +ID: string
+        +Data: string
+        +CreatedAt: Time
+    }
+
+    class RunRequest {
+        <<struct>>
+        +Code: string
+        +Language: string
+    }
+
+    class RunResponse {
+        <<struct>>
+        +Trace: list
+        +Error: string
+        +Output: string
+    }
+
+    %% ── Infrastructure ──────────────────────────────────────────────
+
+    class DockerCompose {
+        <<infrastructure>>
+        +frontend: string
+        +api: string
+        +db: string
+    }
+
+    class SandboxContainer {
+        <<container>>
+        +image: string
+        +networkDisabled: boolean
+        +memoryLimit: string
+        +cpuLimit: string
+        +timeout: string
+    }
+
+    %% ── Relationships ───────────────────────────────────────────────
+
+    BaseEvent --> VisualizationEvent : composes
+    EventPayload --> VisualizationEvent : composes
+    VisualizationEvent --> ExecutionTrace : events
+    TraceMetadata --> ExecutionTrace : metadata
+    AlgorithmPlugin ..> ExecutionTrace : produces
+
+    GraphNode --> GraphInput : nodes
+    GraphEdge --> GraphInput : edges
+    GraphInput --> VisualizationData
+    ArrayInput --> VisualizationData
+    GridInput --> VisualizationData
+    MatrixInput --> VisualizationData
+
+    AnimationEngine --> AnimationEventBus : emits via globalEventBus
+    AnimationEngine --> ExecutionTrace : consumes
+    AnimationEngine --> Easing : uses
+    AnimationEngine --> AlgorithmPlugin : executes via watchdog
+    WorkerPool --> WorkerMessage : sends to workers
+    WorkerPool --> WorkerResponse : receives from workers
+    WorkerPool --> ExecutionTrace : resolves promises with
+
+    useUIStore --> VisualizationData : manages
+    useUIStore --> GraphInput : legacy alias
+
+    App --> Navbar : renders
+    App --> Dashboard : route
+    App --> VisualizerPage : route
+    VisualizerPage --> Sidebar : renders if open
+    VisualizerPage --> VisualStage : sorting mode
+    VisualizerPage --> GraphStage : graph mode
+    VisualizerPage --> MonacoCodeEditor : aside panel
+    VisualizerPage --> EventLog : aside panel
+    VisualizerPage --> PlaybackDeck : bottom bar
+    VisualizerPage --> AmbientGraph : background
+
+    VisualizerPage --> useUIStore : reads and writes
+    MonacoCodeEditor --> useUIStore : reads activeMode and algorithm
+    PlaybackDeck --> AnimationEngine : play/pause/seek
+    VisualStage --> AnimationEventBus : subscribes
+    GraphStage --> AnimationEventBus : subscribes
+
+    AlgorithmEntry --> CategoryEntry : algorithms
+    CategoryEntry --> AlgorithmCatalog : ALGORITHM_CATALOG
+    Dashboard --> AlgorithmCatalog : reads
+    VisualizerPage --> AlgorithmCatalog : findAlgorithm
 
     AlgorithmPlugin <|.. MergeSortPlugin : implements
     AlgorithmPlugin <|.. QuickSortPlugin : implements
     AlgorithmPlugin <|.. DijkstraPlugin : implements
     AlgorithmPlugin <|.. KruskalPlugin : implements
 
-    %% =================================================================
-    %% GO BACKEND
-    %% =================================================================
-
-    class GoBackend {
-        <<Go / Gin Server>>
-        -db: *gorm.DB
-        +POST /api/snapshots → SaveSnapshot()
-        +GET /api/snapshots/:id → GetSnapshot()
-        +POST /api/run → RunCodeInSandbox()
-        -initDB(): void
-    }
-
-    class Snapshot {
-        <<GORM Model>>
-        +ID: string [PK, varchar 10]
-        +Data: datatypes.JSON
-        +CreatedAt: time.Time
-    }
-
-    class RunRequest {
-        <<Go Struct>>
-        +Code: string
-        +Language: python | cpp
-    }
-
-    class RunResponse {
-        <<Go Struct>>
-        +Trace: []map
-        +Error: string
-        +Output: string
-    }
-
     GoBackend --> Snapshot : CRUD via GORM
-    GoBackend --> RunRequest : binds from POST body
+    GoBackend --> RunRequest : binds from body
     GoBackend --> RunResponse : returns JSON
 
-    %% =================================================================
-    %% DOCKER / INFRA
-    %% =================================================================
-
-    class DockerCompose {
-        <<Infrastructure>>
-        +frontend: Nginx container (port 80)
-        +api: Go container (port 8080)
-        +db: PostgreSQL 15 (port 5432)
-    }
-
-    class SandboxContainer {
-        <<Ephemeral Docker Container>>
-        +image: python:3.10-slim | gcc:13
-        +networkDisabled: true
-        +memoryLimit: 256 MB
-        +cpuLimit: 0.5 CPU
-        +timeout: 2s
-    }
-
-    DockerCompose --> GoBackend : hosts api service
-    GoBackend --> SandboxContainer : spawns ephemeral containers for RCE
-    DockerCompose --> Snapshot : db service hosts PostgreSQL
+    DockerCompose --> GoBackend : hosts api
+    GoBackend --> SandboxContainer : spawns
+    DockerCompose --> Snapshot : hosts db
 ```
 
-</details>
+---
 
 ### Relationship Summary
 
@@ -595,6 +575,8 @@ classDiagram
 | `MonacoCodeEditor` | `useUIStore` | reads | Determines which algorithm source to display |
 | `GoBackend` | `SandboxContainer` | spawns | Creates Docker containers for remote code execution |
 | `GoBackend` | `Snapshot` | persists | Saves/loads visualization snapshots via PostgreSQL |
+
+---
 
 ### Event Flow
 
@@ -629,6 +611,8 @@ sequenceDiagram
         Stage->>Stage: update canvas / DOM
     end
 ```
+
+---
 
 ### File Mapping
 
