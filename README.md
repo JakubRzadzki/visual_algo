@@ -1,4 +1,4 @@
-# 🌌 Algorithm Visualizer EDVR (Educational Digital Visualizer Engine)
+# Algorithm Visualizer EDVR
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black&style=for-the-badge)](https://react.dev/)
 [![Go](https://img.shields.io/badge/Go-1.21-00ADD8?logo=go&logoColor=white&style=for-the-badge)](https://go.dev/)
@@ -7,22 +7,135 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white&style=for-the-badge)](https://www.postgresql.org/)
 [![Zustand](https://img.shields.io/badge/Zustand-State-orange?style=for-the-badge)](https://github.com/pmndrs/zustand)
 
-A high-performance, full-stack algorithm execution engine that safely compiles, runs, and visualizes complex user-submitted code in real-time. Built with a premium, physics-driven canvas and encapsulated in a secure, sandboxed multi-container ecosystem.
+A full-stack algorithm execution engine that compiles, runs, and visualizes user-submitted code in real-time. Built with a physics-driven canvas UI and encapsulated in a secure, sandboxed multi-container Docker ecosystem.
 
-## 📐 UML Architecture & System Design
+---
 
-Below is the complete architectural layout and UML documentation of the **Algorithm Visualizer EDVR** engine (originally introduced in commit `ef38451` by Jakub Rządzki), mapping the Frontend React-Zustand architecture, Go Backend, and the Secure Sandbox orchestration.
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Tech Stack](#tech-stack)
+3. [Supported Algorithms](#supported-algorithms)
+4. [Architecture](#architecture)
+5. [Getting Started](#getting-started)
+6. [Engineering Details](#engineering-details)
+7. [Design Patterns](#design-patterns)
+8. [Project Structure](#project-structure)
+
+---
+
+## Overview
+
+EDVR (Educational Digital Visualizer Engine) is a production-grade system for safely executing untrusted C++ and Python code, capturing structured execution traces, and replaying them with frame-accurate animations at 60 FPS.
+
+The project has two operating modes:
+- **Offline mode** -- algorithms run client-side via Web Worker plugins (no backend required).
+- **Online mode** -- user code is compiled and executed inside ephemeral Docker containers with full network isolation, memory caps, and CPU limits.
+
+Key properties:
+- Sandbox isolation via Docker containers with `NetworkDisabled: true`, 256 MB memory cap, 0.5 CPU limit, 10s watchdog.
+- Custom `AnimationEventBus` bypasses React re-renders entirely -- SVG nodes are updated imperatively via `useRef` + Framer Motion controls.
+- Web Worker pool offloads trace parsing and force-directed graph layout off the main thread.
+- Bilingual interface (Polish / English) with a full interactive tutorial system.
+
+---
+
+## Tech Stack
+
+```
++------------------------------------------------------------------------+
+|                         FRONTEND (SPA)                                 |
+|          React 19  |  Zustand  |  Framer Motion  |  Vite  |  TailwindCSS  |
++------------------------------------+-----------------------------------+
+                                     | Web Workers (WorkerPool)
+                                     v
++------------------------------------------------------------------------+
+|                         BACKEND API                                    |
+|                      Go 1.21  |  Gin  |  GORM                         |
++------------------------------------+-----------------------------------+
+                                     | Docker Daemon API
+                                     v
++------------------------------------------------------------------------+
+|                    SECURE EXECUTION SANDBOX                             |
+|          Ephemeral Docker Containers (gcc:13 / python:3.10-slim)       |
+|         Memory: 256 MB  |  Network: disabled  |  Timeout: 10s         |
++------------------------------------------------------------------------+
+                                     |
+                                     v
++------------------------------------------------------------------------+
+|                         DATABASE                                       |
+|                    PostgreSQL 15 (snapshots)                            |
++------------------------------------------------------------------------+
+```
+
+| Layer | Technology | Reason |
+| :--- | :--- | :--- |
+| Frontend | React 19 + Zustand | Lightweight global state without context re-render overhead |
+| Animations | Framer Motion + SVG | Physics-based spring animations that bypass React reconciliation |
+| Backend | Go / Gin | Low memory footprint, native goroutine concurrency, direct Docker daemon integration |
+| Sandbox | Docker containers | Sub-50ms startup, cgroups/namespaces isolation, instant teardown |
+| Database | PostgreSQL 15 | Snapshot persistence via GORM with in-memory fallback |
+
+---
+
+## Supported Algorithms
+
+### Sorting
+- Bubble Sort
+- Merge Sort
+- Quick Sort
+- Heap Sort
+
+### Graph
+- BFS (Breadth-First Search)
+- DFS (Depth-First Search)
+- Dijkstra's Shortest Path
+- Kruskal's MST
+- Prim's MST
+- Topological Sort
+
+### Trees
+- Binary Tree traversal
+- Binary Search Tree (BST)
+- AVL Tree (with rotations)
+- Red-Black Tree
+- Max Heap
+- Trie
+- Union-Find (Disjoint Set)
+
+### Grid / Pathfinding
+- A* Search
+- Flood Fill
+
+### Dynamic Programming
+- 0/1 Knapsack
+- Longest Common Subsequence (LCS)
+
+### Searching
+- Linear Search
+- Binary Search
+
+Each algorithm has implementations in three forms:
+- **TypeScript plugin** (`src/core/plugins/`) -- runs client-side in Web Workers.
+- **Python source** (`src/algorithms/python/`) -- runs in Docker sandbox.
+- **C++ source** (`src/algorithms/cpp/`) -- runs in Docker sandbox.
+
+---
+
+## Architecture
+
+Full UML documentation originally authored in commit `ef38451`.
 
 <details>
-<summary>🔍 Click to expand the full UML Class Diagram (Mermaid)</summary>
+<summary>Click to expand the full UML Class Diagram (Mermaid)</summary>
 
 ```mermaid
 classDiagram
     direction TB
 
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
     %% DOMAIN TYPES & INTERFACES
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
 
     class BaseEvent {
         <<type>>
@@ -75,9 +188,9 @@ classDiagram
     TraceMetadata --> ExecutionTrace : metadata
     AlgorithmPlugin ..> ExecutionTrace : produces
 
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
     %% DATA INPUT MODELS
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
 
     class GraphNode {
         <<interface>>
@@ -135,9 +248,9 @@ classDiagram
     GridInput --> VisualizationData
     MatrixInput --> VisualizationData
 
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
     %% CORE ENGINE LAYER
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
 
     class AnimationEventBus {
         -listeners: EventListener[]
@@ -219,9 +332,9 @@ classDiagram
     WorkerPool --> WorkerResponse : receives from workers
     WorkerPool --> ExecutionTrace : resolves promises with
 
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
     %% ZUSTAND STATE MANAGEMENT
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
 
     class useUIStore {
         <<Zustand Store>>
@@ -255,9 +368,9 @@ classDiagram
     useUIStore --> VisualizationData : manages
     useUIStore --> GraphInput : legacy alias
 
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
     %% REACT COMPONENT TREE
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
 
     class App {
         <<React Component>>
@@ -331,9 +444,9 @@ classDiagram
     VisualStage --> AnimationEventBus : subscribes
     GraphStage --> AnimationEventBus : subscribes
 
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
     %% ALGORITHM CATALOG (Data Layer)
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
 
     class AlgorithmCatalog {
         <<Data Module>>
@@ -369,9 +482,9 @@ classDiagram
     Dashboard --> AlgorithmCatalog : reads
     VisualizerPage --> AlgorithmCatalog : findAlgorithm()
 
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
     %% CONCRETE ALGORITHM PLUGINS
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
 
     class MergeSortPlugin {
         +id: merge-sort
@@ -406,9 +519,9 @@ classDiagram
     AlgorithmPlugin <|.. DijkstraPlugin : implements
     AlgorithmPlugin <|.. KruskalPlugin : implements
 
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
     %% GO BACKEND
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
 
     class GoBackend {
         <<Go / Gin Server>>
@@ -443,9 +556,9 @@ classDiagram
     GoBackend --> RunRequest : binds from POST body
     GoBackend --> RunResponse : returns JSON
 
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
     %% DOCKER / INFRA
-    %% ═══════════════════════════════════════════════════════════════
+    %% =================================================================
 
     class DockerCompose {
         <<Infrastructure>>
@@ -468,11 +581,9 @@ classDiagram
     DockerCompose --> Snapshot : db service hosts PostgreSQL
 ```
 
----
-
 </details>
 
-## Relationship Summary
+### Relationship Summary
 
 | From | To | Relationship | Description |
 |------|----|-------------|-------------|
@@ -485,9 +596,7 @@ classDiagram
 | `GoBackend` | `SandboxContainer` | spawns | Creates Docker containers for remote code execution |
 | `GoBackend` | `Snapshot` | persists | Saves/loads visualization snapshots via PostgreSQL |
 
----
-
-## Event Flow (Sequence)
+### Event Flow
 
 ```mermaid
 sequenceDiagram
@@ -511,7 +620,7 @@ sequenceDiagram
     Pool-->>UI: Promise resolves with ExecutionTrace
     UI->>Engine: engine.loadTrace(trace)
     UI->>Engine: engine.play()
-    
+
     loop RAF Animation Loop
         Engine->>Engine: accumulate deltaTime
         Engine->>Engine: stepForward()
@@ -521,9 +630,7 @@ sequenceDiagram
     end
 ```
 
----
-
-## File Mapping
+### File Mapping
 
 | UML Class | File Path |
 |-----------|-----------|
@@ -540,100 +647,145 @@ sequenceDiagram
 | `GoBackend` | `backend/main.go` |
 | `DockerCompose` | `docker-compose.yml` |
 
-
 ---
 
-## 🧭 1. Overview & Philosophy
+## Getting Started
 
-**EDVR (Educational Digital Visualizer Engine)** is not just a UI toy or a hardcoded frontend-only visualization helper. It is a robust, production-grade **full-stack execution engine** designed to safely compile and run real C++ and Python algorithms on arbitrary user inputs, capture their exact execution logs, and replay them with mathematical precision. 
+### Prerequisites
 
-The core philosophy of EDVR centers on two main pillars:
-1. **Absolute Security**: Safely executing untrusted user code at scale without risking the host machine.
-2. **Visual Fluidity**: Render-cycle-free, physics-based canvas animations that keep pace with high-frequency execution traces (60FPS+) under a bespoke **"Glacier Glassmorphism" UI** design system.
-
-### 🖼️ Visual Showcase & Engine Capabilities
-
-EDVR includes dedicated real-time visual workspaces tailored to different computational domains. Below is the preview of the live interface layers:
-
-| Sorting Algorithms (`sorting.png`) | Graph Algorithms (`graphs.png`) |
-| :---: | :---: |
-| ![Sorting Showcase](./public/images/categories/sorting.png) | ![Graphs Showcase](./public/images/categories/graphs.png) |
-| **Sorting Stage**: Real-time comparison pointer, swap micro-animations, and bar resizing. | **Graph Stage**: Physics-driven Force-Directed layout, shortest-path node highlight, and weight markers. |
-
-| Grid & Pathfinding (`grid.png`) | Binary Tree Structures (`trees.png`) |
-| :---: | :---: |
-| ![Grid Showcase](./public/images/categories/grid.png) | ![Trees Showcase](./public/images/categories/trees.png) |
-| **Grid Workspace**: Dynamic obstacle wall painting, heuristic weights, path highlights. | **Tree Visualizer**: Smooth node rotations (AVL/BST), parent-child connection springs. |
-
-| Dynamic Programming (`dp.png`) | Linear Searches (`searching.png`) |
-| :---: | :---: |
-| ![DP Showcase](./public/images/categories/dp.png) | ![Searching Showcase](./public/images/categories/searching.png) |
-| **DP Matrix HUD**: Interactive memoization tables, backtracking paths, and cell evaluations. | **Searching Stage**: Dynamic index scanning, key comparison highlights, and step intervals. |
-
----
-
-## 🛠️ 2. Technical Stack & "The Why"
-
-Every technology in the EDVR stack was selected after careful architectural analysis, choosing performance and isolation over convenience.
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        GLACIER GLASSMORPHISM UI                        │
-│               React 19  │  Zustand  │  Framer Motion (SVG)              │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Web Workers (WorkerPool)
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                        HIGH-PERFORMANCE API                            │
-│                         Go 1.21  │  Gin Router                         │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Docker Daemon API (gRPC / Unix Socket)
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                        SECURE EXECUTION SANDBOX                        │
-│             Ephemeral Docker Containers (gcc:13 / python:3.10)          │
-│                Memory caps: 256MB  │  Net Disabled  │  10s Watchdog     │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-| Technology | Selected Over | Strategic Justification |
+| Tool | Required for | Minimum version |
 | :--- | :--- | :--- |
-| **Backend: Go / Gin** | Node.js / Express | Exceptional concurrency, extremely low memory footprint, and native OS-level integration when communicating with the Docker daemon via UNIX sockets. |
-| **Sandboxing: Docker** | VM-based hypervisors | Docker provides the exact balance of instant containment startup latency (<50ms) and comprehensive resources limitation (cgroups/namespaces) required for real-time compilation. |
-| **Frontend: React + Zustand** | Redux / Recoil | React yields solid component hierarchy, while **Zustand** provides a lightweight, polymorphic global state slice without boilerplate, avoiding complex context re-renders. |
-| **Animations: Framer Motion + SVGs** | D3.js / Cytoscape.js | D3.js relies heavily on custom DOM bindings. We needed **physics-based spring animations** that bypass React's standard state-update render cycle entirely to sustain 60FPS fluid layouts under stress. |
+| Node.js | Frontend development | 18+ |
+| npm | Package management | 9+ |
+| Docker + Docker Compose | Full-stack deployment / sandbox execution | Docker 24+, Compose v2 |
+| Go | Backend development (bare-metal only) | 1.21+ |
+
+### Option A: Frontend only (no Docker)
+
+This is the fastest way to start. The frontend runs standalone -- algorithms execute client-side in Web Workers. Code execution via Docker sandbox will not be available, but all visualizations work.
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/JakubRzadzki/visual_algo.git
+cd visual_algo
+
+# 2. Install dependencies
+npm install --legacy-peer-deps
+
+# 3. Start the development server
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`.
+
+### Option B: Full stack with Docker Compose (recommended)
+
+This launches the complete multi-service stack: frontend (Nginx), Go API, and PostgreSQL.
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/JakubRzadzki/visual_algo.git
+cd visual_algo
+
+# 2. Build and start all services
+docker-compose up -d --build
+```
+
+Once the containers are running:
+
+| Service | URL | Description |
+| :--- | :--- | :--- |
+| Frontend | `http://localhost:80` | Main application |
+| Go API | `http://localhost:8080` | Code execution + snapshot API |
+| PostgreSQL | `localhost:5432` | Snapshot storage (user: `user`, password: `password`, db: `visual_algo`) |
+
+To stop everything:
+
+```bash
+docker-compose down
+```
+
+To stop and also remove the database volume:
+
+```bash
+docker-compose down -v
+```
+
+### Option C: Backend bare-metal (without Docker Compose)
+
+If you want to run the Go backend outside of Docker (for development), you still need Docker running on the host for the sandbox containers.
+
+```bash
+# Terminal 1 -- start the frontend
+npm install --legacy-peer-deps
+npm run dev
+
+# Terminal 2 -- start the Go backend
+cd backend
+go mod tidy
+go run main.go
+```
+
+The backend listens on port `8080`. The Vite dev server proxies `/api` requests to it automatically (configured in `vite.config.ts`).
+
+### Running Tests
+
+```bash
+# Frontend unit tests (Vitest)
+npm run test
+
+# Backend tests
+cd backend
+go test ./...
+```
+
+### Building for Production
+
+```bash
+npm run build
+```
+
+Output goes to `dist/`. The Dockerfile uses this output with an Nginx container for production serving.
 
 ---
 
-## ⚡ 3. Engineering Challenges Solved
+## Engineering Details
 
-### 🏎️ Challenge A: The React Re-render Trap (High-Frequency Visualization)
-* **The Problem**: Visualizing complex algorithms (such as Quick Sort or Dijkstra's shortest path) triggers hundreds of trace events per second (updates to array pointers, pivot highlights, node state transitions). Standard React state bindings (`useState` / context) force full-tree re-renders, causing browser layout-thrashing and dropping frame rates to single digits.
-* **The Solution**: Designed and built a custom **`AnimationEventBus`** (a lightweight Pub-Sub broker) that bypasses the React render phase completely. 
-  1. The UI components register mutable React `useRef` handles pointing to native SVG DOM nodes.
-  2. The `AnimationEngine` emits state changes directly into the event bus using a RequestAnimationFrame (RAF) loop.
-  3. Subscribers listen to the bus and call imperative **Framer Motion `useAnimation`** controls directly on the mutable refs. This separates the animation pipeline from React's state reconciliation completely.
+### Problem: React re-render trap at high event frequency
 
-### 🛡️ Challenge B: Remote Code Execution (RCE) and Untrusted Code Sandbox
-* **The Problem**: Executing raw C++ and Python code submitted by users opens the system up to fork bombs, host filesystem exploitation, memory exhaustion, and outbound spam/DDoS vectors.
-* **The Solution**: Implemented a highly secure **Docker Sandbox** at the API broker layer:
-  * **Network Isolation**: Containers are constructed with `NetworkDisabled: true` to prevent any outbound or local socket access.
-  * **Memory Guard**: Memory is strictly hard-capped at **256MB** using Linux cgroups (`container.Resources{Memory: 256 * 1024 * 1024}`).
-  * **CPU Limits**: Shares are throttled to a maximum of **0.5 CPU cores** (`NanoCPUs: 500000000`).
-  * **Infinite Loop Watchdog**: A Go-routine-backed watchdog monitors execution and forces a container kill-command (`cli.ContainerRemove` with Force) if execution exceeds a **10-second threshold**, returning a strict `408 Request Timeout` response.
+Visualizing algorithms like Quick Sort or Dijkstra produces hundreds of trace events per second. Standard React state bindings (`useState`, context) force full-tree re-renders, dropping frame rates to single digits.
 
-### 🧵 Challenge C: UI Main Thread Blockages
-* **The Problem**: Parsing large execution traces (tens of thousands of JSON lines) and performing physics-based graph layout calculations (Force-Directed Graph layouts) block the browser's single-threaded event loop, freezing animations.
-* **The Solution**: Architected the **Object Pool Pattern** implemented via a multi-threaded **`WorkerPool`** utilizing HTML5 Web Workers:
-  * All heavy computation—including trace-parsing, parsing of complex layout coordinates, and mathematical step-interpolation—is delegated off-thread to `algo.worker.ts`.
-  * The main thread only receives computed state snapshots, preserving a buttery-smooth 60FPS UI transition rate.
+**Solution**: A custom `AnimationEventBus` (pub-sub broker) bypasses React's render phase entirely:
+1. UI components register mutable `useRef` handles pointing to native SVG DOM nodes.
+2. The `AnimationEngine` emits state changes into the event bus via a `requestAnimationFrame` loop.
+3. Subscribers call imperative Framer Motion `useAnimation` controls directly on the mutable refs -- no React reconciliation involved.
+
+### Problem: Remote Code Execution security
+
+Executing raw user-submitted C++ and Python opens the system to fork bombs, filesystem exploitation, memory exhaustion, and network abuse.
+
+**Solution**: Ephemeral Docker containers with:
+- `NetworkDisabled: true` -- no outbound or local socket access.
+- Memory hard-capped at 256 MB via Linux cgroups.
+- CPU throttled to 0.5 cores (`NanoCPUs: 500000000`).
+- Go-routine watchdog kills the container after 10 seconds, returning `408 Request Timeout`.
+- Containers are force-removed after execution regardless of outcome.
+
+When Docker is unavailable, the backend falls back to direct host execution (development convenience only).
+
+### Problem: Main thread blocking
+
+Parsing large execution traces and computing force-directed graph layouts blocks the browser event loop.
+
+**Solution**: A `WorkerPool` using HTML5 Web Workers handles all heavy computation off-thread. The main thread receives only computed state snapshots, preserving 60 FPS.
 
 ---
 
-## 📐 4. Architecture & Design Patterns
+## Design Patterns
 
-### 📡 The Trace Protocol
-Communication between the backend sandbox and the visual interface is driven by a standardized streaming **Trace Protocol**. During code execution, the program writes structured JSON statements to its standard output. The engine intercepts these logs and converts them into a standardized `ExecutionTrace` structure:
+### Trace Protocol
+
+Communication between backend and frontend follows a structured JSON trace protocol. During execution, the program writes JSON lines to stdout. The backend collects them into an `ExecutionTrace`:
 
 ```json
 {
@@ -648,8 +800,9 @@ Communication between the backend sandbox and the visual interface is driven by 
 }
 ```
 
-### 🧩 The Strategy Pattern
-To prevent bloating the visualizer frontend when adding new algorithms, EDVR employs the **Strategy Design Pattern** via a strict TypeScript interface `AlgorithmPlugin<T>`.
+### Strategy Pattern
+
+New algorithms are added as isolated plugins implementing the `AlgorithmPlugin<T>` interface:
 
 ```typescript
 export interface AlgorithmPlugin<T> {
@@ -659,46 +812,56 @@ export interface AlgorithmPlugin<T> {
   execute(data: T): ExecutionTrace;
 }
 ```
-Any new algorithm (e.g. Red-Black Trees, A* Search) is written as an isolated plugin, registering itself with the `AlgorithmCatalog` without modifying the core state machines or rendering stages.
 
-## 🚀 5. Getting Started & Local Development
+Plugins register themselves with the `AlgorithmCatalog` without modifying core state machines or rendering stages.
 
-### Prerequisites
-* **Docker** & **Docker Compose** installed.
-* **Go 1.21+** and **Node.js 18+** (only if running services bare-metal outside of containers).
+---
 
-### Standard Containerized Setup (Recommended)
-This launches the complete multi-service stack:
-1. **Frontend**: Vite SPA bundled and served via Nginx on port `80`.
-2. **Backend**: Go API brokering compilation requests on port `8080`.
-3. **Database**: PostgreSQL 15 listening on port `5432` for snapshots.
+## Project Structure
 
-Run the following command at the project root:
-
-```bash
-# Build all images and spin up the complete environment in detached mode
-docker-compose up -d --build
+```
+visual_algo/
+├── backend/
+│   ├── Dockerfile          # Go API container
+│   ├── main.go             # Gin server, snapshot CRUD, Docker sandbox RCE
+│   └── main_test.go
+├── public/
+│   └── images/categories/  # Dashboard category icons
+├── src/
+│   ├── algorithms/
+│   │   ├── cpp/            # C++ algorithm sources (sandbox execution)
+│   │   ├── python/         # Python algorithm sources (sandbox execution)
+│   │   └── source/         # TypeScript reference sources (editor display)
+│   ├── components/
+│   │   ├── background/     # AmbientGraph animated background
+│   │   ├── controls/       # Playback controls
+│   │   ├── dashboard/      # Algorithm catalog grid
+│   │   ├── hud/            # MonacoCodeEditor, EventLog, stats panels
+│   │   ├── layout/         # Navbar, Sidebar
+│   │   ├── presentation/   # Presentation/demo mode overlay
+│   │   ├── tutorial/       # Interactive tutorial system
+│   │   └── visualizer/     # Graph stage (Cytoscape), grid, DP matrix, tree renderers
+│   ├── core/
+│   │   ├── AnimationEngine.ts
+│   │   ├── EventBus.ts
+│   │   ├── WorkerPool.ts
+│   │   ├── plugins/        # All algorithm plugin implementations (TS)
+│   │   └── workers/        # Web Worker entry points
+│   ├── data/               # Algorithm catalog, educational content, i18n
+│   ├── hooks/              # Custom React hooks
+│   ├── pages/              # VisualizerPage, ShareLoader
+│   ├── sorting/            # Standalone sorting visualizer module
+│   ├── store/              # Zustand stores (uiStore, tutorialStore)
+│   ├── types/              # TypeScript type definitions
+│   ├── types.ts            # Core domain types
+│   └── App.tsx             # Root component with routing
+├── docker-compose.yml      # Multi-service orchestration
+├── Dockerfile              # Frontend build (Vite -> Nginx)
+├── nginx.conf              # SPA routing config
+├── vite.config.ts
+└── package.json
 ```
 
-#### Port Allocations & Verification
-
-Once Docker has successfully compiled and initialized the containers, verify that the services are online:
-
-| Service | Port | Endpoint / Health Check |
-| :--- | :--- | :--- |
-| **Glacier Frontend** | `http://localhost:80` | Client visual panel / main entry point |
-| **Go Gin Router** | `http://localhost:8080` | `GET http://localhost:8080/api/snapshots/:id` |
-| **PostgreSQL Database** | `http://localhost:5432` | Accessible via any standard SQL client |
-
 ---
 
-## 🎨 6. The "Glacier Glassmorphism" Design Language
-
-To create a premium UI experience, the system operates on a customized CSS glassmorphism implementation:
-* **Backgrounds**: High-blur backdrop-filters (`backdrop-filter: blur(20px)`) combined with dynamic, translucent color overlays (HSL tailored palettes).
-* **Borders**: Thin, semi-transparent gradients that mimic refracting ice.
-* **Micro-Animations**: Smooth, elastic spring physics using Framer Motion (no linear, artificial-feeling easing curves).
-* **Typography**: Outfit & Inter fonts (fetched dynamically via Google Fonts API) to ensure high readability and slick layout styling.
-
----
-*EDVR Engine is created for developers who value security, speed, and beautiful visual feedback.*
+*EDVR -- Jakub Rzadzki*
