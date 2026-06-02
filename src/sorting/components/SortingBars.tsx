@@ -73,6 +73,7 @@ export default function SortingBars({ frame }: SortingBarsProps) {
   const maxValue = useMemo(() => Math.max(...arr, 1), [arr]);
   const count = arr.length;
   const useLayoutAnim = count <= LAYOUT_ANIM_THRESHOLD;
+  const valueOccurrences = new Map<number, number>();
 
   return (
     <div
@@ -93,10 +94,14 @@ export default function SortingBars({ frame }: SortingBarsProps) {
           />
         );
 
+        const occ = valueOccurrences.get(value) || 0;
+        valueOccurrences.set(value, occ + 1);
+        const uniqueKey = `bar-${value}-${occ}`;
+
         if (useLayoutAnim) {
           return (
             <motion.div
-              key={`bar-${value}`}
+              key={uniqueKey}
               layout
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               className="flex flex-col items-center justify-end h-full"

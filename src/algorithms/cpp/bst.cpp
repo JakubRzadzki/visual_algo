@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#define EMIT(type, id) std::cout << "{\"type\": \"" << type << "\", \"nodeIds\": [\"" << id << "\"]}\n"
+#define EMIT(type, id) std::cout << "{\"type\": \"" << type << "\", \"nodeIds\": [\"" << id << "\"]}" << std::endl;
 
 using namespace std;
 

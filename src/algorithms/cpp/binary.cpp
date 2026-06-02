@@ -4,7 +4,7 @@
 #include <string>
 
 // Simple emit macro to prevent empty trace errors in sandbox
-#define EMIT(type, id) std::cout << "{\"type\": \"" << type << "\", \"nodeIds\": [\"" << id << "\"]}\n"
+#define EMIT(type, id) std::cout << "{\"type\": \"" << type << "\", \"nodeIds\": [\"" << id << "\"]}" << std::endl;
 
 struct Node {
     std::string value;

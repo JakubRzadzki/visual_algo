@@ -348,6 +348,9 @@ export default function MonacoCodeEditor() {
           const v = parseInt(e.to.replace("n", ""), 10);
           if (!isNaN(u) && !isNaN(v)) {
             adj[u].push([v, e.weight, e.id]);
+            if (currentGraph.isDirected === false) {
+              adj[v].push([u, e.weight, e.id]);
+            }
           }
         });
         const match = code.match(/^([ \t]*)graph\s*=\s*\[[\s\S]*?^\1\]/m);
@@ -394,6 +397,9 @@ export default function MonacoCodeEditor() {
           const v = parseInt(e.to.replace("n", ""), 10);
           if (!isNaN(u) && !isNaN(v)) {
             adj[u].push([v, e.weight, e.id]);
+            if (currentGraph.isDirected === false) {
+              adj[v].push([u, e.weight, e.id]);
+            }
           }
         });
         const match = code.match(

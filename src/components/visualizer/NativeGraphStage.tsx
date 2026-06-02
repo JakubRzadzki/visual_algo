@@ -343,6 +343,9 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
           case "queued":
             v = { fill: C.purple, stroke: C.purpleLight, scale: 1.05, status: "queued" };
             break;
+          case "removed":
+            v = { fill: "#64748b", stroke: "#475569", scale: 0.9, status: "removed" };
+            break;
           case "visited":
             v = { fill: C.blue, stroke: C.blueLight, scale: 1, status: "visited" };
             break;
@@ -400,6 +403,11 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
 
       // ── Forward: RELAX ─────────────────────────────────────────────────
       else if (ev.type === "GRAPH_RELAX") {
+        const prev = timers.current.get(ev.edgeId);
+        if (prev !== undefined) {
+          clearTimeout(prev);
+          timers.current.delete(ev.edgeId);
+        }
         setEdgeVis((p) =>
           new Map(p).set(ev.edgeId, {
             stroke: C.cyan,
