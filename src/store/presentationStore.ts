@@ -1,182 +1,95 @@
 /**
  * @file presentationStore.ts
- * @description Zustand store managing the Presentation Mode state machine.
+ * @description Zustand store managing the Presentation Mode slide deck.
  *
- * Controls the auto-pilot showcase that cycles through every available algorithm,
- * alternating between Python and C++ source code on each step, automatically
- * navigating to the appropriate route and triggering sandbox execution.
+ * Drives the full-screen engineering presentation: an ordered deck of slides
+ * (title, architecture, design patterns and the algorithm gallery). The store
+ * only tracks navigation state — the actual content lives in
+ * {@link PRESENTATION_SLIDES} and is rendered by {@link PresentationOverlay}.
  */
 
 import { create } from "zustand";
-import {
-  ALGORITHM_CATALOG,
-  type AlgorithmEntry,
-  type CategoryEntry,
-} from "../data/algorithmCatalog";
+import { PRESENTATION_SLIDES } from "../data/presentationSlides";
 
-/** Supported source code languages for alternation. */
-type PresentationLanguage = "python" | "cpp";
-
-/** A single item in the presentation playlist. */
-export interface PresentationItem {
-  /** The category entry from the algorithm catalog. */
-  category: CategoryEntry;
-  /** The algorithm entry from the catalog. */
-  algorithm: AlgorithmEntry;
-  /** Which language to show for this particular slide. */
-  language: PresentationLanguage;
-  /** The route path for navigation, e.g. "/algo/sorting/merge-sort". */
-  route: string;
-}
-
-/** Current phase of a single presentation slide. */
-type SlidePhase =
-  | "navigating"
-  | "loading-code"
-  | "running"
-  | "animating"
-  | "done";
+/** Number of seconds each slide is shown before auto-advancing (autoplay). */
+export const AUTOPLAY_SECONDS = 15;
 
 interface PresentationState {
   /** Whether presentation mode is currently active. */
   isActive: boolean;
-  /** Full ordered playlist of algorithm slides. */
-  playlist: PresentationItem[];
-  /** Current index in the playlist. */
+  /** Current slide index in {@link PRESENTATION_SLIDES}. */
   currentIndex: number;
-  /** Current phase of the active slide lifecycle. */
-  slidePhase: SlidePhase;
-  /** Seconds remaining before auto-advancing to the next slide. */
-  countdownSeconds: number;
-  /** Whether the presentation is paused (user interaction). */
-  isPaused: boolean;
+  /** Total number of slides. */
+  totalSlides: number;
+  /** Whether autoplay is running (auto-advances every {@link AUTOPLAY_SECONDS}). */
+  isAutoPlaying: boolean;
+  /** Direction of the last navigation (1 = forward, -1 = backward) for transitions. */
+  direction: number;
 
-  /** Start presentation mode — builds the playlist and begins cycling. */
+  /** Open the presentation at the first slide. */
   startPresentation: () => void;
-  /** Stop presentation mode and reset all state. */
+  /** Close the presentation and reset state. */
   stopPresentation: () => void;
-  /** Advance to the next slide manually. */
+  /** Advance to the next slide (clamped at the end). */
   nextSlide: () => void;
-  /** Go back to the previous slide. */
+  /** Go back to the previous slide (clamped at the start). */
   prevSlide: () => void;
-  /** Toggle pause/resume. */
-  togglePause: () => void;
-  /** Update the slide phase. */
-  setSlidePhase: (phase: SlidePhase) => void;
-  /** Update countdown timer value. */
-  setCountdown: (seconds: number) => void;
-  /** Jump to a specific slide index. */
+  /** Jump directly to a slide index. */
   jumpToSlide: (index: number) => void;
-}
-
-/**
- * Builds the full presentation playlist from the algorithm catalog.
- * Each algorithm appears twice — once in Python, once in C++ —
- * alternating languages across slides.
- *
- * @returns Ordered array of PresentationItem entries.
- */
-function buildPlaylist(): PresentationItem[] {
-  const items: PresentationItem[] = [];
-  let langToggle: PresentationLanguage = "python";
-
-  for (const category of ALGORITHM_CATALOG) {
-    for (const algo of category.algorithms) {
-      if (!algo.available) continue;
-
-      // Map category.id to route segment
-      const categoryRoute = category.id === "trees" ? "trees" : category.id;
-
-      items.push({
-        category,
-        algorithm: algo,
-        language: langToggle,
-        route: `/algo/${categoryRoute}/${algo.id}`,
-      });
-
-      // Alternate language for the next slide
-      langToggle = langToggle === "python" ? "cpp" : "python";
-    }
-  }
-
-  return items;
+  /** Toggle the autoplay timer on/off. */
+  toggleAutoPlay: () => void;
 }
 
 export const usePresentationStore = create<PresentationState>((set, get) => ({
   isActive: false,
-  playlist: [],
   currentIndex: 0,
-  slidePhase: "navigating",
-  countdownSeconds: 0,
-  isPaused: false,
+  totalSlides: PRESENTATION_SLIDES.length,
+  isAutoPlaying: false,
+  direction: 1,
 
   startPresentation: () => {
-    const playlist = buildPlaylist();
-    if (playlist.length === 0) return;
     set({
       isActive: true,
-      playlist,
       currentIndex: 0,
-      slidePhase: "navigating",
-      countdownSeconds: 0,
-      isPaused: false,
+      isAutoPlaying: false,
+      direction: 1,
     });
   },
 
   stopPresentation: () => {
     set({
       isActive: false,
-      playlist: [],
       currentIndex: 0,
-      slidePhase: "navigating",
-      countdownSeconds: 0,
-      isPaused: false,
+      isAutoPlaying: false,
+      direction: 1,
     });
   },
 
   nextSlide: () => {
-    const { playlist, currentIndex } = get();
-    if (currentIndex >= playlist.length - 1) {
-      // Reached end — stop presentation
-      get().stopPresentation();
+    const { currentIndex, totalSlides } = get();
+    if (currentIndex >= totalSlides - 1) {
+      set({ isAutoPlaying: false });
       return;
     }
-    set({
-      currentIndex: currentIndex + 1,
-      slidePhase: "navigating",
-      countdownSeconds: 0,
-    });
+    set({ currentIndex: currentIndex + 1, direction: 1 });
   },
 
   prevSlide: () => {
     const { currentIndex } = get();
     if (currentIndex <= 0) return;
-    set({
-      currentIndex: currentIndex - 1,
-      slidePhase: "navigating",
-      countdownSeconds: 0,
-    });
-  },
-
-  togglePause: () => {
-    set((state) => ({ isPaused: !state.isPaused }));
-  },
-
-  setSlidePhase: (phase) => {
-    set({ slidePhase: phase });
-  },
-
-  setCountdown: (seconds) => {
-    set({ countdownSeconds: seconds });
+    set({ currentIndex: currentIndex - 1, direction: -1 });
   },
 
   jumpToSlide: (index) => {
-    const { playlist } = get();
-    if (index < 0 || index >= playlist.length) return;
+    const { currentIndex, totalSlides } = get();
+    if (index < 0 || index >= totalSlides || index === currentIndex) return;
     set({
       currentIndex: index,
-      slidePhase: "navigating",
-      countdownSeconds: 0,
+      direction: index > currentIndex ? 1 : -1,
     });
+  },
+
+  toggleAutoPlay: () => {
+    set((state) => ({ isAutoPlaying: !state.isAutoPlaying }));
   },
 }));

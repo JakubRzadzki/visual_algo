@@ -51,7 +51,7 @@ int manhattan(int x1, int y1, int x2, int y2) {
 /**
  * Core A* Algorithm
  */
-void a_star(int width, int height, pair<int, int> start, pair<int, int> target) {
+void a_star(int width, int height, pair<int, int> start, pair<int, int> target, const vector<pair<int, int>>& walls) {
     push_event("SYSTEM_LOG", "\"message\": \"Starting A* Search (C++)\", \"level\": \"INFO\"");
     
     priority_queue<Node, vector<Node>, greater<Node>> open_set;
@@ -62,6 +62,7 @@ void a_star(int width, int height, pair<int, int> start, pair<int, int> target) 
     
     map<pair<int, int>, pair<int, int>> came_from;
     set<pair<int, int>> closed_set;
+    set<pair<int, int>> wall_set(walls.begin(), walls.end());
     
     while (!open_set.empty()) {
         Node current = open_set.top();
@@ -104,6 +105,8 @@ void a_star(int width, int height, pair<int, int> start, pair<int, int> target) 
             
             if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
                 pair<int, int> neighbor = {nx, ny};
+                if (wall_set.count(neighbor)) continue;
+                
                 int tentative_g = current.g + 1;
                 
                 if (g_score.find(neighbor) == g_score.end() || tentative_g < g_score[neighbor]) {
@@ -125,7 +128,8 @@ void a_star(int width, int height, pair<int, int> start, pair<int, int> target) 
 int main() {
     // Standard visualizer grid is 20x20
     // Start at (2, 10), Target at (17, 10)
-    a_star(20, 20, {2, 10}, {17, 10});
+    vector<pair<int, int>> walls = {};
+    a_star(20, 20, {2, 10}, {17, 10}, walls);
     return 0;
 }
 

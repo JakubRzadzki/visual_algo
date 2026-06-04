@@ -69,7 +69,19 @@ const ARROW_VARIANTS: { key: string; fill: string }[] = [
   { key: "cyan", fill: C.cyan },
   { key: "green", fill: C.green },
   { key: "red", fill: C.red },
+  { key: "purple", fill: C.purpleLight },
 ];
+
+/** Tree algorithms that surface rotation / balance state in the UI. */
+const TREE_ALGOS = new Set(["avl", "bst", "rbt", "binary", "max-heap", "trie"]);
+
+/** Aggregated tree state (rotation count + per-node AVL balance factors). */
+interface TreeStats {
+  rotations: number;
+  lastDir: "LEFT" | "RIGHT" | null;
+  lastPivot: string | null;
+  balances: Record<string, number>;
+}
 
 // ─── Visual State Types ───────────────────────────────────────────────────────
 
@@ -159,7 +171,6 @@ const RELEVANT = new Set([
   "GRAPH_EDGE_ADD",
   "GRAPH_NODE_MOVE",
   "GRAPH_EDGE_REMOVE",
-  "TREE_ROTATE",
 ]);
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -194,6 +205,14 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
     queue: [] as string[],
     mst: [] as string[],
     msg: "",
+  });
+
+  /* ── Tree rotation / balance state ── */
+  const [treeStats, setTreeStats] = useState<TreeStats>({
+    rotations: 0,
+    lastDir: null,
+    lastPivot: null,
+    balances: {},
   });
 
   /* ── Refs for stable callbacks ── */
@@ -235,6 +254,7 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
     }
     for (const e of g.edges) ind[e.to] = (ind[e.to] || 0) + 1;
     setAlgo({ dist: d, indeg: ind, queue: [], mst: [], msg: "" });
+    setTreeStats({ rotations: 0, lastDir: null, lastPivot: null, balances: {} });
 
     timers.current.forEach((id) => clearTimeout(id));
     timers.current.clear();
@@ -288,6 +308,27 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
       }
     }
     setAlgo({ dist: d, indeg: ind, queue: q, mst, msg });
+
+    // ── Tree rotation / balance aggregation ──
+    if (TREE_ALGOS.has(a)) {
+      let rotations = 0;
+      let lastDir: "LEFT" | "RIGHT" | null = null;
+      let lastPivot: string | null = null;
+      const balances: Record<string, number> = {};
+      for (const ev of events) {
+        if (ev.type === "TREE_ROTATE") {
+          rotations++;
+          lastDir = ev.direction;
+          lastPivot =
+            g.nodes.find((n) => n.id === ev.pivotId)?.label ?? ev.pivotId;
+        } else if (ev.type === "SYSTEM_LOG") {
+          // Parse "BF(<value>) = <balance>" emitted by the AVL plugin
+          const m = ev.message.match(/^BF\((-?\d+)\)\s*=\s*(-?\d+)/);
+          if (m) balances[m[1]] = Number(m[2]);
+        }
+      }
+      setTreeStats({ rotations, lastDir, lastPivot, balances });
+    }
   }, []);
 
   /* ── EventBus subscription ── */
@@ -367,6 +408,9 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
             break;
           case "black":
             v = { fill: "#0f172a", stroke: "#475569", scale: 1, status: "black" };
+            break;
+          case "rotate":
+            v = { fill: C.violet, stroke: C.purpleLight, scale: 1.4, status: "rotate" };
             break;
           case "finished":
             v = { fill: C.nodeFill, stroke: "#06b6d4", scale: 1.1, status: "finished" };
@@ -651,22 +695,36 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
             })}
           </g>
 
-          {/* ── Distance / In-Degree badges ── */}
+          {/* ── Distance / In-Degree / AVL balance badges ── */}
           <g>
             {Array.from(dynNodes.values()).map((node) => {
               if (hiddenN.has(node.id)) return null;
               let txt = "";
+              let badgeText: string = C.cyan;
+              let badgeStroke = "rgba(6,182,212,0.2)";
+
               if (activeAlgo === "dijkstra") {
                 const d = algo.dist[node.id];
                 txt = `d: ${d === Infinity || d === undefined ? "∞" : d}`;
               } else if (activeAlgo === "topo-sort") {
                 txt = `in: ${algo.indeg[node.id] ?? 0}`;
+              } else if (activeAlgo === "avl") {
+                const bf = treeStats.balances[node.label];
+                if (bf !== undefined) {
+                  txt = `BF ${bf > 0 ? "+" : ""}${bf}`;
+                  // |BF| > 1 means the node is unbalanced → triggers a rotation
+                  if (Math.abs(bf) > 1) {
+                    badgeText = C.yellowLight;
+                    badgeStroke = "rgba(250,204,21,0.45)";
+                  }
+                }
               }
               if (!txt) return null;
 
               const pop = popCnt.get(node.id) ?? 0;
               return (
                   <motion.g
+                    key={`badge-${node.id}`}
                     animate={{ x: node.x, y: node.y + 40, scale: pop > 0 ? [1, 1.5, 1] : 1 }}
                     transition={{ type: "spring", stiffness: 120, damping: 14 }}
                     style={{ transformOrigin: "0px 0px" }}
@@ -678,14 +736,14 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
                       height={18}
                       rx={4}
                       fill="rgba(15,23,42,0.75)"
-                      stroke="rgba(6,182,212,0.2)"
+                      stroke={badgeStroke}
                       strokeWidth={1}
                     />
                     <text
                       x={0}
                       y={3}
                       textAnchor="middle"
-                      fill={C.cyan}
+                      fill={badgeText}
                       fontSize={10}
                       fontFamily="monospace"
                       fontWeight="bold"
@@ -752,6 +810,7 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
               );
             })}
           </g>
+
         </svg>
 
         {/* ── Legend overlay ── */}
@@ -796,6 +855,8 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
             {translateGraphDescription(algo.msg, language)}
           </div>
         )}
+
+
 
         {/* ── Dijkstra distances ── */}
         {activeAlgo === "dijkstra" && (

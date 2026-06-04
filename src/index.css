@@ -249,3 +249,23 @@
   stroke-dasharray: 8 4;
   animation: edge-flow 0.6s linear infinite;
 }
+
+/* ────────────────────────────────────────────────────
+ * Grid Stage — cell reveal pop (pathfinding / flood fill)
+ * ──────────────────────────────────────────────────── */
+@keyframes grid-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.4;
+  }
+  60% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.grid-pop {
+  animation: grid-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}

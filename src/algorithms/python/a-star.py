@@ -18,22 +18,28 @@ def a_star(width, height, start, target, walls):
     def get_h(p1, p2):
         return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
+    # Use a counter to avoid comparing tuple/None in heapq
+    import itertools
+    counter = itertools.count()
+
     open_set = []
-    heapq.heappush(open_set, (get_h(start, target), 0, start, None))
+    heapq.heappush(open_set, (get_h(start, target), 0, next(counter), start))
 
     g_score = {start: 0}
     came_from = {}
 
     wall_set = set(tuple(w) for w in walls)
+    closed_set = set()
 
     while open_set:
-        f, g, current, parent = heapq.heappop(open_set)
+        f, g, _, current = heapq.heappop(open_set)
+
+        if current in closed_set:
+            continue
+        closed_set.add(current)
 
         if current in wall_set:
             continue
-
-        if parent:
-            came_from[current] = parent
 
         # Highlight expansion
         if current != start and current != target:
@@ -70,9 +76,10 @@ def a_star(width, height, start, target, walls):
             ):
                 tentative_g = g + 1
                 if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                    came_from[neighbor] = current
                     g_score[neighbor] = tentative_g
                     f_score = tentative_g + get_h(neighbor, target)
-                    heapq.heappush(open_set, (f_score, tentative_g, neighbor, current))
+                    heapq.heappush(open_set, (f_score, tentative_g, next(counter), neighbor))
 
     push_event("SYSTEM_LOG", {"message": "No path found", "level": "WARN"})
     return None
