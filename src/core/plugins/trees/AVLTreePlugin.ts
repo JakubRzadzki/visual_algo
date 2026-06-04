@@ -280,6 +280,19 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
       updateLayout(simRoot); // Animate the layout change after insertion and rotations!
     });
 
+    // ── Final cleanup: clear all highlights so the tree looks clean ──
+    push({ type: "SYSTEM_LOG", level: "INFO", message: "AVL Tree construction complete." });
+
+    // Reset all edge highlights to default
+    for (const e of edges) {
+      push({ type: "GRAPH_EDGE_HIGHLIGHT", edgeId: e.id, status: "default" });
+    }
+
+    // Set all nodes to finished (clean) state
+    for (const n of nodes) {
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: n.id, status: "finished" });
+    }
+
     const initialGraph: GraphInput = {
       nodes: nodes.map((n) => ({
         id: n.id,

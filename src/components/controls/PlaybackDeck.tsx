@@ -37,7 +37,7 @@ export default function PlaybackDeck() {
   return (
     <div
       data-tutorial-step="control-panel"
-      className="absolute bottom-8 left-1/2 -translate-x-1/2 glass-panel-elevated px-8 py-3 flex items-center gap-6 z-50 transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-white/10 scale-90 sm:scale-100"
+      className="absolute bottom-32 left-8 origin-bottom-left glass-panel-elevated px-8 py-3 flex items-center gap-6 z-50 transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-white/10 scale-90 sm:scale-100"
     >
       <div className="flex items-center gap-4 border-r border-ice-blue/20 pr-6">
         <button

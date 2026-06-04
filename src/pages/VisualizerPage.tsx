@@ -106,7 +106,7 @@ export default function VisualizerPage() {
 
     // Preload demonstration trace client-side via worker if available
     const graphAlgos = ["dijkstra", "kruskal", "bfs", "dfs", "prim", "topo-sort"];
-    const treeAlgos = ["bst", "avl", "max-heap", "union-find"];
+    const treeAlgos = ["bst", "avl", "rbt", "max-heap", "union-find"];
     const otherAlgos = ["knapsack", "lcs"];
 
     if (graphAlgos.includes(found.algorithm.id)) {

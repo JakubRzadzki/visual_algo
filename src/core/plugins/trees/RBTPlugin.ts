@@ -271,6 +271,23 @@ export class RBTPlugin implements AlgorithmPlugin<ArrayInput> {
 
     values.forEach(v => simInsert(v));
 
+    // ── Final cleanup: clear all highlights so the tree looks clean ──
+    push({ type: "SYSTEM_LOG", level: "INFO", message: "Red-Black Tree construction complete." });
+
+    // Reset all edge highlights to default
+    for (const e of edges) {
+      push({ type: "GRAPH_EDGE_HIGHLIGHT", edgeId: e.id, status: "default" });
+    }
+
+    // Show all nodes with their correct final RB color
+    const setFinalColors = (n: RBTNode | null) => {
+      if (!n) return;
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: n.id, status: n.color === "red" ? "red" : "black" });
+      setFinalColors(n.left);
+      setFinalColors(n.right);
+    };
+    setFinalColors(root);
+
     const initialGraph: GraphInput = {
       nodes: nodes.map((n) => ({
         id: n.id,

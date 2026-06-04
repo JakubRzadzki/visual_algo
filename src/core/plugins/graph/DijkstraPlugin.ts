@@ -28,6 +28,7 @@ export class DijkstraPlugin implements AlgorithmPlugin<GraphInput> {
 
     // Distance map, initialised to Infinity
     const dist: Record<string, number> = {};
+    const parentEdge: Record<string, string> = {};
     for (const n of nodes) dist[n.id] = Infinity;
 
     const source = startNodeId ?? nodes[0]?.id;
@@ -92,6 +93,17 @@ export class DijkstraPlugin implements AlgorithmPlugin<GraphInput> {
         if (alt < dist[v]) {
           dist[v] = alt;
           pq.push({ id: v, priority: alt });
+          
+          if (parentEdge[v]) {
+            // Un-highlight the old parent edge because we found a shorter path
+            push({
+              type: "GRAPH_EDGE_HIGHLIGHT",
+              edgeId: parentEdge[v],
+              status: "default"
+            });
+          }
+          parentEdge[v] = edge.id;
+
           // Emit relax event so the renderer can react to the updated distance
           push({ type: "GRAPH_RELAX", edgeId: edge.id, weight: alt });
         }

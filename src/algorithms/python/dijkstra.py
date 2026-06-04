@@ -16,18 +16,27 @@ def dijkstra(src, graph):
 
     emit("GRAPH_NODE_HIGHLIGHT", nodeId=f"n{src}", distance=0)
 
+    parent_edge = {}
+
     while pq:
         d, u = heapq.heappop(pq)
         if d > dist[u]:
             continue
 
         for v, w, edge_id in graph[u]:
-            emit("GRAPH_EDGE_HIGHLIGHT", edgeId=edge_id, accepted=True)
             if dist[u] + w < dist[v]:
+                emit("GRAPH_EDGE_HIGHLIGHT", edgeId=edge_id, accepted=True)
                 dist[v] = dist[u] + w
+                
+                if v in parent_edge:
+                    emit("GRAPH_EDGE_HIGHLIGHT", edgeId=parent_edge[v], status="default")
+                parent_edge[v] = edge_id
+                
                 emit("GRAPH_RELAX", edgeId=edge_id, weight=dist[v])
                 emit("GRAPH_NODE_HIGHLIGHT", nodeId=f"n{v}", distance=dist[v])
                 heapq.heappush(pq, (dist[v], v))
+            else:
+                emit("GRAPH_EDGE_HIGHLIGHT", edgeId=edge_id, accepted=False)
     unreachable = sum(1 for d in dist if d == float("inf"))
     results = [f"n{i}:{d}" for i, d in enumerate(dist) if d != float("inf")]
 

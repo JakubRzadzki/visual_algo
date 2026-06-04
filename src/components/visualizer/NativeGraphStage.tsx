@@ -114,6 +114,12 @@ function resolveAlgoId(url: string | undefined, storeName: string): string {
   if (s.includes("breadth") || s === "bfs") return "bfs";
   if (s.includes("depth") || s === "dfs") return "dfs";
   if (s.includes("topo")) return "topo-sort";
+  // Tree algorithms
+  if (s.includes("avl")) return "avl";
+  if (s.includes("red") || s.includes("rbt")) return "rbt";
+  if (s.includes("bst") || s.includes("binary search")) return "bst";
+  if (s.includes("trie")) return "trie";
+  if (s.includes("heap")) return "max-heap";
   return "dijkstra";
 }
 
@@ -153,6 +159,7 @@ const RELEVANT = new Set([
   "GRAPH_EDGE_ADD",
   "GRAPH_NODE_MOVE",
   "GRAPH_EDGE_REMOVE",
+  "TREE_ROTATE",
 ]);
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -263,7 +270,10 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
         }
         if (ev.distance !== undefined) d[ev.nodeId] = ev.distance;
       } else if (ev.type === "GRAPH_EDGE_HIGHLIGHT") {
-        if (ev.accepted) {
+        if (ev.status === "default") {
+          const idx = mst.indexOf(ev.edgeId);
+          if (idx !== -1) mst.splice(idx, 1);
+        } else if (ev.accepted) {
           if (!mst.includes(ev.edgeId)) mst.push(ev.edgeId);
           const edge = g.edges.find((e) => e.id === ev.edgeId);
           if (edge) {
@@ -369,6 +379,21 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
 
       // ── Forward: EDGE_HIGHLIGHT ────────────────────────────────────────
       else if (ev.type === "GRAPH_EDGE_HIGHLIGHT") {
+        // "default" status = reset edge back to normal (used by tree cleanup)
+        if (ev.status === "default") {
+          const prev = timers.current.get(ev.edgeId);
+          if (prev !== undefined) {
+            clearTimeout(prev);
+            timers.current.delete(ev.edgeId);
+          }
+          setEdgeVis((p) => {
+            const m = new Map(p);
+            m.delete(ev.edgeId);
+            return m;
+          });
+          return;
+        }
+
         let vis: EdgeVis;
         let permanent = false;
 
@@ -379,7 +404,10 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
           vis = { stroke: C.red, strokeWidth: 3, isPath: false, labelScale: 1, markerKey: "red" };
         } else if (ev.accepted) {
           vis = { stroke: C.green, strokeWidth: 3, isPath: false, labelScale: 1.1, markerKey: "green" };
-          permanent = true;
+          // For tree algorithms, accepted edges are transient (traversal path)
+          // For graph algorithms (MST), they should be permanent
+          const isTreeAlgo = ["avl", "bst", "rbt", "trie", "binary", "max-heap"].includes(algoRef.current);
+          permanent = !isTreeAlgo;
         } else {
           vis = { stroke: C.white, strokeWidth: 4, isPath: false, labelScale: 1.15, markerKey: "highlight" };
         }
@@ -396,7 +424,7 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
               return m;
             });
             timers.current.delete(ev.edgeId);
-          }, 500);
+          }, 800);
           timers.current.set(ev.edgeId, tid);
         }
       }
@@ -417,6 +445,22 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
             markerKey: "cyan",
           }),
         );
+
+        const tid = window.setTimeout(() => {
+          setEdgeVis((p) => {
+            const m = new Map(p);
+            m.set(ev.edgeId, {
+              stroke: C.green,
+              strokeWidth: 3,
+              isPath: false,
+              labelScale: 1.1,
+              markerKey: "green",
+            });
+            return m;
+          });
+          timers.current.delete(ev.edgeId);
+        }, 800);
+        timers.current.set(ev.edgeId, tid);
         const edge = gRef.current.edges.find((e) => e.id === ev.edgeId);
         if (edge) {
           setPopCnt((p) => new Map(p).set(edge.to, (p.get(edge.to) || 0) + 1));
