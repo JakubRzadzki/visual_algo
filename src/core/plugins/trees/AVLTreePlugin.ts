@@ -7,6 +7,18 @@ import type {
   EventPayload,
 } from "../../../types";
 
+/**
+ * AVLTreePlugin — builds a self-balancing AVL tree and emits a visualization
+ * trace of insertions, rotations and the resulting re-layout.
+ *
+ * Implementation notes for nice rotation animations:
+ * - Nodes carry parent pointers and there is a single global `root`, so the
+ *   tree can be reconciled + re-laid-out after EACH rotation (not just per
+ *   insert). That makes every rotation a discrete, visible step.
+ * - Layout is positional (root centered, children offset left/right, spacing
+ *   halves per depth). Unlike an in-order layout — which is invariant under
+ *   rotation — this makes rotated nodes physically swap places on screen.
+ */
 export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
   id = "avl";
   name = "AVL Tree";
@@ -16,26 +28,29 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
     const values =
       data.values && data.values.length > 0
         ? data.values
-        : [10, 20, 30, 40, 50, 25];
+        : [50, 25, 10, 75, 100, 60, 65];
     const events: VisualizationEvent[] = [];
     let step = 0;
     const startTime = performance.now();
 
-    const push = (evt: EventPayload) => {
+    const push = (evt: EventPayload, incrementStep: boolean = true) => {
       events.push({
         ...evt,
         id: crypto.randomUUID(),
         timestamp: performance.now(),
-        step: step++,
+        step: step,
       });
+      if (incrementStep) step++;
     };
 
+    // ── AVL Node (with parent pointer) ────────────────────────────────────
     class AVLNode {
       value: number;
       id: string;
-      height: number = 1;
+      height = 1;
       left: AVLNode | null = null;
       right: AVLNode | null = null;
+      parent: AVLNode | null = null;
       constructor(value: number, id: string) {
         this.value = value;
         this.id = id;
@@ -43,6 +58,7 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
     }
 
     let nextId = 0;
+    let root: AVLNode | null = null;
 
     const getHeight = (n: AVLNode | null) => (n ? n.height : 0);
     const getBalance = (n: AVLNode | null) =>
@@ -51,90 +67,186 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
       n.height = Math.max(getHeight(n.left), getHeight(n.right)) + 1;
     };
 
-    // Calculate dynamic layout for current state
-    let lastCoords = new Map<string, {x: number, y: number}>();
-    const updateLayout = (simRoot: AVLNode | null) => {
-      if (!simRoot) return;
-      let currentIndex = 0;
-      const depths = new Map<string, number>();
-      const inOrderIndices = new Map<string, number>();
+    const nodes: { id: string; label: string; hidden: boolean }[] = [];
+    const edges: { id: string; from: string; to: string; hidden: boolean }[] =
+      [];
 
-      const traverse = (n: AVLNode | null, depth: number) => {
+    // ── Positional layout: root centered, children offset, spacing halves ──
+    const CENTER_X = 400;
+    const TOP_Y = 70;
+    const LEVEL_H = 92;
+    const ROOT_SPREAD = 180;
+
+    const lastCoords = new Map<string, { x: number; y: number }>();
+    const updateLayout = () => {
+      const place = (n: AVLNode | null, x: number, y: number, spread: number) => {
         if (!n) return;
-        depths.set(n.id, depth);
-        traverse(n.left, depth + 1);
-        inOrderIndices.set(n.id, currentIndex++);
-        traverse(n.right, depth + 1);
-      };
-
-      traverse(simRoot, 0);
-
-      const SVG_WIDTH = 800;
-      const SVG_HEIGHT = 600;
-      const paddingX = 60;
-      const paddingY = 80;
-      
-      const totalNodes = currentIndex;
-      const maxDepth = Math.max(0, ...Array.from(depths.values()));
-
-      const stepX = totalNodes > 1 ? (SVG_WIDTH - 2 * paddingX) / (totalNodes - 1) : 0;
-      const stepY = maxDepth > 0 ? (SVG_HEIGHT - 2 * paddingY) / maxDepth : 0;
-
-      for (const [id, idx] of inOrderIndices.entries()) {
-        const d = depths.get(id) || 0;
-        const x = totalNodes === 1 ? SVG_WIDTH / 2 : paddingX + idx * stepX;
-        const y = paddingY + d * Math.min(stepY, 120);
-        
-        const old = lastCoords.get(id);
+        const old = lastCoords.get(n.id);
         if (!old || old.x !== x || old.y !== y) {
-          push({ type: "GRAPH_NODE_MOVE", nodeId: id, x, y });
-          lastCoords.set(id, { x, y });
+          push({ type: "GRAPH_NODE_MOVE", nodeId: n.id, x, y }, false);
+          lastCoords.set(n.id, { x, y });
+        }
+        place(n.left, x - spread, y + LEVEL_H, spread * 0.5);
+        place(n.right, x + spread, y + LEVEL_H, spread * 0.5);
+      };
+      place(root, CENTER_X, TOP_Y, ROOT_SPREAD);
+    };
+
+    // ── Edge reconciliation against the actual tree structure ──
+    const activeEdges = new Set<string>();
+    const reconcileEdges = () => {
+      const desired = new Map<string, { from: string; to: string }>();
+      const walk = (n: AVLNode | null) => {
+        if (!n) return;
+        if (n.left) {
+          desired.set(`e${n.id}-${n.left.id}`, { from: n.id, to: n.left.id });
+          walk(n.left);
+        }
+        if (n.right) {
+          desired.set(`e${n.id}-${n.right.id}`, { from: n.id, to: n.right.id });
+          walk(n.right);
+        }
+      };
+      walk(root);
+
+      for (const id of Array.from(activeEdges)) {
+        if (!desired.has(id)) {
+          push({ type: "GRAPH_EDGE_REMOVE", edgeId: id }, false);
+          activeEdges.delete(id);
+        }
+      }
+      for (const [id, e] of desired.entries()) {
+        if (!activeEdges.has(id)) {
+          push({ type: "GRAPH_EDGE_ADD", edgeId: id, from: e.from, to: e.to }, false);
+          if (!edges.find((x) => x.id === id)) {
+            edges.push({ id, from: e.from, to: e.to, hidden: true });
+          }
+          activeEdges.add(id);
         }
       }
     };
 
-    const rightRotate = (y: AVLNode): AVLNode => {
-      const x = y.left!;
-      const T2 = x.right;
-      
-      push({ type: "GRAPH_EDGE_REMOVE", edgeId: `e${y.id}-${x.id}` });
-      if (T2) push({ type: "GRAPH_EDGE_REMOVE", edgeId: `e${x.id}-${T2.id}` });
-      
-      x.right = y;
-      y.left = T2;
-      
-      push({ type: "GRAPH_EDGE_ADD", edgeId: `e${x.id}-${y.id}`, from: x.id, to: y.id });
-      if (T2) push({ type: "GRAPH_EDGE_ADD", edgeId: `e${y.id}-${T2.id}`, from: y.id, to: T2.id });
-
-      updateHeight(y);
-      updateHeight(x);
-      return x;
+    /** Re-sync edges + positions to the current tree atomically. */
+    const syncTree = () => {
+      // Temporarily hijack push to not increment step so it all happens atomically
+      const oldStep = step;
+      reconcileEdges();
+      updateLayout();
+      // Ensure all these layout events share the same step number, then manually increment once
+      step = oldStep + 1;
     };
 
+    // ── Rotations described as a NODE SWAP (rise / fall / subtree transfer) ──
+
+    /** LEFT rotation on [x]: its RIGHT child [y] rises, [x] falls. */
     const leftRotate = (x: AVLNode): AVLNode => {
-      const y = x.right!;
-      const T2 = y.left;
+      const y = x.right!; // pivot — the node that rises
+      const mid = y.left; // middle subtree that must be transferred
       
-      push({ type: "GRAPH_EDGE_REMOVE", edgeId: `e${x.id}-${y.id}` });
-      if (T2) push({ type: "GRAPH_EDGE_REMOVE", edgeId: `e${y.id}-${T2.id}` });
+      push({
+        type: "SYSTEM_LOG",
+        level: "WARN",
+        message: `Identyfikacja węzłów: [parent]=${x.value} oraz jego PRAWE dziecko [pivot]=${y.value}.`,
+      });
+      push({
+        type: "SYSTEM_LOG",
+        level: "WARN",
+        message: `[pivot] ${y.value} WZNOSI SIĘ w górę — przejmuje miejsce węzła [parent] ${x.value}.`,
+      });
+      push({
+        type: "SYSTEM_LOG",
+        level: "WARN",
+        message: `[parent] ${x.value} OPADA w dół — staje się LEWYM dzieckiem węzła [pivot] ${y.value}.`,
+      });
+      push({
+        type: "SYSTEM_LOG",
+        level: "INFO",
+        message: `Oryginalne LEWE poddrzewo węzła [pivot] ${y.value}${mid ? ` (korzeń ${mid.value})` : ` (null)`} zostaje przeniesione i staje się NOWYM PRAWYM dzieckiem węzła [parent] ${x.value}. (Wartości są < ${y.value} i > ${x.value}).`,
+      });
 
+      x.right = y.left;
+      if (y.left) y.left.parent = x;
+      y.parent = x.parent;
+      if (!x.parent) root = y;
+      else if (x === x.parent.left) x.parent.left = y;
+      else x.parent.right = y;
       y.left = x;
-      x.right = T2;
-      
-      push({ type: "GRAPH_EDGE_ADD", edgeId: `e${y.id}-${x.id}`, from: y.id, to: x.id });
-      if (T2) push({ type: "GRAPH_EDGE_ADD", edgeId: `e${x.id}-${T2.id}`, from: x.id, to: T2.id });
-
+      x.parent = y;
       updateHeight(x);
       updateHeight(y);
+      
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "rotate" }, false);
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "rotate" });
+      
+      syncTree();
+      
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "default" }, false);
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "default" }, false);
+      
+      push({
+        type: "SYSTEM_LOG",
+        level: "INFO",
+        message: `Zaktualizowano balance factors dla ${x.value} i ${y.value}.`,
+      });
       return y;
     };
 
-    const nodes: { id: string; label: string; hidden: boolean }[] = [];
-    const edges: { id: string; from: string; to: string; hidden: boolean }[] = [];
+    /** RIGHT rotation on [y]: its LEFT child [x] rises, [y] falls. */
+    const rightRotate = (y: AVLNode): AVLNode => {
+      const x = y.left!; // pivot — the node that rises
+      const mid = x.right; // middle subtree that must be transferred
+      
+      push({
+        type: "SYSTEM_LOG",
+        level: "WARN",
+        message: `Identyfikacja węzłów: [parent]=${y.value} oraz jego LEWE dziecko [pivot]=${x.value}.`,
+      });
+      push({
+        type: "SYSTEM_LOG",
+        level: "WARN",
+        message: `[pivot] ${x.value} WZNOSI SIĘ w górę — przejmuje miejsce węzła [parent] ${y.value}.`,
+      });
+      push({
+        type: "SYSTEM_LOG",
+        level: "WARN",
+        message: `[parent] ${y.value} OPADA w dół — staje się PRAWYM dzieckiem węzła [pivot] ${x.value}.`,
+      });
+      push({
+        type: "SYSTEM_LOG",
+        level: "INFO",
+        message: `Oryginalne PRAWE poddrzewo węzła [pivot] ${x.value}${mid ? ` (korzeń ${mid.value})` : ` (null)`} zostaje przeniesione i staje się NOWYM LEWYM dzieckiem węzła [parent] ${y.value}. (Wartości są > ${x.value} i < ${y.value}).`,
+      });
 
-    // Pre-create node data for the graph
+      y.left = x.right;
+      if (x.right) x.right.parent = y;
+      x.parent = y.parent;
+      if (!y.parent) root = x;
+      else if (y === y.parent.right) y.parent.right = x;
+      else y.parent.left = x;
+      x.right = y;
+      y.parent = x;
+      updateHeight(y);
+      updateHeight(x);
+
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "rotate" }, false);
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "rotate" });
+
+      syncTree();
+      
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "default" }, false);
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "default" }, false);
+      
+      push({
+        type: "SYSTEM_LOG",
+        level: "INFO",
+        message: `Zaktualizowano balance factors dla ${y.value} i ${x.value}.`,
+      });
+      return x;
+    };
+
+    // Pre-create stable node identities
     values.forEach((v) => {
-      if (!nodes.find(n => n.label === String(v))) {
+      if (!nodes.find((n) => n.label === String(v))) {
         nodes.push({ id: `n${nextId++}`, label: String(v), hidden: true });
       }
     });
@@ -142,153 +254,146 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
     push({
       type: "SYSTEM_LOG",
       level: "INFO",
-      message: "Starting AVL Tree construction.",
+      message: "Rozpoczynam budowę drzewa AVL.",
     });
 
-    let simRoot: AVLNode | null = null;
-
-    const simInsert = (
-      node: AVLNode | null,
-      val: number,
-      parentId: string | null = null,
-    ): AVLNode => {
-      if (!node) {
-        const targetId = nodes.find((n) => n.label === String(val))!.id;
-        const newNode = new AVLNode(val, targetId);
-        push({ type: "GRAPH_NODE_ADD", nodeId: targetId });
-        
-        // Temporarily put it at parent's pos or middle to animate from there
-        const parentPos = parentId ? lastCoords.get(parentId) : null;
-        const startX = parentPos ? parentPos.x : 400;
-        const startY = parentPos ? parentPos.y : 80;
-        push({ type: "GRAPH_NODE_MOVE", nodeId: targetId, x: startX, y: startY });
-        lastCoords.set(targetId, { x: startX, y: startY });
-
-        if (parentId) {
-          push({
-            type: "GRAPH_EDGE_ADD",
-            edgeId: `e${parentId}-${targetId}`,
-            from: parentId,
-            to: targetId,
-          });
-          edges.push({ id: `e${parentId}-${targetId}`, from: parentId, to: targetId, hidden: true });
-        }
-        push({
-          type: "GRAPH_NODE_HIGHLIGHT",
-          nodeId: targetId,
-          status: "visited",
-        });
-        return newNode;
-      }
+    const simInsert = (value: number) => {
+      const data = nodes.find(
+        (n) =>
+          n.label === String(value) &&
+          !events.find((e) => e.type === "GRAPH_NODE_ADD" && e.nodeId === n.id),
+      );
+      if (!data) return; // duplicate
+      const targetId = data.id;
 
       push({
-        type: "GRAPH_NODE_HIGHLIGHT",
-        nodeId: node.id,
-        status: "current",
+        type: "SYSTEM_LOG",
+        level: "INFO",
+        message: `── Wstawiam ${value} ──`,
+      });
+      const newNode = new AVLNode(value, targetId);
+      push({ type: "GRAPH_NODE_ADD", nodeId: targetId });
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: targetId, status: "visited" });
+
+      // ── BST descent to find parent ──
+      let parent: AVLNode | null = null;
+      let cur = root;
+      while (cur) {
+        parent = cur;
+        push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: cur.id, status: "current" });
+        if (value < cur.value) {
+          push({
+            type: "SYSTEM_LOG",
+            level: "INFO",
+            message: `${value} < ${cur.value} → w lewo`,
+          });
+          if (cur.left)
+            push({
+              type: "GRAPH_EDGE_HIGHLIGHT",
+              edgeId: `e${cur.id}-${cur.left.id}`,
+              accepted: true,
+            });
+          cur = cur.left;
+        } else if (value > cur.value) {
+          push({
+            type: "SYSTEM_LOG",
+            level: "INFO",
+            message: `${value} > ${cur.value} → w prawo`,
+          });
+          if (cur.right)
+            push({
+              type: "GRAPH_EDGE_HIGHLIGHT",
+              edgeId: `e${cur.id}-${cur.right.id}`,
+              accepted: true,
+            });
+          cur = cur.right;
+        } else return; // duplicate value
+      }
+
+      // Spawn at parent's position so it animates outward
+      const parentPos = parent ? lastCoords.get(parent.id) : null;
+      push({
+        type: "GRAPH_NODE_MOVE",
+        nodeId: targetId,
+        x: parentPos ? parentPos.x : CENTER_X,
+        y: parentPos ? parentPos.y + LEVEL_H : TOP_Y,
+      });
+      lastCoords.set(targetId, {
+        x: parentPos ? parentPos.x : CENTER_X,
+        y: parentPos ? parentPos.y + LEVEL_H : TOP_Y,
       });
 
-      if (val < node.value) {
+      newNode.parent = parent;
+      if (!parent) root = newNode;
+      else if (value < parent.value) parent.left = newNode;
+      else parent.right = newNode;
+
+      syncTree(); // show the freshly linked leaf in place
+
+      // ── Retrace upwards, update heights & rebalance ──
+      let node: AVLNode | null = parent;
+      while (node) {
+        const above = node.parent; // capture before any rotation re-links
+        updateHeight(node);
+        const balance = getBalance(node);
+
         push({
           type: "SYSTEM_LOG",
           level: "INFO",
-          message: `${val} < ${node.value}`,
+          message: `BF(${node.value}) = ${balance}`,
         });
-        if (node.left) {
+
+        if (balance > 1 && getBalance(node.left) >= 0) {
+          // Left-Left: left child rises above the parent (single swap)
           push({
-            type: "GRAPH_EDGE_HIGHLIGHT",
-            edgeId: `e${node.id}-${node.left.id}`,
-            accepted: true,
+            type: "SYSTEM_LOG",
+            level: "WARN",
+            message: `${node.value} przeciążony w lewo (BF=${balance}) — lewe dziecko wzniesie się ponad ${node.value}.`,
           });
-        }
-        node.left = simInsert(node.left, val, node.id);
-      } else if (val > node.value) {
-        push({
-          type: "SYSTEM_LOG",
-          level: "INFO",
-          message: `${val} > ${node.value}`,
-        });
-        if (node.right) {
+          rightRotate(node);
+        } else if (balance > 1) {
+          // Left-Right (double swap): align first, then rise
           push({
-            type: "GRAPH_EDGE_HIGHLIGHT",
-            edgeId: `e${node.id}-${node.right.id}`,
-            accepted: true,
+            type: "SYSTEM_LOG",
+            level: "WARN",
+            message: `${node.value} przeciążony lewo-prawo (BF=${balance}) — dwie zamiany: najpierw na lewym dziecku, potem na ${node.value}.`,
           });
+          leftRotate(node.left!); // step 1: convert to a straight left-left line
+          rightRotate(node); // step 2: standard right swap
+        } else if (balance < -1 && getBalance(node.right) <= 0) {
+          // Right-Right: right child rises above the parent (single swap)
+          push({
+            type: "SYSTEM_LOG",
+            level: "WARN",
+            message: `${node.value} przeciążony w prawo (BF=${balance}) — prawe dziecko wzniesie się ponad ${node.value}.`,
+          });
+          leftRotate(node);
+        } else if (balance < -1) {
+          // Right-Left (double swap): align first, then rise
+          push({
+            type: "SYSTEM_LOG",
+            level: "WARN",
+            message: `${node.value} przeciążony prawo-lewo (BF=${balance}) — dwie zamiany: najpierw na prawym dziecku, potem na ${node.value}.`,
+          });
+          rightRotate(node.right!); // step 1: convert to a straight right-right line
+          leftRotate(node); // step 2: standard left swap
         }
-        node.right = simInsert(node.right, val, node.id);
-      } else {
-        return node;
-      }
 
-      updateHeight(node);
-      const balance = getBalance(node);
-
-      if (balance > 1 && val < node.left!.value) {
-        push({ type: "TREE_ROTATE", pivotId: node.id, direction: "RIGHT" });
-        push({
-          type: "SYSTEM_LOG",
-          level: "WARN",
-          message: `Right Rotation on ${node.value}`,
-        });
-        return rightRotate(node);
+        node = above;
       }
-      if (balance < -1 && val > node.right!.value) {
-        push({ type: "TREE_ROTATE", pivotId: node.id, direction: "LEFT" });
-        push({
-          type: "SYSTEM_LOG",
-          level: "WARN",
-          message: `Left Rotation on ${node.value}`,
-        });
-        return leftRotate(node);
-      }
-      if (balance > 1 && val > node.left!.value) {
-        push({
-          type: "TREE_ROTATE",
-          pivotId: node.left!.id,
-          direction: "LEFT",
-        });
-        push({
-          type: "SYSTEM_LOG",
-          level: "WARN",
-          message: `Left-Right Rotation starting on ${node.left!.value}`,
-        });
-        node.left = leftRotate(node.left!);
-        push({ type: "TREE_ROTATE", pivotId: node.id, direction: "RIGHT" });
-        return rightRotate(node);
-      }
-      if (balance < -1 && val < node.right!.value) {
-        push({
-          type: "TREE_ROTATE",
-          pivotId: node.right!.id,
-          direction: "RIGHT",
-        });
-        push({
-          type: "SYSTEM_LOG",
-          level: "WARN",
-          message: `Right-Left Rotation starting on ${node.right!.value}`,
-        });
-        node.right = rightRotate(node.right!);
-        push({ type: "TREE_ROTATE", pivotId: node.id, direction: "LEFT" });
-        return leftRotate(node);
-      }
-
-      return node;
     };
 
-    values.forEach((val) => {
-      push({ type: "SYSTEM_LOG", level: "INFO", message: `Inserting ${val}` });
-      simRoot = simInsert(simRoot, val);
-      updateLayout(simRoot); // Animate the layout change after insertion and rotations!
+    values.forEach((v) => simInsert(v));
+
+    // ── Final cleanup ──
+    push({
+      type: "SYSTEM_LOG",
+      level: "INFO",
+      message: "Budowa drzewa AVL zakończona.",
     });
-
-    // ── Final cleanup: clear all highlights so the tree looks clean ──
-    push({ type: "SYSTEM_LOG", level: "INFO", message: "AVL Tree construction complete." });
-
-    // Reset all edge highlights to default
     for (const e of edges) {
       push({ type: "GRAPH_EDGE_HIGHLIGHT", edgeId: e.id, status: "default" });
     }
-
-    // Set all nodes to finished (clean) state
     for (const n of nodes) {
       push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: n.id, status: "finished" });
     }
@@ -303,7 +408,7 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
         vy: 0,
         hidden: true,
       })),
-      edges: edges.map(e => ({ ...e, weight: 0 })),
+      edges: edges.map((e) => ({ ...e, weight: 0 })),
       isDirected: true,
       layoutHint: "dagre",
     };

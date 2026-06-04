@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Target, ChevronDown } from "lucide-react";
 import { useUIStore } from "../../store/uiStore";
 import { useTreeStore } from "../../store/treeStore";
 import { findAlgorithm } from "../../data/algorithmCatalog";
@@ -67,6 +68,14 @@ export default function AlgorithmViewer(): React.ReactElement {
     return saved ? parseInt(saved, 10) : DEFAULT_EDITOR_WIDTH;
   });
   const [isDragging, setIsDragging] = useState<boolean>(false);
+
+  // Objective ("Cel i Oczekiwany Wynik") panel — hidden by default, revealed on demand
+  const [showObjective, setShowObjective] = useState<boolean>(false);
+
+  // Collapse the objective panel whenever the algorithm changes
+  useEffect(() => {
+    setShowObjective(false);
+  }, [category, id]);
 
   /**
    * Initiates the resizing interaction on mouse down.
@@ -150,10 +159,25 @@ export default function AlgorithmViewer(): React.ReactElement {
       (async () => {
         try {
           const algoId = id === "rbt" ? "rbt" : id === "trie" ? "trie" : id || "";
-          const defaultValues = id === "trie" ? ["cat", "car", "dog"] : [15, 10, 20, 8, 12, 17, 25];
-          const trace = await globalWorkerPool.run(algoId, { values: defaultValues } as any);
+          // AVL/RBT use an ascending sequence that forces balancing rotations,
+          // so the rotations (the whole point of these structures) are visible.
+          const defaultValues =
+            id === "trie"
+              ? ["cat", "car", "dog"]
+              : id === "avl" || id === "rbt"
+                ? [30, 10, 20, 40, 50, 5, 15, 25, 35]
+                : [15, 10, 20, 8, 12, 17, 25];
+          useUIStore
+            .getState()
+            .setVisualizationData({ values: defaultValues } as any);
+          const trace = await globalWorkerPool.run(algoId, {
+            values: defaultValues,
+          } as any);
           if (trace) {
             globalEngine.loadTrace(trace);
+            globalEngine.setSpeed(1.0);
+            useUIStore.getState().setIsAnimating(true);
+            globalEngine.play();
           }
         } catch (e) {
           console.error("Failed to pre-populate tree layout:", e);
@@ -295,7 +319,7 @@ export default function AlgorithmViewer(): React.ReactElement {
             key={id}
             nodes={graphToDisplay.nodes}
             edges={graphToDisplay.edges}
-            isDirected={true}
+            isDirected={false}
             layoutHint={graphToDisplay.layoutHint}
           />
         );
@@ -323,6 +347,32 @@ export default function AlgorithmViewer(): React.ReactElement {
         data-tutorial-step="algorithm-viewer"
         className="flex-1 flex flex-col relative rounded-2xl overflow-hidden glass-panel-elevated border border-glacier-border-bright shadow-2xl"
       >
+        {/* Objective ("Cel i Oczekiwany Wynik") — collapsed by default, shown on demand */}
+        {(educationData.theory || educationData.forDummies) && (
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2">
+            <button
+              onClick={() => setShowObjective((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/60 backdrop-blur-md border border-cyan-500/20 shadow-lg text-cyan-400 hover:text-cyan-300 hover:border-cyan-500/40 transition-all"
+              title={language === "pl" ? "Pokaż cel i oczekiwany wynik" : "Show objective & expected result"}
+            >
+              <Target className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">
+                {language === "pl" ? "Cel i Oczekiwany Wynik" : "Objective & Expected Result"}
+              </span>
+              <ChevronDown
+                className={`w-3 h-3 transition-transform duration-200 ${showObjective ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {showObjective && (
+              <div className="px-4 py-2 rounded-xl bg-slate-900/80 backdrop-blur-md border border-cyan-500/20 shadow-lg max-w-xl text-center">
+                <p className="text-xs text-slate-300 leading-snug drop-shadow-sm">
+                  {educationData.forDummies || educationData.theory}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
         {renderStage()}
       </div>
 

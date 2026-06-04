@@ -131,6 +131,18 @@ function defineGlacierDark(monaco: Monaco) {
   });
 }
 
+/** Maps tree display names to their worker plugin id (used by local fallback). */
+const TREE_NAME_TO_ID: Record<string, string> = {
+  "Binary Tree": "binary",
+  "Binary Search Tree": "bst",
+  "AVL Tree": "avl",
+  "Red-Black Tree": "rbt",
+  "Trie Prefix Tree": "trie",
+};
+
+/** Values used when none are available — chosen to trigger clear rotations. */
+const DEFAULT_TREE_VALUES = [30, 10, 20, 40, 50, 5, 15, 25, 35];
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function MonacoCodeEditor() {
@@ -162,6 +174,7 @@ export default function MonacoCodeEditor() {
 
   const setIsAnimating = useUIStore((state) => state.setIsAnimating);
   const currentGraph = useUIStore((state) => state.currentGraph);
+  const visualizationData = useUIStore((state) => state.visualizationData);
 
   const [algoName, setAlgoName] = useState<string>(getAlgoName());
   const [language, setLanguage] = useState<Language>("python");
@@ -437,10 +450,32 @@ export default function MonacoCodeEditor() {
           `${indent}int nodes = ${currentGraph.nodes.length};`,
         );
       }
+    } else if (activeMode === "grid") {
+      const visData = useUIStore.getState().visualizationData as any;
+      if (visData && visData.start && visData.target) {
+        const startStr = `(${visData.start.x}, ${visData.start.y})`;
+        const targetStr = `(${visData.target.x}, ${visData.target.y})`;
+        const wallsStr = visData.walls && visData.walls.length > 0 
+          ? visData.walls.map((w: any) => `(${w.x}, ${w.y})`).join(", ") 
+          : "";
+
+        if (language === "python") {
+          code = code.replace(/^([ \t]*)start\s*=\s*\([^)]+\)/m, (_, ind) => `${ind}start = ${startStr}`);
+          code = code.replace(/^([ \t]*)target\s*=\s*\([^)]+\)/m, (_, ind) => `${ind}target = ${targetStr}`);
+          code = code.replace(/^([ \t]*)walls\s*=\s*\[[^\]]*\]/m, (_, ind) => `${ind}walls = [${wallsStr}]`);
+        } else if (language === "cpp") {
+          code = code.replace(/a_star\(20,\s*20,\s*\{[0-9]+,\s*[0-9]+\},\s*\{[0-9]+,\s*[0-9]+\}/, `a_star(20, 20, {${visData.start.x}, ${visData.start.y}}, {${visData.target.x}, ${visData.target.y}}`);
+          code = code.replace(/flood_fill\(20,\s*20,\s*\{[0-9]+,\s*[0-9]+\}/, `flood_fill(20, 20, {${visData.start.x}, ${visData.start.y}}`);
+          const cppWallsStr = visData.walls && visData.walls.length > 0 
+            ? visData.walls.map((w: any) => `{${w.x}, ${w.y}}`).join(", ") 
+            : "";
+          code = code.replace(/^([ \t]*)vector<pair<int, int>>\s+walls\s*=\s*\{[^}]*\};/m, (_, ind) => `${ind}vector<pair<int, int>> walls = {${cppWallsStr}};`);
+        }
+      }
     }
 
     setEditorContent(code);
-  }, [language, algoName, getSourceCode, activeMode, currentGraph]);
+  }, [language, algoName, getSourceCode, activeMode, currentGraph, visualizationData]);
 
   // Sync the array in the editor to the visualization canvas directly
   useEffect(() => {
@@ -585,6 +620,35 @@ export default function MonacoCodeEditor() {
     setIsRunning(true);
     const startTime = performance.now();
 
+    /**
+     * Run a tree algorithm through the proven local worker engine. The Docker
+     * sandbox frequently yields no usable tree events (or is unavailable), so
+     * trees always have this reliable path that guarantees rotations animate.
+     */
+    const runTreeLocally = async () => {
+      const treeId =
+        TREE_NAME_TO_ID[algoName] ??
+        findAlgorithmByName(algoName)?.algorithm.id;
+      if (!treeId) throw new Error(`Could not resolve tree algorithm: ${algoName}`);
+
+      const vd = useUIStore.getState().visualizationData as any;
+      const values =
+        Array.isArray(vd?.values) && vd.values.length > 0
+          ? vd.values
+          : DEFAULT_TREE_VALUES;
+
+      const trace = await globalWorkerPool.run(treeId, { values } as any);
+      globalEngine.loadTrace(trace);
+      globalEngine.setSpeed(1.0);
+      setIsAnimating(true);
+      globalEngine.play();
+      showToast(
+        "Wygenerowano lokalnie",
+        "info",
+        "Animacja drzewa (z rotacjami) odtworzona silnikiem lokalnym.",
+      );
+    };
+
     try {
       const response = await executeInSandbox(code, backendLang);
       const elapsedMs = Math.round(performance.now() - startTime);
@@ -615,11 +679,10 @@ export default function MonacoCodeEditor() {
           "success",
           `Executed in ${elapsedMs}ms via Docker sandbox`,
         );
+      } else if (activeMode === "tree") {
+        // Sandbox produced no usable tree events — use the reliable local engine
+        await runTreeLocally();
       } else {
-        // No valid graph trace events and no error — fall back if in tree mode
-        if (activeMode === "tree") {
-          throw new Error("No valid graph trace events from Python script. Falling back to native TS engine for tree algorithms.");
-        }
         showToast(
           "No trace events produced",
           "info",
@@ -634,36 +697,46 @@ export default function MonacoCodeEditor() {
         err,
       );
       try {
-        const match = findAlgorithmByName(algoName);
-        if (!match) throw new Error(`Could not resolve algorithm: ${algoName}`);
+        if (activeMode === "tree") {
+          await runTreeLocally();
+        } else {
+          const match = findAlgorithmByName(algoName);
+          if (!match) throw new Error(`Could not resolve algorithm: ${algoName}`);
 
-        const payload = {
-          nodes: currentGraph?.nodes || [],
-          edges: currentGraph?.edges || [],
-          values: (useUIStore.getState().visualizationData as any)?.values || [],
-          ...useUIStore.getState().visualizationData,
-        };
+          const payload = {
+            nodes: currentGraph?.nodes || [],
+            edges: currentGraph?.edges || [],
+            values:
+              (useUIStore.getState().visualizationData as any)?.values || [],
+            ...useUIStore.getState().visualizationData,
+          };
 
-        const trace = await globalWorkerPool.run(
-          match.algorithm.id,
-          payload as any,
-        );
-        globalEngine.loadTrace(trace);
-        globalEngine.setSpeed(1.0);
-        setIsAnimating(true);
-        globalEngine.play();
+          const trace = await globalWorkerPool.run(
+            match.algorithm.id,
+            payload as any,
+          );
+          globalEngine.loadTrace(trace);
+          globalEngine.setSpeed(1.0);
+          setIsAnimating(true);
+          globalEngine.play();
 
-        showToast(
-          "Executed locally (Offline mode)",
-          "info",
-          "Sandbox is unreachable. Successfully generated trace using local fallback engine.",
-        );
+          showToast(
+            "Executed locally (Offline mode)",
+            "info",
+            "Sandbox is unreachable. Successfully generated trace using local fallback engine.",
+          );
+        }
       } catch (fallbackErr) {
-        const message = err instanceof Error ? err.message : "Unknown error";
+        const message =
+          fallbackErr instanceof Error
+            ? fallbackErr.message
+            : err instanceof Error
+              ? err.message
+              : "Unknown error";
         showToast(
           "Sandbox execution failed",
           "error",
-          message + " (Local fallback also failed)",
+          `${message} (lokalny silnik również zawiódł)`,
         );
       }
     } finally {
