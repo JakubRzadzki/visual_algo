@@ -217,11 +217,13 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
 
   /* ── Refs for stable callbacks ── */
   const gRef = useRef(graph);
-  gRef.current = graph;
   const algoRef = useRef(activeAlgo);
-  algoRef.current = activeAlgo;
   const timers = useRef<Map<string, number>>(new Map());
 
+  useEffect(() => {
+    gRef.current = graph;
+    algoRef.current = activeAlgo;
+  }, [graph, activeAlgo]);
   /* ── Reset ── */
   const reset = useCallback(() => {
     setNodeVis(new Map());

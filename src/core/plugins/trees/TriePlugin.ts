@@ -13,10 +13,10 @@ export class TriePlugin implements AlgorithmPlugin<ArrayInput> {
   category = "tree" as const;
 
   execute(data: ArrayInput): ExecutionTrace {
-    let rawValues = data.values && data.values.length > 0 ? data.values : [];
+    const rawValues = data.values && data.values.length > 0 ? data.values : [];
     
     // Convert numeric array into strings. If empty, use a sensible default.
-    let strings = rawValues.length > 0 ? rawValues.map(String) : ["cat", "car", "dog"];
+    const strings = rawValues.length > 0 ? rawValues.map(String) : ["cat", "car", "dog"];
     
     const events: VisualizationEvent[] = [];
     let step = 0;
@@ -74,7 +74,7 @@ export class TriePlugin implements AlgorithmPlugin<ArrayInput> {
     traverse(root);
 
     // Dynamic layout state
-    let lastCoords = new Map<string, {x: number, y: number}>();
+    const lastCoords = new Map<string, {x: number, y: number}>();
     const updateLayout = (simRoot: TrieNode) => {
       const widths = new Map<string, number>();
       const depths = new Map<string, number>();
@@ -199,7 +199,6 @@ export class TriePlugin implements AlgorithmPlugin<ArrayInput> {
         hidden: true,
       })),
       isDirected: true,
-      layoutHint: "dagre",
     };
 
     return {

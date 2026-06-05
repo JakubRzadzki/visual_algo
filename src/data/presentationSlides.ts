@@ -13,6 +13,7 @@ export type SlideCodeLanguage =
   | "typescript"
   | "go"
   | "markup"
+  | "css"
   | "python"
   | "cpp";
 
@@ -566,7 +567,164 @@ if pingErr == nil {
     repo: "github.com/JakubRzadzki/visual_algo",
   },
 
-  // ── 22–40. Galeria algorytmów ────────────────────────────
+  // ── Warstwa doświadczenia (UI/UX · tło · motyw · i18n) ────
+  {
+    id: 41,
+    variant: "content",
+    kicker: "UI / UX",
+    title: "Warstwa doświadczenia: glassmorphism + HUD",
+    bullets: [
+      "Trójkolumnowy workspace: scena wizualizacji • edytor Monaco • panele HUD (statystyki, log zdarzeń, teoria).",
+      "Spójny język wizualny oparty na tokenach CSS (var(--bg-card), backdrop-blur) — jeden „glass-panel\" w całej aplikacji.",
+      "Mikrointerakcje Framer Motion (spring) + dostępność: AriaLiveRegion ogłasza kroki algorytmu czytnikom ekranu.",
+    ],
+    code: {
+      language: "css",
+      filePath: "src/index.css",
+      code: `@layer components {
+  .glass-panel {
+    background: var(--bg-card);              /* token motywu */
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-card);
+    /* płynne przejście przy zmianie motywu */
+    transition: background-color .3s ease,
+                border-color .3s ease, box-shadow .3s ease;
+  }
+  .glass-panel-elevated { @apply backdrop-blur-xl rounded-2xl; }
+}`,
+      caption: "Komponenty nie znają kolorów — czytają tokeny, więc motyw zmienia się globalnie.",
+    },
+    note: "Layout jest sterowany danymi (HUD odbiera zdarzenia z EventBus), a styl — tokenami CSS. Dzięki temu te same panele działają w trybie ciemnym i jasnym bez duplikacji stylów.",
+  },
+
+  // ── Animacja tła — silnik ────────────────────────────────
+  {
+    id: 42,
+    variant: "content",
+    kicker: "Tło — silnik",
+    title: "Ambientowe tło: pole cząstek na Canvas 2D",
+    bullets: [
+      "100 węzłów dryfuje z odbiciem od krawędzi; krawędź rysowana tylko gdy para < 200 px (próg odległości).",
+      "Renderowanie poza Reactem — pętla requestAnimationFrame maluje wprost po kontekście 2D, zero re-renderów.",
+      "Subtelne strumienie binarne (0/1) i pulsujące węzły budują „neuronowy\" klimat bez żadnej biblioteki.",
+    ],
+    code: {
+      language: "typescript",
+      filePath: "src/components/background/AmbientGraph.tsx",
+      code: `const draw = () => {
+  ctx.clearRect(0, 0, width, height);
+  for (let i = 0; i < points.length; i++) {
+    const p1 = points[i];
+    p1.x += p1.vx; p1.y += p1.vy;                  // dryf
+    if (p1.x <= 0 || p1.x >= width) p1.vx *= -1;   // odbicie od ściany
+    for (let j = i + 1; j < points.length; j++) {
+      const dx = p1.x - points[j].x, dy = p1.y - points[j].y;
+      if (dx * dx + dy * dy < 40000)               // łącz tylko < 200 px
+        drawLink(p1, points[j], dx, dy);           // alfa ∝ bliskość
+    }
+  }
+  requestAnimationFrame(draw);
+};`,
+      caption: "O(n²) par na klatkę, ale operacje canvasa są tanie — przy n=100 to ~5 000 testów odległości.",
+    },
+    note: "Klucz wydajności: animacja żyje całkowicie obok Reacta. Brak setState w pętli = brak reconciliacji Virtual DOM — dokładnie ta sama zasada, co EventBus dla scen algorytmów.",
+  },
+
+  // ── Animacja tła — interakcja ────────────────────────────
+  {
+    id: 43,
+    variant: "content",
+    kicker: "Tło — interakcja",
+    title: "Reakcja tła na kursor i kliknięcia",
+    bullets: [
+      "Canvas ma pointer-events-none → nasłuch podpięty do window, by nie blokować interfejsu pod spodem.",
+      "Kursor przyciąga węzły w promieniu 190 px i łączy je liniami; kliknięcie nadaje impuls rozpychający (burst).",
+      "Stabilność: prędkość wraca do bazowego dryfu (easing) i jest ograniczana (clamp), więc pole samo się wycisza.",
+    ],
+    code: {
+      language: "typescript",
+      filePath: "src/components/background/AmbientGraph.tsx",
+      code: `// kliknięcie → impuls rozpychający pobliskie cząstki
+window.addEventListener("mousedown", (e) => {
+  for (const p of points) {
+    const dx = p.x - e.clientX, dy = p.y - e.clientY;
+    const d = Math.hypot(dx, dy);
+    if (d < CLICK_RADIUS && d > 0.01) {
+      const force = (1 - d / CLICK_RADIUS) * 5.5;
+      p.vx += (dx / d) * force; p.vy += (dy / d) * force;
+    }
+  }
+});
+
+// w pętli: powrót do dryfu + przycięcie prędkości
+p.vx += (p.bvx - p.vx) * 0.02;                  // self-calming
+const sp = Math.hypot(p.vx, p.vy);
+if (sp > MAX_SPEED) { p.vx = p.vx / sp * MAX_SPEED; /* …vy */ }`,
+      caption: "bvx/bvy = bazowy dryf cząstki; impuls dodaje energię, easing ją z czasem rozprasza.",
+    },
+    note: "Efekt jest „żywy\", ale nie chaotyczny: każda cząstka pamięta swój spokojny dryf i wraca do niego, a clamp gwarantuje, że nawet seria kliknięć nie rozbije pola.",
+  },
+
+  // ── Dark / Light ─────────────────────────────────────────
+  {
+    id: 44,
+    variant: "content",
+    kicker: "Motyw",
+    title: "Dark / Light: tokeny CSS + jedna klasa",
+    bullets: [
+      "Cała paleta to zmienne CSS w :root; klasa .light-mode nadpisuje tokeny — komponenty nie znają konkretnych wartości.",
+      "toggleTheme przełącza klasę na <html> i <body> oraz utrwala wybór w localStorage (edvr-theme).",
+      "Tło re-inicjalizuje canvas przy zmianie motywu i czyta --star-color, więc cząstki pasują do palety.",
+    ],
+    code: {
+      language: "typescript",
+      filePath: "src/store/uiStore.ts",
+      code: `toggleTheme: () =>
+  set((state) => {
+    const next = state.theme === "dark" ? "light" : "dark";
+    localStorage.setItem("edvr-theme", next);
+    // jedna klasa steruje całą paletą motywu
+    [document.documentElement, document.body].forEach((el) =>
+      el.classList.toggle("light-mode", next === "light"));
+    return { theme: next };
+  }),`,
+      caption:
+        ":root → --star-color: rgba(255,255,255,.6) · .light-mode → rgba(100,120,180,.25)",
+    },
+    note: "Zmiana motywu to jedna operacja na klasie DOM — przeglądarka przelicza wszystkie var(--…) naraz. Zero przekazywania motywu przez propsy, zero warunków w komponentach.",
+  },
+
+  // ── i18n EN / PL ─────────────────────────────────────────
+  {
+    id: 45,
+    variant: "content",
+    kicker: "i18n",
+    title: "Dwujęzyczność EN / PL bez bibliotek",
+    bullets: [
+      "Słownik TRANSLATIONS z gałęziami en/pl; getTranslation(lang) zwraca jedną z nich — typ wymusza komplet kluczy.",
+      "Język trzymany w Zustand (+ localStorage); selektor renderuje tylko komponenty faktycznie używające tłumaczeń.",
+      "Treść merytoryczna (teoria, etykiety HUD, kategorie) ma warianty pl/en współdzielone w całej aplikacji.",
+    ],
+    code: {
+      language: "typescript",
+      filePath: "src/data/translations.ts",
+      code: `export const TRANSLATIONS = {
+  en: { run: "Run",     categories: { grid: "Grid / Mazes" }, /* … */ },
+  pl: { run: "Uruchom", categories: { grid: "Siatka / Labirynty" }, /* … */ },
+};
+
+export function getTranslation(lang: "en" | "pl") {
+  return TRANSLATIONS[lang];        // brak klucza = błąd kompilacji
+}
+
+// komponent: re-render tylko przy zmianie języka
+const t = getTranslation(useUIStore((s) => s.language));`,
+      caption: "Typowanie strukturalne gwarantuje, że pl i en mają identyczny zestaw kluczy.",
+    },
+    note: "Lekki, własny i18n: brak runtime'owej biblioteki, brak ładowania plików. Kompilator pilnuje kompletności tłumaczeń, a Zustand izoluje przerysowania do komponentów zależnych od języka.",
+  },
+
+  // ── Galeria algorytmów ───────────────────────────────────
   {
     id: 22,
     variant: "content",
@@ -830,7 +988,7 @@ function postorder(n) { if (!n) return; postorder(n.left); postorder(n.right); v
     id: 36,
     variant: "content",
     kicker: "Drzewa",
-    title: "AVL — rotacje",
+    title: "AVL",
     complexity: "O(log n)",
     code: {
       language: "typescript",
@@ -849,7 +1007,7 @@ function postorder(n) { if (!n) return; postorder(n.left); postorder(n.right); v
     id: 37,
     variant: "content",
     kicker: "Drzewa",
-    title: "Red-Black Tree — fix-up",
+    title: "Red-Black Tree",
     complexity: "wys. ≤ 2 log(n+1)",
     code: {
       language: "typescript",
@@ -927,9 +1085,9 @@ for (let i = 1; i <= n; i++)
     },
   },
 
-  // ── 41. Zakończenie ──────────────────────────────────────
+  // ── Zakończenie ──────────────────────────────────────────
   {
-    id: 41,
+    id: 46,
     variant: "closing",
     kicker: "Koniec",
     title: "Dziękujemy za uwagę",
@@ -943,26 +1101,34 @@ for (let i = 1; i <= n; i++)
  * presentation can navigate to the real visualizer and play the animation
  * underneath the slide content.
  */
+// Canonical 1-based slide numbers are derived from array order, so inserting or
+// reordering slides never requires manual renumbering. The literal `id` fields
+// in the slide objects above are authoring hints only — this loop is the source
+// of truth for the number shown in the deck and used by LIVE_ROUTES below.
+PRESENTATION_SLIDES.forEach((slide, index) => {
+  slide.id = index + 1;
+});
+
 const LIVE_ROUTES: Record<number, { route: string; categoryId: string }> = {
-  22: { route: "/algo/sorting/bubble-sort", categoryId: "sorting" },
-  23: { route: "/algo/sorting/merge-sort", categoryId: "sorting" },
-  24: { route: "/algo/sorting/quick-sort", categoryId: "sorting" },
-  25: { route: "/algo/sorting/heap-sort", categoryId: "sorting" },
-  26: { route: "/algo/searching/linear-search", categoryId: "searching" },
-  27: { route: "/algo/searching/binary-search", categoryId: "searching" },
-  28: { route: "/algo/graphs/bfs", categoryId: "graphs" },
-  29: { route: "/algo/graphs/dfs", categoryId: "graphs" },
-  30: { route: "/algo/graphs/dijkstra", categoryId: "graphs" },
-  31: { route: "/algo/graphs/kruskal", categoryId: "graphs" },
-  32: { route: "/algo/graphs/prim", categoryId: "graphs" },
-  33: { route: "/algo/graphs/topo-sort", categoryId: "graphs" },
-  34: { route: "/algo/trees/binary", categoryId: "trees" },
-  35: { route: "/algo/trees/bst", categoryId: "trees" },
-  36: { route: "/algo/trees/avl", categoryId: "trees" },
-  37: { route: "/algo/trees/rbt", categoryId: "trees" },
-  38: { route: "/algo/grid/a-star", categoryId: "grid" },
-  39: { route: "/algo/grid/flood-fill", categoryId: "grid" },
-  40: { route: "/algo/dp/knapsack", categoryId: "dp" },
+  27: { route: "/algo/sorting/bubble-sort", categoryId: "sorting" },
+  28: { route: "/algo/sorting/merge-sort", categoryId: "sorting" },
+  29: { route: "/algo/sorting/quick-sort", categoryId: "sorting" },
+  30: { route: "/algo/sorting/heap-sort", categoryId: "sorting" },
+  31: { route: "/algo/searching/linear-search", categoryId: "searching" },
+  32: { route: "/algo/searching/binary-search", categoryId: "searching" },
+  33: { route: "/algo/graphs/bfs", categoryId: "graphs" },
+  34: { route: "/algo/graphs/dfs", categoryId: "graphs" },
+  35: { route: "/algo/graphs/dijkstra", categoryId: "graphs" },
+  36: { route: "/algo/graphs/kruskal", categoryId: "graphs" },
+  37: { route: "/algo/graphs/prim", categoryId: "graphs" },
+  38: { route: "/algo/graphs/topo-sort", categoryId: "graphs" },
+  39: { route: "/algo/trees/binary", categoryId: "trees" },
+  40: { route: "/algo/trees/bst", categoryId: "trees" },
+  41: { route: "/algo/trees/avl", categoryId: "trees" },
+  42: { route: "/algo/trees/rbt", categoryId: "trees" },
+  43: { route: "/algo/grid/a-star", categoryId: "grid" },
+  44: { route: "/algo/grid/flood-fill", categoryId: "grid" },
+  45: { route: "/algo/dp/knapsack", categoryId: "dp" },
 };
 
 for (const slide of PRESENTATION_SLIDES) {

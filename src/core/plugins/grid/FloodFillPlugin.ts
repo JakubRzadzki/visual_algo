@@ -105,61 +105,76 @@ export class FloodFillPlugin implements AlgorithmPlugin<GridInput> {
       };
     }
 
-    // Phase 2: Breadth-First exploration queue initialization
-    const queue: { x: number; y: number }[] = [start];
+    // Phase 2: Breadth-First exploration, processed in distance layers so the
+    // fill visibly radiates outward as a coherent wavefront (one ring per pass).
+    let frontier: { x: number; y: number }[] = [start];
     const visited = new Set<string>();
     visited.add(startKey);
 
-    // Highlight starting origin immediately
+    // Highlight the flood source immediately (darker accent than the wavefront).
     pushEvent({
       type: "MATRIX_CELL_HIGHLIGHT",
       row: start.y,
       col: start.x,
-      color: "#3b82f6", // Rich oceanic blue for flood source
+      color: "#3b82f6", // Rich oceanic blue for the flood source
     });
 
-    // Phase 3: Iterative orthogonal traversal loop
-    while (queue.length > 0) {
-      const current = queue.shift()!;
+    const directions = [
+      { x: 0, y: -1 }, // North
+      { x: 1, y: 0 }, // East
+      { x: 0, y: 1 }, // South
+      { x: -1, y: 0 }, // West
+    ];
 
-      const directions = [
-        { x: 0, y: -1 }, // North
-        { x: 1, y: 0 }, // East
-        { x: 0, y: 1 }, // South
-        { x: -1, y: 0 }, // West
-      ];
+    // Phase 3: Expand ring by ring (BFS layers)
+    let depth = 0;
+    while (frontier.length > 0) {
+      const nextFrontier: { x: number; y: number }[] = [];
 
-      for (const dir of directions) {
-        const nx = current.x + dir.x;
-        const ny = current.y + dir.y;
-        const nKey = this.toKey(nx, ny);
+      for (const current of frontier) {
+        for (const dir of directions) {
+          const nx = current.x + dir.x;
+          const ny = current.y + dir.y;
+          const nKey = this.toKey(nx, ny);
 
-        // Filter standard enclosed boundary cells and previously filled components
-        if (
-          nx >= 0 &&
-          nx < width &&
-          ny >= 0 &&
-          ny < height &&
-          !walls.has(nKey) &&
-          !visited.has(nKey)
-        ) {
-          visited.add(nKey);
-          queue.push({ x: nx, y: ny });
+          // Skip out-of-bounds cells, walls, and already-filled regions
+          if (
+            nx >= 0 &&
+            nx < width &&
+            ny >= 0 &&
+            ny < height &&
+            !walls.has(nKey) &&
+            !visited.has(nKey)
+          ) {
+            visited.add(nKey);
+            nextFrontier.push({ x: nx, y: ny });
 
-          // Emits discrete step events driving individual visual color updates
-          pushEvent({
-            type: "MATRIX_CELL_HIGHLIGHT",
-            row: ny,
-            col: nx,
-            color: "#0ea5e9", // Vibrant sky blue water propagation accent
-          });
+            // Discrete per-cell highlight driving the water propagation accent
+            pushEvent({
+              type: "MATRIX_CELL_HIGHLIGHT",
+              row: ny,
+              col: nx,
+              color: "#0ea5e9", // Vibrant sky blue water propagation accent
+            });
+          }
         }
       }
+
+      if (nextFrontier.length > 0) {
+        depth++;
+        pushEvent({
+          type: "SYSTEM_LOG",
+          message: `Wavefront depth ${depth}: flooded ${nextFrontier.length} new cell(s) (${visited.size} total).`,
+          level: "INFO",
+        });
+      }
+
+      frontier = nextFrontier;
     }
 
     pushEvent({
       type: "SYSTEM_LOG",
-      message: `Flood Fill completed successfully. Total flooded area span: ${visited.size} cells.`,
+      message: `Flood Fill completed successfully. Filled ${visited.size} cell(s) across ${depth} wavefront layer(s).`,
       level: "INFO",
     });
 

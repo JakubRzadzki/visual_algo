@@ -9,13 +9,22 @@
  */
 
 import { useRef, useEffect, useCallback } from "react";
+import { useUIStore } from "../../store/uiStore";
 
-/** Color palette for neural nodes — each entry is an RGBA base string. */
-const NODE_COLORS = [
+/** Node palette in light mode — curated cyan/blue/indigo/violet. */
+const NODE_COLORS_LIGHT = [
   { r: 34, g: 211, b: 238 }, // cyan  #22d3ee
   { r: 59, g: 130, b: 246 }, // blue  #3b82f6
   { r: 99, g: 102, b: 241 }, // indigo #6366f1
   { r: 139, g: 92, b: 246 }, // violet #8b5cf6
+] as const;
+
+/** Node palette in dark mode — monochrome white/grey for a cleaner mesh. */
+const NODE_COLORS_DARK = [
+  { r: 255, g: 255, b: 255 }, // white
+  { r: 226, g: 232, b: 240 }, // slate-200
+  { r: 203, g: 213, b: 225 }, // slate-300
+  { r: 148, g: 163, b: 184 }, // slate-400
 ] as const;
 
 /** Maximum distance² between nodes for edge drawing (180px radius). */
@@ -39,6 +48,7 @@ interface Node {
 
 export default function NeuralNetworkBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const theme = useUIStore((s) => s.theme);
 
   /** Determine if reduced motion is preferred. Safe for SSR — guarded by window check. */
   const prefersReducedMotion = useCallback(() => {
@@ -53,6 +63,9 @@ export default function NeuralNetworkBackground() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    // White/grey mesh in dark mode, coloured mesh in light mode.
+    const NODE_COLORS = theme === "dark" ? NODE_COLORS_DARK : NODE_COLORS_LIGHT;
 
     let width = window.innerWidth;
     let height = window.innerHeight;
@@ -157,7 +170,7 @@ export default function NeuralNetworkBackground() {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);
     };
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, theme]);
 
   return (
     <canvas

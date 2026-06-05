@@ -620,6 +620,19 @@ export default function MonacoCodeEditor() {
     setIsRunning(true);
     const startTime = performance.now();
 
+    let codeToRun = code;
+    const vd = useUIStore.getState().visualizationData as any;
+    if (vd && Array.isArray(vd.values) && vd.values.length > 0) {
+      const valStr = JSON.stringify(vd.values);
+      if (backendLang === "python") {
+        codeToRun = codeToRun.replace(/arr\s*=\s*\[[^\]]*\]/, `arr = ${valStr}`);
+      } else if (backendLang === "cpp") {
+        codeToRun = codeToRun.replace(/vector<int>\s+arr\s*=\s*\{[^}]*\};/, `vector<int> arr = {${vd.values.join(", ")}};`);
+      } else if (backendLang === "javascript" || backendLang === "typescript" || backendLang === "go") {
+        codeToRun = codeToRun.replace(/(?:let|const|var)\s+arr\s*=\s*\[[^\]]*\];?/, `const arr = ${valStr};`);
+      }
+    }
+
     /**
      * Run a tree algorithm through the proven local worker engine. The Docker
      * sandbox frequently yields no usable tree events (or is unavailable), so
@@ -645,12 +658,23 @@ export default function MonacoCodeEditor() {
       showToast(
         "Wygenerowano lokalnie",
         "info",
-        "Animacja drzewa (z rotacjami) odtworzona silnikiem lokalnym.",
+        "Animacja drzewa (z rotacjami) odtworzona natywnym silnikiem.",
       );
+      setIsRunning(false);
     };
 
+    if (activeMode === "tree") {
+      try {
+        await runTreeLocally();
+      } catch (err: any) {
+        showToast("Błąd silnika drzew", "error", err.message || "Unknown error");
+        setIsRunning(false);
+      }
+      return;
+    }
+
     try {
-      const response = await executeInSandbox(code, backendLang);
+      const response = await executeInSandbox(codeToRun, backendLang);
       const elapsedMs = Math.round(performance.now() - startTime);
 
       // Check for stderr errors from the sandbox
@@ -662,12 +686,10 @@ export default function MonacoCodeEditor() {
         );
       }
 
-      const hasGraphEvents = response.trace?.some(
-        (evt: any) => evt.type === "GRAPH_NODE_ADD" || evt.type === "INIT"
-      );
 
-      // Build and load trace if events were produced and they are valid graph/tree events if in tree mode
-      if (response.trace && response.trace.length > 0 && (activeMode !== "tree" || hasGraphEvents)) {
+
+      // Build and load trace if events were produced
+      if (response.trace && response.trace.length > 0) {
         const trace = buildExecutionTrace(response, algoName, elapsedMs);
         globalEngine.loadTrace(trace);
         globalEngine.setSpeed(1.0);
@@ -679,9 +701,6 @@ export default function MonacoCodeEditor() {
           "success",
           `Executed in ${elapsedMs}ms via Docker sandbox`,
         );
-      } else if (activeMode === "tree") {
-        // Sandbox produced no usable tree events — use the reliable local engine
-        await runTreeLocally();
       } else {
         showToast(
           "No trace events produced",
@@ -697,11 +716,8 @@ export default function MonacoCodeEditor() {
         err,
       );
       try {
-        if (activeMode === "tree") {
-          await runTreeLocally();
-        } else {
-          const match = findAlgorithmByName(algoName);
-          if (!match) throw new Error(`Could not resolve algorithm: ${algoName}`);
+        const match = findAlgorithmByName(algoName);
+        if (!match) throw new Error(`Could not resolve algorithm: ${algoName}`);
 
           const payload = {
             nodes: currentGraph?.nodes || [],
@@ -720,12 +736,11 @@ export default function MonacoCodeEditor() {
           setIsAnimating(true);
           globalEngine.play();
 
-          showToast(
-            "Executed locally (Offline mode)",
-            "info",
-            "Sandbox is unreachable. Successfully generated trace using local fallback engine.",
-          );
-        }
+        showToast(
+          "Executed locally (Offline mode)",
+          "info",
+          "Sandbox is unreachable. Successfully generated trace using local fallback engine.",
+        );
       } catch (fallbackErr) {
         const message =
           fallbackErr instanceof Error

@@ -39,6 +39,72 @@ import {
   type PresentationSlide,
 } from "../../data/presentationSlides";
 import { globalEngine } from "../../core/AnimationEngine";
+import { useUIStore } from "../../store/uiStore";
+
+/**
+ * Theme-aware class tokens for the slide deck. The deck must read well in both
+ * the app's dark and light modes, so every surface/text colour is resolved from
+ * the active theme rather than hard-coded to the dark palette.
+ */
+interface DeckPalette {
+  /** Full-screen concept-deck background (inline style). */
+  deckBg: string;
+  /** Primary heading gradient (title/closing slides). */
+  titleGradient: string;
+  /** Section heading gradient (content slide header). */
+  headingGradient: string;
+  /** Main body / bullet text. */
+  bodyText: string;
+  /** Muted secondary text. */
+  mutedText: string;
+  /** Panel surface background. */
+  panelBg: string;
+  /** Panel border. */
+  panelBorder: string;
+  /** Control-bar surface background. */
+  controlBg: string;
+  /** Control-bar button text. */
+  controlText: string;
+  /** Cyan accent text (kickers, slide-number badges, flow pills). */
+  accentText: string;
+}
+
+function getDeckPalette(isLight: boolean): DeckPalette {
+  if (isLight) {
+    return {
+      deckBg:
+        "radial-gradient(circle at 20% 20%, rgba(8,145,178,0.10), transparent 45%), radial-gradient(circle at 80% 80%, rgba(99,102,241,0.10), transparent 45%), rgba(240,247,255,0.98)",
+      titleGradient: "from-cyan-700 via-blue-700 to-indigo-700",
+      headingGradient: "from-slate-900 via-slate-800 to-slate-700",
+      bodyText: "text-slate-700",
+      mutedText: "text-slate-500",
+      panelBg: "bg-white/80",
+      panelBorder: "border-slate-300/70",
+      controlBg: "bg-white/90 border-slate-300/70",
+      controlText: "text-slate-600",
+      accentText: "text-cyan-700",
+    };
+  }
+  return {
+    deckBg:
+      "radial-gradient(circle at 20% 20%, rgba(34,211,238,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(99,102,241,0.10), transparent 45%), rgba(6,10,22,0.97)",
+    titleGradient: "from-cyan-300 via-blue-300 to-indigo-300",
+    headingGradient: "from-white via-slate-100 to-slate-300",
+    bodyText: "text-slate-200",
+    mutedText: "text-slate-400",
+    panelBg: "bg-slate-900/40",
+    panelBorder: "border-slate-700/40",
+    controlBg: "bg-slate-950/85 border-slate-700/50",
+    controlText: "text-slate-300",
+    accentText: "text-cyan-300",
+  };
+}
+
+/** Hook returning the resolved deck palette for the active theme. */
+function useDeckPalette(): DeckPalette {
+  const theme = useUIStore((s) => s.theme);
+  return getDeckPalette(theme === "light");
+}
 
 /** Categories whose visualization is triggered via the editor Run button. */
 const RUN_TRIGGER_CATEGORIES = ["sorting", "searching", "dp"];
@@ -48,6 +114,7 @@ const LANG_LABEL: Record<string, string> = {
   typescript: "TypeScript",
   go: "Go",
   markup: "SVG",
+  css: "CSS",
   python: "Python",
   cpp: "C++",
 };
@@ -112,70 +179,83 @@ const CodePanel: React.FC<{ slide: PresentationSlide; compact?: boolean }> = ({
 };
 
 /** Speaker-note ("Komentarz") panel. */
-const NotePanel: React.FC<{ note: string }> = ({ note }) => (
-  <div className="mt-1 flex gap-3 rounded-xl border border-slate-700/40 bg-slate-900/40 px-4 py-3">
-    <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-cyan-400/70 mt-0.5">
-      Komentarz
-    </span>
-    <p className="text-[13px] text-slate-400 leading-relaxed italic">{note}</p>
-  </div>
-);
+const NotePanel: React.FC<{ note: string }> = ({ note }) => {
+  const pal = useDeckPalette();
+  return (
+    <div
+      className={`mt-1 flex gap-3 rounded-xl border ${pal.panelBorder} ${pal.panelBg} px-4 py-3`}
+    >
+      <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-cyan-500/80 mt-0.5">
+        Komentarz
+      </span>
+      <p className={`text-[13px] ${pal.mutedText} leading-relaxed italic`}>
+        {note}
+      </p>
+    </div>
+  );
+};
 
 /** Horizontal pipeline diagram rendered as connected pills. */
-const FlowDiagram: React.FC<{ steps: string[] }> = ({ steps }) => (
-  <div className="flex flex-wrap items-center gap-2">
-    {steps.map((step, i) => (
-      <React.Fragment key={step}>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.85 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.15 + i * 0.1 }}
-          className="px-3.5 py-2 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 text-sm font-semibold text-cyan-100 shadow-[0_0_15px_rgba(34,211,238,0.1)]"
-        >
-          {step}
-        </motion.div>
-        {i < steps.length - 1 && (
-          <ArrowRight className="w-4 h-4 text-cyan-500/60 shrink-0" />
-        )}
-      </React.Fragment>
-    ))}
-  </div>
-);
+const FlowDiagram: React.FC<{ steps: string[] }> = ({ steps }) => {
+  const pal = useDeckPalette();
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {steps.map((step, i) => (
+        <React.Fragment key={step}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.15 + i * 0.1 }}
+            className={`px-3.5 py-2 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 text-sm font-semibold ${pal.accentText} shadow-[0_0_15px_rgba(34,211,238,0.1)]`}
+          >
+            {step}
+          </motion.div>
+          {i < steps.length - 1 && (
+            <ArrowRight className="w-4 h-4 text-cyan-500/60 shrink-0" />
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
 
 /**
  * Renders the body of a non-live (concept) slide based on its variant.
  */
 const SlideBody: React.FC<{ slide: PresentationSlide }> = ({ slide }) => {
+  const pal = useDeckPalette();
   // ── Title slide ──────────────────────────────────────────
   if (slide.variant === "title") {
     return (
       <div className="flex flex-col items-center text-center gap-6 max-w-3xl">
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10">
-          <Sparkles className="w-4 h-4 text-cyan-400" />
-          <span className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+          <Sparkles className={`w-4 h-4 ${pal.accentText}`} />
+          <span className={`text-xs font-bold uppercase tracking-[0.2em] ${pal.accentText}`}>
             {slide.kicker}
           </span>
         </div>
 
-        <h1 className="text-5xl md:text-6xl font-black tracking-tight bg-gradient-to-r from-cyan-300 via-blue-300 to-indigo-300 bg-clip-text text-transparent leading-tight">
+        <h1
+          className={`text-5xl md:text-6xl font-black tracking-tight bg-gradient-to-r ${pal.titleGradient} bg-clip-text text-transparent leading-tight`}
+        >
           {slide.title}
         </h1>
 
         {slide.subtitle && (
-          <p className="text-lg md:text-xl text-slate-300/90 font-medium">
+          <p className={`text-lg md:text-xl ${pal.bodyText} font-medium`}>
             {slide.subtitle}
           </p>
         )}
 
         {slide.authors && (
           <div className="mt-2 flex flex-col items-center gap-1">
-            <span className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">
+            <span className={`text-[11px] uppercase tracking-widest ${pal.mutedText} font-bold`}>
               Autorzy
             </span>
-            <div className="flex items-center gap-3 text-base font-semibold text-white">
+            <div className={`flex items-center gap-3 text-base font-semibold ${pal.bodyText}`}>
               {slide.authors.map((a, i) => (
                 <React.Fragment key={a}>
-                  {i > 0 && <span className="text-slate-600">•</span>}
+                  {i > 0 && <span className={pal.mutedText}>•</span>}
                   <span>{a}</span>
                 </React.Fragment>
               ))}
@@ -184,8 +264,8 @@ const SlideBody: React.FC<{ slide: PresentationSlide }> = ({ slide }) => {
         )}
 
         {slide.repo && (
-          <div className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-700/50 bg-slate-900/50 text-sm text-slate-300">
-            <FolderGit2 className="w-4 h-4 text-slate-400" />
+          <div className={`mt-2 flex items-center gap-2 px-4 py-2 rounded-xl border ${pal.panelBorder} ${pal.panelBg} text-sm ${pal.bodyText}`}>
+            <FolderGit2 className={`w-4 h-4 ${pal.mutedText}`} />
             <span className="font-mono">{slide.repo}</span>
           </div>
         )}
@@ -197,14 +277,16 @@ const SlideBody: React.FC<{ slide: PresentationSlide }> = ({ slide }) => {
   if (slide.variant === "closing") {
     return (
       <div className="flex flex-col items-center text-center gap-8 max-w-2xl">
-        <h1 className="text-5xl md:text-7xl font-black tracking-tight bg-gradient-to-r from-cyan-300 via-blue-300 to-indigo-300 bg-clip-text text-transparent">
+        <h1
+          className={`text-5xl md:text-7xl font-black tracking-tight bg-gradient-to-r ${pal.titleGradient} bg-clip-text text-transparent`}
+        >
           {slide.title}
         </h1>
         {slide.subtitle && (
-          <p className="text-2xl text-slate-300 font-light">{slide.subtitle}</p>
+          <p className={`text-2xl ${pal.bodyText} font-light`}>{slide.subtitle}</p>
         )}
         {slide.repo && (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-cyan-500/25 bg-cyan-500/5 text-base text-cyan-200">
+          <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-base font-medium text-cyan-600">
             <FolderGit2 className="w-5 h-5" />
             <span className="font-mono">{slide.repo}</span>
           </div>
@@ -218,14 +300,16 @@ const SlideBody: React.FC<{ slide: PresentationSlide }> = ({ slide }) => {
     const { headers, rows } = slide.table;
     return (
       <div className="w-full max-w-5xl">
-        <div className="rounded-2xl overflow-hidden border border-slate-700/50 bg-slate-950/50">
+        <div
+          className={`rounded-2xl overflow-hidden border ${pal.panelBorder} ${pal.panelBg}`}
+        >
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
                 {headers.map((h) => (
                   <th
                     key={h}
-                    className="px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-cyan-300 bg-slate-900/70 border-b border-cyan-500/20"
+                    className="px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-cyan-600 bg-cyan-500/10 border-b border-cyan-500/20"
                   >
                     {h}
                   </th>
@@ -236,12 +320,12 @@ const SlideBody: React.FC<{ slide: PresentationSlide }> = ({ slide }) => {
               {rows.map((row, ri) => (
                 <tr
                   key={ri}
-                  className="border-b border-slate-800/50 last:border-0"
+                  className={`border-b ${pal.panelBorder} last:border-0`}
                 >
                   {row.map((cell, ci) => (
                     <td
                       key={ci}
-                      className="px-3 py-2.5 text-slate-300 font-medium"
+                      className={`px-3 py-2.5 ${pal.bodyText} font-medium`}
                     >
                       {cell && (
                         <span className="inline-flex items-center gap-1.5">
@@ -288,7 +372,7 @@ const SlideBody: React.FC<{ slide: PresentationSlide }> = ({ slide }) => {
                     className="flex items-start gap-3"
                   >
                     <span className="mt-1.5 shrink-0 w-2 h-2 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
-                    <span className="text-[15px] md:text-base text-slate-200 leading-relaxed">
+                    <span className={`text-[15px] md:text-base ${pal.bodyText} leading-relaxed`}>
                       {b}
                     </span>
                   </motion.li>
@@ -314,7 +398,7 @@ const SlideBody: React.FC<{ slide: PresentationSlide }> = ({ slide }) => {
       {slide.note && <NotePanel note={slide.note} />}
 
       {slide.repo && (
-        <div className="flex items-center gap-2 text-sm text-slate-400">
+        <div className={`flex items-center gap-2 text-sm ${pal.mutedText}`}>
           <FolderGit2 className="w-4 h-4" />
           <span className="font-mono">{slide.repo}</span>
         </div>
@@ -334,9 +418,12 @@ const ControlBar: React.FC = () => {
     jumpToSlide,
     toggleAutoPlay,
   } = usePresentationStore();
+  const pal = useDeckPalette();
 
   return (
-    <div className="mx-auto max-w-4xl rounded-2xl bg-slate-950/85 border border-slate-700/50 shadow-[0_-8px_40px_rgba(0,0,0,0.5)] px-5 py-3 backdrop-blur-xl">
+    <div
+      className={`mx-auto max-w-4xl rounded-2xl border ${pal.controlBg} shadow-[0_-8px_40px_rgba(0,0,0,0.25)] px-5 py-3 backdrop-blur-xl`}
+    >
       {/* Progress dots */}
       <div className="flex items-center justify-center gap-1 flex-wrap mb-3">
         {PRESENTATION_SLIDES.map((s, idx) => (
@@ -356,7 +443,7 @@ const ControlBar: React.FC = () => {
       </div>
 
       <div className="flex items-center justify-between gap-4">
-        <span className="text-xs text-slate-500 font-mono w-16">
+        <span className={`text-xs ${pal.mutedText} font-mono w-16`}>
           {currentIndex + 1} / {totalSlides}
         </span>
 
@@ -364,7 +451,7 @@ const ControlBar: React.FC = () => {
           <button
             onClick={prevSlide}
             disabled={currentIndex === 0}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className={`flex items-center gap-1 px-3 py-2 rounded-xl ${pal.controlText} hover:text-cyan-500 hover:bg-cyan-500/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all`}
             title="Poprzedni (←)"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -390,7 +477,7 @@ const ControlBar: React.FC = () => {
           <button
             onClick={nextSlide}
             disabled={currentIndex >= totalSlides - 1}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className={`flex items-center gap-1 px-3 py-2 rounded-xl ${pal.controlText} hover:text-cyan-500 hover:bg-cyan-500/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all`}
             title="Następny (→)"
           >
             <span className="text-xs font-semibold hidden sm:inline">Dalej</span>
@@ -398,7 +485,7 @@ const ControlBar: React.FC = () => {
           </button>
         </div>
 
-        <span className="text-[10px] text-slate-600 font-medium w-16 text-right hidden sm:block">
+        <span className={`text-[10px] ${pal.mutedText} font-medium w-16 text-right hidden sm:block`}>
           ← → spacja
         </span>
       </div>
@@ -415,6 +502,7 @@ export const PresentationOverlay: React.FC = () => {
   const isAutoPlaying = usePresentationStore((s) => s.isAutoPlaying);
 
   const navigate = useNavigate();
+  const pal = useDeckPalette();
   const autoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const slide = PRESENTATION_SLIDES[currentIndex];
   const isLive = !!slide?.route;
@@ -671,8 +759,7 @@ export const PresentationOverlay: React.FC = () => {
         transition={{ duration: 0.3 }}
         className="fixed inset-0 z-[9990] flex flex-col"
         style={{
-          background:
-            "radial-gradient(circle at 20% 20%, rgba(34,211,238,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(99,102,241,0.10), transparent 45%), rgba(6,10,22,0.97)",
+          background: pal.deckBg,
           backdropFilter: "blur(24px)",
         }}
       >
@@ -694,16 +781,18 @@ export const PresentationOverlay: React.FC = () => {
               {slide.variant !== "title" && slide.variant !== "closing" && (
                 <div className="w-full max-w-6xl flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 text-cyan-300 font-black text-sm">
+                    <span className={`flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 ${pal.accentText} font-black text-sm`}>
                       {slide.id}
                     </span>
                     <div className="flex flex-col">
                       {slide.kicker && (
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400/80">
+                        <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${pal.accentText}`}>
                           {slide.kicker}
                         </span>
                       )}
-                      <h2 className="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+                      <h2
+                        className={`text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r ${pal.headingGradient} bg-clip-text text-transparent`}
+                      >
                         {slide.title}
                       </h2>
                     </div>

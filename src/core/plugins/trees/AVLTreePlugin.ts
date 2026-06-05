@@ -141,29 +141,26 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
     /** LEFT rotation on [x]: its RIGHT child [y] rises, [x] falls. */
     const leftRotate = (x: AVLNode): AVLNode => {
       const y = x.right!; // pivot — the node that rises
-      const mid = y.left; // middle subtree that must be transferred
       
       push({
         type: "SYSTEM_LOG",
         level: "WARN",
-        message: `Identyfikacja węzłów: [parent]=${x.value} oraz jego PRAWE dziecko [pivot]=${y.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "WARN",
-        message: `[pivot] ${y.value} WZNOSI SIĘ w górę — przejmuje miejsce węzła [parent] ${x.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "WARN",
-        message: `[parent] ${x.value} OPADA w dół — staje się LEWYM dzieckiem węzła [pivot] ${y.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "INFO",
-        message: `Oryginalne LEWE poddrzewo węzła [pivot] ${y.value}${mid ? ` (korzeń ${mid.value})` : ` (null)`} zostaje przeniesione i staje się NOWYM PRAWYM dzieckiem węzła [parent] ${x.value}. (Wartości są < ${y.value} i > ${x.value}).`,
+        message: `Rotacja w lewo wokół węzła ${x.value}.`,
       });
 
+      // 1. Faza podświetlenia
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "rotate" }, false);
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "rotate" });
+
+      // 2. Animacja zamiany (Swap) na ekranie ZANIM zaktualizuje się struktura logiczna
+      const parentPos = lastCoords.get(x.id);
+      const pivotPos = lastCoords.get(y.id);
+      if (parentPos && pivotPos) {
+        push({ type: "GRAPH_NODE_MOVE", nodeId: x.id, x: pivotPos.x, y: pivotPos.y }, false);
+        push({ type: "GRAPH_NODE_MOVE", nodeId: y.id, x: parentPos.x, y: parentPos.y }, true);
+      }
+
+      // 3. Logiczna rotacja
       x.right = y.left;
       if (y.left) y.left.parent = x;
       y.parent = x.parent;
@@ -175,10 +172,10 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
       updateHeight(x);
       updateHeight(y);
       
-      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "rotate" }, false);
-      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "rotate" });
-      
+      // 4. Synchronizacja krawędzi i położeń na nowo
       syncTree();
+      
+      // 5. Czyszczenie podświetlenia
       
       push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "default" }, false);
       push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "default" }, false);
@@ -194,29 +191,26 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
     /** RIGHT rotation on [y]: its LEFT child [x] rises, [y] falls. */
     const rightRotate = (y: AVLNode): AVLNode => {
       const x = y.left!; // pivot — the node that rises
-      const mid = x.right; // middle subtree that must be transferred
       
       push({
         type: "SYSTEM_LOG",
         level: "WARN",
-        message: `Identyfikacja węzłów: [parent]=${y.value} oraz jego LEWE dziecko [pivot]=${x.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "WARN",
-        message: `[pivot] ${x.value} WZNOSI SIĘ w górę — przejmuje miejsce węzła [parent] ${y.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "WARN",
-        message: `[parent] ${y.value} OPADA w dół — staje się PRAWYM dzieckiem węzła [pivot] ${x.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "INFO",
-        message: `Oryginalne PRAWE poddrzewo węzła [pivot] ${x.value}${mid ? ` (korzeń ${mid.value})` : ` (null)`} zostaje przeniesione i staje się NOWYM LEWYM dzieckiem węzła [parent] ${y.value}. (Wartości są > ${x.value} i < ${y.value}).`,
+        message: `Rotacja w prawo wokół węzła ${y.value}.`,
       });
 
+      // 1. Faza podświetlenia
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "rotate" }, false);
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "rotate" });
+
+      // 2. Animacja zamiany (Swap) na ekranie ZANIM zaktualizuje się struktura logiczna
+      const parentPos = lastCoords.get(y.id);
+      const pivotPos = lastCoords.get(x.id);
+      if (parentPos && pivotPos) {
+        push({ type: "GRAPH_NODE_MOVE", nodeId: y.id, x: pivotPos.x, y: pivotPos.y }, false);
+        push({ type: "GRAPH_NODE_MOVE", nodeId: x.id, x: parentPos.x, y: parentPos.y }, true);
+      }
+
+      // 3. Logiczna rotacja
       y.left = x.right;
       if (x.right) x.right.parent = y;
       x.parent = y.parent;
@@ -228,9 +222,7 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
       updateHeight(y);
       updateHeight(x);
 
-      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "rotate" }, false);
-      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "rotate" });
-
+      // 4. Synchronizacja krawędzi i położeń na nowo
       syncTree();
       
       push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "default" }, false);
@@ -348,7 +340,7 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
           push({
             type: "SYSTEM_LOG",
             level: "WARN",
-            message: `${node.value} przeciążony w lewo (BF=${balance}) — lewe dziecko wzniesie się ponad ${node.value}.`,
+            message: `${node.value} przeciążony w lewo (BF=${balance}) — wykonuję rotację w prawo.`,
           });
           rightRotate(node);
         } else if (balance > 1) {
@@ -356,7 +348,7 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
           push({
             type: "SYSTEM_LOG",
             level: "WARN",
-            message: `${node.value} przeciążony lewo-prawo (BF=${balance}) — dwie zamiany: najpierw na lewym dziecku, potem na ${node.value}.`,
+            message: `${node.value} przeciążony lewo-prawo (BF=${balance}) — wykonuję podwójną rotację (lewo, prawo).`,
           });
           leftRotate(node.left!); // step 1: convert to a straight left-left line
           rightRotate(node); // step 2: standard right swap
@@ -365,7 +357,7 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
           push({
             type: "SYSTEM_LOG",
             level: "WARN",
-            message: `${node.value} przeciążony w prawo (BF=${balance}) — prawe dziecko wzniesie się ponad ${node.value}.`,
+            message: `${node.value} przeciążony w prawo (BF=${balance}) — wykonuję rotację w lewo.`,
           });
           leftRotate(node);
         } else if (balance < -1) {
@@ -373,7 +365,7 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
           push({
             type: "SYSTEM_LOG",
             level: "WARN",
-            message: `${node.value} przeciążony prawo-lewo (BF=${balance}) — dwie zamiany: najpierw na prawym dziecku, potem na ${node.value}.`,
+            message: `${node.value} przeciążony prawo-lewo (BF=${balance}) — wykonuję podwójną rotację (prawo, lewo).`,
           });
           rightRotate(node.right!); // step 1: convert to a straight right-right line
           leftRotate(node); // step 2: standard left swap
@@ -410,7 +402,6 @@ export class AVLTreePlugin implements AlgorithmPlugin<ArrayInput> {
       })),
       edges: edges.map((e) => ({ ...e, weight: 0 })),
       isDirected: true,
-      layoutHint: "dagre",
     };
 
     const endTime = performance.now();

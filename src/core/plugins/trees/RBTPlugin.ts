@@ -160,30 +160,27 @@ export class RBTPlugin implements AlgorithmPlugin<ArrayInput> {
     /** LEFT rotation on [x]: its RIGHT child [y] rises, [x] falls. */
     const simLeftRotate = (x: RBTNode) => {
       const y = x.right!; // pivot — the node that rises
-      const mid = y.left; // middle subtree to transfer
       const originalColor = x.color; // for color transfer
       
       push({
         type: "SYSTEM_LOG",
         level: "WARN",
-        message: `Identyfikacja węzłów: [parent]=${x.value} oraz jego PRAWE dziecko [pivot]=${y.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "WARN",
-        message: `[pivot] ${y.value} WZNOSI SIĘ w górę — przejmuje miejsce węzła [parent] ${x.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "WARN",
-        message: `[parent] ${x.value} OPADA w dół — staje się LEWYM dzieckiem węzła [pivot] ${y.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "INFO",
-        message: `Oryginalne LEWE poddrzewo węzła [pivot] ${y.value}${mid ? ` (korzeń ${mid.value})` : ` (null)`} zostaje przeniesione i staje się NOWYM PRAWYM dzieckiem węzła [parent] ${x.value}.`,
+        message: `Rotacja w lewo wokół węzła ${x.value}.`,
       });
 
+      // 1. Faza podświetlenia
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "rotate" }, false);
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "rotate" });
+
+      // 2. Animacja zamiany (Swap) na ekranie ZANIM zaktualizuje się struktura logiczna
+      const parentPos = lastCoords.get(x.id);
+      const pivotPos = lastCoords.get(y.id);
+      if (parentPos && pivotPos) {
+        push({ type: "GRAPH_NODE_MOVE", nodeId: x.id, x: pivotPos.x, y: pivotPos.y }, false);
+        push({ type: "GRAPH_NODE_MOVE", nodeId: y.id, x: parentPos.x, y: parentPos.y }, true);
+      }
+
+      // 3. Logiczna rotacja
       x.right = y.left;
       if (y.left) y.left.parent = x;
       y.parent = x.parent;
@@ -202,11 +199,10 @@ export class RBTPlugin implements AlgorithmPlugin<ArrayInput> {
       y.color = originalColor;
       x.color = "red";
       
-      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "rotate" }, false);
-      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "rotate" });
-
+      // 4. Synchronizacja krawędzi i położeń na nowo
       syncTree();
 
+      // 5. Czyszczenie podświetlenia (przywrócenie właściwych kolorów)
       push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: y.color }, false);
       push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: x.color }, false);
     };
@@ -214,30 +210,27 @@ export class RBTPlugin implements AlgorithmPlugin<ArrayInput> {
     /** RIGHT rotation on [y]: its LEFT child [x] rises, [y] falls. */
     const simRightRotate = (y: RBTNode) => {
       const x = y.left!; // pivot — the node that rises
-      const mid = x.right; // middle subtree to transfer
       const originalColor = y.color; // for color transfer
 
       push({
         type: "SYSTEM_LOG",
         level: "WARN",
-        message: `Identyfikacja węzłów: [parent]=${y.value} oraz jego LEWE dziecko [pivot]=${x.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "WARN",
-        message: `[pivot] ${x.value} WZNOSI SIĘ w górę — przejmuje miejsce węzła [parent] ${y.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "WARN",
-        message: `[parent] ${y.value} OPADA w dół — staje się PRAWYM dzieckiem węzła [pivot] ${x.value}.`,
-      });
-      push({
-        type: "SYSTEM_LOG",
-        level: "INFO",
-        message: `Oryginalne PRAWE poddrzewo węzła [pivot] ${x.value}${mid ? ` (korzeń ${mid.value})` : ` (null)`} zostaje przeniesione i staje się NOWYM LEWYM dzieckiem węzła [parent] ${y.value}.`,
+        message: `Rotacja w prawo wokół węzła ${y.value}.`,
       });
 
+      // 1. Faza podświetlenia
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "rotate" }, false);
+      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "rotate" });
+
+      // 2. Animacja zamiany (Swap) na ekranie ZANIM zaktualizuje się struktura logiczna
+      const parentPos = lastCoords.get(y.id);
+      const pivotPos = lastCoords.get(x.id);
+      if (parentPos && pivotPos) {
+        push({ type: "GRAPH_NODE_MOVE", nodeId: y.id, x: pivotPos.x, y: pivotPos.y }, false);
+        push({ type: "GRAPH_NODE_MOVE", nodeId: x.id, x: parentPos.x, y: parentPos.y }, true);
+      }
+
+      // 3. Logiczna rotacja
       y.left = x.right;
       if (x.right) x.right.parent = y;
       x.parent = y.parent;
@@ -256,11 +249,10 @@ export class RBTPlugin implements AlgorithmPlugin<ArrayInput> {
       x.color = originalColor;
       y.color = "red";
       
-      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: "rotate" }, false);
-      push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: "rotate" });
-
+      // 4. Synchronizacja krawędzi i położeń na nowo
       syncTree();
 
+      // 5. Czyszczenie podświetlenia (przywrócenie właściwych kolorów)
       push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: x.id, status: x.color }, false);
       push({ type: "GRAPH_NODE_HIGHLIGHT", nodeId: y.id, status: y.color }, false);
     };
@@ -276,11 +268,10 @@ export class RBTPlugin implements AlgorithmPlugin<ArrayInput> {
           const uncle = grandparent.right;
 
           if (uncle && uncle.color === "red") {
-            // ── Case 1: Uncle is RED → recolor ──
             push({
               type: "SYSTEM_LOG",
               level: "WARN",
-              message: `Przypadek 1: wujek ${uncle.value} CZERWONY → rodzic i wujek na CZARNO, dziadek na CZERWONO (równa czarna wysokość), przenoszę problem w górę.`,
+              message: `Wujek ${uncle.value} CZERWONY → przemalowanie.`,
             });
 
             // Highlight uncle
@@ -317,21 +308,11 @@ export class RBTPlugin implements AlgorithmPlugin<ArrayInput> {
             // Uncle is BLACK (or null)
             if (node === node.parent.right) {
               // ── Case 2: node is inner child → rotate to align ──
-              push({
-                type: "SYSTEM_LOG",
-                level: "WARN",
-                message: `Przypadek 2: ${node.value} to wewnętrzny wnuk (trójkąt) → zamiana na ${node.parent.value}, aby ułożyć węzły w linię.`,
-              });
               node = node.parent;
               simLeftRotate(node);
             }
 
             // ── Case 3: node is outer child → recolor + rotate ──
-            push({
-              type: "SYSTEM_LOG",
-              level: "WARN",
-              message: `Przypadek 3: wujek jest CZARNY, węzeł to zewn. wnuk (linia LL/RR) → wykonujemy pojedynczą rotację i transfer kolorów (rotacja zrobi to automatycznie).`,
-            });
             simRightRotate(node.parent!.parent!);
           }
         } else {
@@ -339,11 +320,10 @@ export class RBTPlugin implements AlgorithmPlugin<ArrayInput> {
           const uncle = grandparent.left;
 
           if (uncle && uncle.color === "red") {
-            // ── Case 1 (mirror): Uncle is RED → recolor ──
             push({
               type: "SYSTEM_LOG",
               level: "WARN",
-              message: `Przypadek 1 (lustro): wujek ${uncle.value} CZERWONY → rodzic i wujek na CZARNO, dziadek na CZERWONO (równa czarna wysokość), przenoszę problem w górę.`,
+              message: `Wujek ${uncle.value} CZERWONY → przemalowanie.`,
             });
 
             push({
@@ -377,21 +357,11 @@ export class RBTPlugin implements AlgorithmPlugin<ArrayInput> {
           } else {
             if (node === node.parent.left) {
               // ── Case 2 (mirror): inner child → rotate to align ──
-              push({
-                type: "SYSTEM_LOG",
-                level: "WARN",
-                message: `Przypadek 2 (lustro): ${node.value} to wewnętrzny wnuk (trójkąt) → zamiana na ${node.parent.value}, aby ułożyć węzły w linię.`,
-              });
               node = node.parent;
               simRightRotate(node);
             }
 
             // ── Case 3 (mirror): recolor + rotate ──
-            push({
-              type: "SYSTEM_LOG",
-              level: "WARN",
-              message: `Przypadek 3 (lustro): wujek jest CZARNY, węzeł to zewn. wnuk (linia LL/RR) → wykonujemy pojedynczą rotację i transfer kolorów (rotacja zrobi to automatycznie).`,
-            });
             simLeftRotate(node.parent!.parent!);
           }
         }
@@ -548,7 +518,6 @@ export class RBTPlugin implements AlgorithmPlugin<ArrayInput> {
       })),
       edges: edges.map((e) => ({ ...e, weight: 0 })),
       isDirected: true,
-      layoutHint: "dagre",
     };
 
     return {
