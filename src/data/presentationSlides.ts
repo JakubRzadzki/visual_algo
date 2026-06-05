@@ -125,7 +125,7 @@ export const PRESENTATION_SLIDES: PresentationSlide[] = [
         ["Merge Sort", "Binary Search", "DFS", "AVL", "LCS", "Flood Fill"],
         ["Quick Sort", "", "Dijkstra", "Red-Black", "", ""],
         ["Heap Sort", "", "Kruskal, Prim", "Przechodzenie", "", ""],
-        ["", "", "Topological Sort", "", "", ""],
+        ["", "", "Topological Sort", "Trie", "", ""],
       ],
     },
     note: "Każdy algorytm to osobna klasa implementująca AlgorithmPlugin. Rejestr w workerze mapuje id → instancję — dodanie algorytmu nie dotyka silnika.",
@@ -1028,6 +1028,63 @@ root.color = "black";`,
   {
     id: 38,
     variant: "content",
+    kicker: "Drzewa",
+    title: "Trie — drzewo prefiksowe",
+    complexity: "O(L) na słowo",
+    code: {
+      language: "typescript",
+      filePath: "src/core/plugins/trees/TriePlugin.ts",
+      code: `function insert(word) {
+  let curr = root;
+  for (const ch of word) {                 // O(L) — długość słowa
+    if (!curr.children.has(ch))
+      curr.children.set(ch, new TrieNode(ch));
+    curr = curr.children.get(ch);
+  }
+  curr.isEndOfWord = true;                  // oznacz koniec słowa
+}`,
+      caption: "O(L) na wstawienie/wyszukanie; wspólne prefiksy dzielą węzły.",
+    },
+  },
+  {
+    id: 39,
+    variant: "content",
+    kicker: "Programowanie dynamiczne",
+    title: "0/1 Knapsack",
+    complexity: "O(n·W) · O(n·W)",
+    code: {
+      language: "typescript",
+      filePath: "src/core/plugins/dp/KnapsackDPPlugin.ts",
+      code: `// dp[i][w] = maks. wartość dla i przedmiotów i pojemności w
+for (let i = 1; i <= n; i++)
+  for (let w = 1; w <= W; w++)
+    dp[i][w] = wt[i - 1] <= w
+      ? Math.max(dp[i - 1][w], val[i - 1] + dp[i - 1][w - wt[i - 1]])
+      : dp[i - 1][w];`,
+      caption: "O(n·W) — każda komórka emitowana jako MATRIX_CELL_UPDATE.",
+    },
+  },
+  {
+    id: 40,
+    variant: "content",
+    kicker: "Programowanie dynamiczne",
+    title: "LCS — najdłuższy wspólny podciąg",
+    complexity: "O(m·n) · O(m·n)",
+    code: {
+      language: "typescript",
+      filePath: "src/core/plugins/dp/LCSPlugin.ts",
+      code: `for (let i = 1; i <= m; i++)
+  for (let j = 1; j <= n; j++)
+    dp[i][j] = text1[i - 1] === text2[j - 1]
+      ? dp[i - 1][j - 1] + 1                        // znaki zgodne
+      : Math.max(dp[i - 1][j], dp[i][j - 1]);       // pomiń jeden znak
+// backtracking od dp[m][n] rekonstruuje sam podciąg`,
+      caption: "O(m·n); zależności komórek wizualizowane, potem backtracking.",
+    },
+  },
+  {
+    id: 41,
+    variant: "content",
     kicker: "Pathfinding",
     title: "A* Pathfinding",
     complexity: "f(n) = g(n) + h(n)",
@@ -1047,7 +1104,7 @@ while (!open.empty()) {
     },
   },
   {
-    id: 39,
+    id: 42,
     variant: "content",
     kicker: "Pathfinding",
     title: "Flood Fill",
@@ -1064,24 +1121,6 @@ while (q.length) {
   q.push([x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]);
 }`,
       caption: "O(N) — każda komórka odwiedzana raz.",
-    },
-  },
-  {
-    id: 40,
-    variant: "content",
-    kicker: "Programowanie dynamiczne",
-    title: "Knapsack i LCS",
-    complexity: "O(n·W) / O(m·n)",
-    code: {
-      language: "typescript",
-      filePath: "src/core/plugins/dp/KnapsackDPPlugin.ts",
-      code: `// 0/1 Knapsack — tablica dp[i][w]
-for (let i = 1; i <= n; i++)
-  for (let w = 1; w <= W; w++)
-    dp[i][w] = wt[i - 1] <= w
-      ? Math.max(dp[i - 1][w], val[i - 1] + dp[i - 1][w - wt[i - 1]])
-      : dp[i - 1][w];`,
-      caption: "Knapsack O(n·W); LCS O(m·n) — emitowane jako MATRIX_CELL_UPDATE.",
     },
   },
 
@@ -1126,9 +1165,11 @@ const LIVE_ROUTES: Record<number, { route: string; categoryId: string }> = {
   40: { route: "/algo/trees/bst", categoryId: "trees" },
   41: { route: "/algo/trees/avl", categoryId: "trees" },
   42: { route: "/algo/trees/rbt", categoryId: "trees" },
-  43: { route: "/algo/grid/a-star", categoryId: "grid" },
-  44: { route: "/algo/grid/flood-fill", categoryId: "grid" },
-  45: { route: "/algo/dp/knapsack", categoryId: "dp" },
+  43: { route: "/algo/trees/trie", categoryId: "trees" },
+  44: { route: "/algo/dp/knapsack", categoryId: "dp" },
+  45: { route: "/algo/dp/lcs", categoryId: "dp" },
+  46: { route: "/algo/grid/a-star", categoryId: "grid" },
+  47: { route: "/algo/grid/flood-fill", categoryId: "grid" },
 };
 
 for (const slide of PRESENTATION_SLIDES) {
