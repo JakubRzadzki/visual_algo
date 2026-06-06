@@ -328,9 +328,167 @@ const speed = useUIStore((s) => s.animationSpeed);`,
     note: "Niemożliwe jest odczytanie pola, którego dany wariant nie posiada — błędy kształtu payloadu znikają na etapie kompilacji, a nie w runtime.",
   },
 
-  // ── 13. React re-render trap ─────────────────────────────
+  // ── Architektura klas ──────────────────────────────
   {
     id: 13,
+    variant: "table",
+    kicker: "Architektura klas",
+    title: "Mapa klas — przegląd warstw",
+    subtitle: "43 klasy w czterech warstwach systemu",
+    table: {
+      headers: ["Warstwa", "Co zawiera", "Liczba"],
+      rows: [
+        ["Rdzeń silnika (TypeScript)", "Silnik animacji, magistrala zdarzeń, pula wątków", "3"],
+        ["Wtyczki algorytmów (TypeScript)", "Klasy implementujące kontrakt AlgorithmPlugin<T>", "23"],
+        ["Węzły struktur (TypeScript, lokalne)", "Węzły drzew budowane wewnątrz wtyczek", "4"],
+        ["Backend (Go — struct)", "Model danych i kontrakty API", "3"],
+        ["Implementacje referencyjne (Python)", "Struktury danych uruchamiane w sandboxie", "10"],
+        ["RAZEM", "—", "43"],
+      ],
+    },
+    note: "We froncie klasami są tylko 3 elementy rdzenia i 23 wtyczki — reszta warstwy TypeScript to typy, interfejsy i komponenty funkcyjne. Go używa struct (odpowiednik klasy), a Python tworzy drugą, niezależną rodzinę klas struktur.",
+  },
+  {
+    id: 14,
+    variant: "table",
+    kicker: "Architektura klas · rdzeń",
+    title: "Rdzeń silnika (TypeScript)",
+    table: {
+      headers: ["Klasa", "Odpowiedzialność", "Plik"],
+      rows: [
+        ["AnimationEngine", "Pętla requestAnimationFrame: odtwarza ślad klatka po klatce, steruje play/pause/seek i prędkością, planuje animacje; watchdog ubija zbyt długie generowanie śladu", "core/AnimationEngine.ts"],
+        ["AnimationEventBus", "Broker pub-sub: rozsyła zdarzenia wizualizacji do scen z pominięciem cyklu renderowania Reacta", "core/EventBus.ts"],
+        ["WorkerPool", "Pula Web Workerów z kolejką FIFO: zleca parsowanie śladu i layout grafu poza wątek UI, utrzymując 60 FPS", "core/WorkerPool.ts"],
+      ],
+    },
+    note: "Trzy jedyne stanowe klasy warstwy frontu. To one realizują kluczowe decyzje wydajnościowe: animacja poza Reactem i obliczenia poza głównym wątkiem.",
+  },
+  {
+    id: 15,
+    variant: "table",
+    kicker: "Architektura klas · węzły",
+    title: "Węzły struktur danych (TypeScript, lokalne)",
+    table: {
+      headers: ["Klasa", "Odpowiedzialność", "Plik"],
+      rows: [
+        ["TreeNode", "Węzeł drzewa BST: klucz oraz wskaźniki na lewe i prawe dziecko", "core/plugins/trees/BSTPlugin.ts"],
+        ["AVLNode", "Węzeł drzewa AVL: klucz, dzieci i wysokość używana do wyliczania współczynnika balansu", "core/plugins/trees/AVLTreePlugin.ts"],
+        ["RBTNode", "Węzeł drzewa czerwono-czarnego: klucz, dzieci, rodzic i kolor (czerwony/czarny)", "core/plugins/trees/RBTPlugin.ts"],
+        ["TrieNode", "Węzeł drzewa trie: mapa dzieci indeksowana znakami i flaga końca słowa", "core/plugins/trees/TriePlugin.ts"],
+      ],
+    },
+    note: "Klasy lokalne — zdefiniowane wewnątrz metody budującej strukturę w danej wtyczce, dlatego nie są eksportowane.",
+  },
+  {
+    id: 16,
+    variant: "table",
+    kicker: "Architektura klas · wtyczki",
+    title: "Wtyczki: sortowanie i przeszukiwanie",
+    table: {
+      headers: ["Klasa", "Odpowiedzialność", "Plik"],
+      rows: [
+        ["BubbleSortPlugin", "Sortowanie bąbelkowe: powtarzane zamiany sąsiednich elementów; emituje porównania i przestawienia", "core/plugins/sorting/BubbleSortPlugin.ts"],
+        ["MergeSortPlugin", "Sortowanie przez scalanie (dziel i zwyciężaj): emituje podziały i scalanie podtablic", "core/plugins/sorting/MergeSortPlugin.ts"],
+        ["QuickSortPlugin", "Sortowanie szybkie, partycja Lomuto (pivot = ostatni element): partycjonowanie i rekurencja", "core/plugins/sorting/QuickSortPlugin.ts"],
+        ["HeapSortPlugin", "Sortowanie przez kopcowanie: budowa kopca i powtarzane sift-down; emituje operacje na kopcu", "core/plugins/sorting/HeapSortPlugin.ts"],
+        ["LinearSearchPlugin", "Wyszukiwanie liniowe: sekwencyjne sprawdzanie elementów do trafienia", "core/plugins/searching/LinearSearchPlugin.ts"],
+        ["BinarySearchPlugin", "Wyszukiwanie binarne na tablicy posortowanej: zawężanie przedziału lewy/środek/prawy", "core/plugins/searching/BinarySearchPlugin.ts"],
+      ],
+    },
+    note: "Wszystkie implementują kontrakt AlgorithmPlugin<T>; metoda execute() zwraca ExecutionTrace.",
+  },
+  {
+    id: 17,
+    variant: "table",
+    kicker: "Architektura klas · wtyczki",
+    title: "Wtyczki: grafy",
+    table: {
+      headers: ["Klasa", "Odpowiedzialność", "Plik"],
+      rows: [
+        ["BFSPlugin", "Przeszukiwanie wszerz: kolejka FIFO, odwiedzanie warstwami; emituje kolejkowanie i odwiedziny", "core/plugins/graph/BFSPlugin.ts"],
+        ["DFSPlugin", "Przeszukiwanie w głąb: stos/rekurencja, eksploracja gałęzi do końca", "core/plugins/graph/DFSPlugin.ts"],
+        ["DijkstraPlugin", "Najkrótsze ścieżki z jednego źródła (wagi nieujemne): relaksacja krawędzi z kolejką priorytetową", "core/plugins/graph/DijkstraPlugin.ts"],
+        ["KruskalPlugin", "Minimalne drzewo rozpinające: sortowanie krawędzi + union-find do wykrywania cykli", "core/plugins/graph/KruskalPlugin.ts"],
+        ["PrimPlugin", "Minimalne drzewo rozpinające: rozrost drzewa przez najtańszą krawędź wychodzącą", "core/plugins/graph/PrimPlugin.ts"],
+        ["TopoSortPlugin", "Sortowanie topologiczne DAG: porządkowanie wierzchołków zgodnie z zależnościami", "core/plugins/graph/TopoSortPlugin.ts"],
+      ],
+    },
+  },
+  {
+    id: 18,
+    variant: "table",
+    kicker: "Architektura klas · wtyczki",
+    title: "Wtyczki: drzewa",
+    table: {
+      headers: ["Klasa", "Odpowiedzialność", "Plik"],
+      rows: [
+        ["BinaryTreePlugin", "Przechodzenie drzewa wyrażeń: pre-order, in-order i post-order; emituje kolejność odwiedzin", "core/plugins/trees/BinaryTreePlugin.ts"],
+        ["BSTPlugin", "Drzewo wyszukiwań binarnych: wstawianie z zachowaniem porządku; buduje strukturę z TreeNode", "core/plugins/trees/BSTPlugin.ts"],
+        ["AVLTreePlugin", "Samobalansujące BST: po wstawieniu rotacje LL/RR/LR/RL; re-layout po każdej rotacji (AVLNode)", "core/plugins/trees/AVLTreePlugin.ts"],
+        ["RBTPlugin", "Drzewo czerwono-czarne: wstawianie z rekolorowaniem i rotacjami pilnującymi niezmienników (RBTNode)", "core/plugins/trees/RBTPlugin.ts"],
+        ["TriePlugin", "Drzewo prefiksowe: wstawianie słów znak po znaku z węzłów TrieNode", "core/plugins/trees/TriePlugin.ts"],
+        ["MaxHeapPlugin", "Kopiec maksymalny: wstawianie i sift-up/sift-down; emituje operacje porządkujące kopiec", "core/plugins/trees/MaxHeapPlugin.ts"],
+        ["UnionFindPlugin", "Zbiory rozłączne: operacje find/union z kompresją ścieżek i union by rank", "core/plugins/trees/UnionFindPlugin.ts"],
+      ],
+    },
+  },
+  {
+    id: 19,
+    variant: "table",
+    kicker: "Architektura klas · wtyczki",
+    title: "Wtyczki: programowanie dynamiczne i pathfinding",
+    table: {
+      headers: ["Klasa", "Odpowiedzialność", "Plik"],
+      rows: [
+        ["KnapsackDPPlugin", "Problem plecakowy 0/1: wypełnianie tabeli DP wartościami dla pojemności i przedmiotów", "core/plugins/dp/KnapsackDPPlugin.ts"],
+        ["LCSPlugin", "Najdłuższy wspólny podciąg: tabela DP porównań znaków dwóch ciągów + odtworzenie wyniku", "core/plugins/dp/LCSPlugin.ts"],
+        ["AStarPlugin", "Wyszukiwanie ścieżki A*: koszt rzeczywisty + heurystyka na siatce; emituje rozwijane komórki", "core/plugins/grid/AStarPlugin.ts"],
+        ["FloodFillPlugin", "Wypełnianie obszaru: rozlewanie od punktu startowego na sąsiednie komórki siatki", "core/plugins/grid/FloodFillPlugin.ts"],
+      ],
+    },
+    note: "Łącznie 23 wtyczki w 6 kategoriach. Rejestr w workerze mapuje id → instancję, więc dodanie algorytmu nie dotyka silnika (wzorzec Strategy).",
+  },
+  {
+    id: 20,
+    variant: "table",
+    kicker: "Architektura klas · backend",
+    title: "Backend — struktury Go",
+    table: {
+      headers: ["Struct", "Odpowiedzialność", "Plik"],
+      rows: [
+        ["Snapshot", "Model GORM: trwały zapis wizualizacji (ID, Data, CreatedAt) w PostgreSQL", "backend/main.go"],
+        ["RunRequest", "Kontrakt wejścia API: kod użytkownika i język do wykonania w sandboxie", "backend/main.go"],
+        ["RunResponse", "Kontrakt wyjścia API: ślad wykonania, ewentualny błąd i standardowe wyjście", "backend/main.go"],
+      ],
+    },
+    note: "Go nie ma klas — struct jest jego odpowiednikiem. Te trzy typy domykają warstwę zapisu i komunikacji z sandboxem.",
+  },
+  {
+    id: 21,
+    variant: "table",
+    kicker: "Architektura klas · Python",
+    title: "Implementacje referencyjne (Python)",
+    table: {
+      headers: ["Klasa", "Odpowiedzialność", "Plik"],
+      rows: [
+        ["Node (BST)", "Węzeł drzewa BST: wartość i wskaźniki na dzieci", "algorithms/python/bst.py"],
+        ["Node (binarne)", "Węzeł drzewa binarnego dla referencyjnego przechodzenia", "algorithms/python/binary.py"],
+        ["Node (RBT)", "Węzeł czerwono-czarny: wartość, kolor, rodzic i dzieci", "algorithms/python/rbt.py"],
+        ["RedBlackTree", "Pełna implementacja drzewa czerwono-czarnego z rotacjami i rekolorowaniem", "algorithms/python/rbt.py"],
+        ["AVLNode", "Węzeł AVL z wysokością do balansowania", "algorithms/python/avl.py"],
+        ["Trie", "Drzewo prefiksowe: wstawianie i wyszukiwanie słów oraz prefiksów", "algorithms/python/trie.py"],
+        ["TrieNode", "Węzeł trie: dzieci indeksowane znakami i znacznik końca słowa", "algorithms/python/trie.py"],
+        ["UnionFind", "Zbiory rozłączne z kompresją ścieżek i union by rank (np. dla Kruskala)", "algorithms/python/union-find.py"],
+        ["SNode (AVL)", "Lokalny węzeł statycznego layoutu AVL (val, id, dzieci, height) — buduje układ drzewa dla zdarzenia INIT", "algorithms/python/avl.py"],
+        ["SNode (RBT)", "Lokalny węzeł statycznego layoutu RBT (val, id, kolor, rodzic, dzieci) — układ początkowy dla zdarzenia INIT", "algorithms/python/rbt.py"],
+      ],
+    },
+    note: "Kod uruchamiany w izolowanym kontenerze Docker. Druga, niezależna od frontu, rodzina klas struktur danych — pokazuje ten sam algorytm w realnym kodzie wykonywanym po stronie backendu. Dwie klasy SNode to lokalne węzły pomocnicze budujące statyczny layout drzewa przed animacją.",
+  },
+
+  // ── 13. React re-render trap ─────────────────────────────
+  {
+    id: 22,
     variant: "content",
     kicker: "Wydajność",
     title: "Pułapka: setState na każdą klatkę",
@@ -344,7 +502,7 @@ const speed = useUIStore((s) => s.animationSpeed);`,
 
   // ── 14. EventBus ─────────────────────────────────────────
   {
-    id: 14,
+    id: 23,
     variant: "content",
     kicker: "Wydajność",
     title: "EventBus — kanał obok Reacta",
@@ -374,7 +532,7 @@ export const globalEventBus = new AnimationEventBus();`,
 
   // ── 15. RAF playback ─────────────────────────────────────
   {
-    id: 15,
+    id: 24,
     variant: "content",
     kicker: "Wydajność",
     title: "Odtwarzanie na requestAnimationFrame",
@@ -404,7 +562,7 @@ export const globalEventBus = new AnimationEventBus();`,
 
   // ── 16. Web Workers ──────────────────────────────────────
   {
-    id: 16,
+    id: 25,
     variant: "content",
     kicker: "Współbieżność",
     title: "Web Workers: ciężkie obliczenia poza wątkiem UI",
@@ -434,7 +592,7 @@ self.addEventListener("message", (e: MessageEvent<WorkerMessage>) => {
 
   // ── 17. WorkerPool ───────────────────────────────────────
   {
-    id: 17,
+    id: 26,
     variant: "content",
     kicker: "Wzorzec",
     title: "WorkerPool (Object Pool) + kolejka FIFO",
@@ -470,7 +628,7 @@ self.addEventListener("message", (e: MessageEvent<WorkerMessage>) => {
 
   // ── 18. Docker health-check / fallback ───────────────────
   {
-    id: 18,
+    id: 27,
     variant: "content",
     kicker: "Niezawodność",
     title: "Degradacja: Docker → wykonanie lokalne",
@@ -501,7 +659,7 @@ if pingErr == nil {
 
   // ── 19. Natywny silnik SVG ───────────────────────────────
   {
-    id: 19,
+    id: 28,
     variant: "content",
     kicker: "Rendering",
     title: "Natywna scena SVG + filtry glow",
@@ -527,7 +685,7 @@ if pingErr == nil {
 
   // ── 20. Reverse playback ─────────────────────────────────
   {
-    id: 20,
+    id: 29,
     variant: "content",
     kicker: "Funkcja",
     title: "Odtwarzanie wstecz w O(1) na krok",
@@ -554,7 +712,7 @@ if pingErr == nil {
 
   // ── 21. Podsumowanie ─────────────────────────────────────
   {
-    id: 21,
+    id: 30,
     variant: "content",
     kicker: "Podsumowanie",
     title: "Trzy problemy, trzy rozwiązania",
@@ -569,7 +727,7 @@ if pingErr == nil {
 
   // ── Warstwa doświadczenia (UI/UX · tło · motyw · i18n) ────
   {
-    id: 41,
+    id: 31,
     variant: "content",
     kicker: "UI / UX",
     title: "Warstwa doświadczenia: glassmorphism + HUD",
@@ -599,7 +757,7 @@ if pingErr == nil {
 
   // ── Animacja tła — silnik ────────────────────────────────
   {
-    id: 42,
+    id: 32,
     variant: "content",
     kicker: "Tło — silnik",
     title: "Ambientowe tło: pole cząstek na Canvas 2D",
@@ -632,7 +790,7 @@ if pingErr == nil {
 
   // ── Animacja tła — interakcja ────────────────────────────
   {
-    id: 43,
+    id: 33,
     variant: "content",
     kicker: "Tło — interakcja",
     title: "Reakcja tła na kursor i kliknięcia",
@@ -667,7 +825,7 @@ if (sp > MAX_SPEED) { p.vx = p.vx / sp * MAX_SPEED; /* …vy */ }`,
 
   // ── Dark / Light ─────────────────────────────────────────
   {
-    id: 44,
+    id: 34,
     variant: "content",
     kicker: "Motyw",
     title: "Dark / Light: tokeny CSS + jedna klasa",
@@ -696,7 +854,7 @@ if (sp > MAX_SPEED) { p.vx = p.vx / sp * MAX_SPEED; /* …vy */ }`,
 
   // ── i18n EN / PL ─────────────────────────────────────────
   {
-    id: 45,
+    id: 35,
     variant: "content",
     kicker: "i18n",
     title: "Dwujęzyczność EN / PL bez bibliotek",
@@ -726,7 +884,7 @@ const t = getTranslation(useUIStore((s) => s.language));`,
 
   // ── Galeria algorytmów ───────────────────────────────────
   {
-    id: 22,
+    id: 36,
     variant: "content",
     kicker: "Sortowanie",
     title: "Bubble Sort",
@@ -744,7 +902,7 @@ const t = getTranslation(useUIStore((s) => s.language));`,
     },
   },
   {
-    id: 23,
+    id: 37,
     variant: "content",
     kicker: "Sortowanie",
     title: "Merge Sort",
@@ -761,7 +919,7 @@ const t = getTranslation(useUIStore((s) => s.language));`,
     },
   },
   {
-    id: 24,
+    id: 38,
     variant: "content",
     kicker: "Sortowanie",
     title: "Quick Sort (Lomuto)",
@@ -780,7 +938,7 @@ const t = getTranslation(useUIStore((s) => s.language));`,
     },
   },
   {
-    id: 25,
+    id: 39,
     variant: "content",
     kicker: "Sortowanie",
     title: "Heap Sort",
@@ -801,7 +959,7 @@ const t = getTranslation(useUIStore((s) => s.language));`,
     },
   },
   {
-    id: 26,
+    id: 40,
     variant: "content",
     kicker: "Przeszukiwanie",
     title: "Linear Search",
@@ -817,7 +975,7 @@ const t = getTranslation(useUIStore((s) => s.language));`,
     },
   },
   {
-    id: 27,
+    id: 41,
     variant: "content",
     kicker: "Przeszukiwanie",
     title: "Binary Search",
@@ -836,7 +994,7 @@ while (lo <= hi) {
     },
   },
   {
-    id: 28,
+    id: 42,
     variant: "content",
     kicker: "Grafy",
     title: "BFS — przeszukiwanie wszerz",
@@ -857,7 +1015,7 @@ while (q.length) {
     },
   },
   {
-    id: 29,
+    id: 43,
     variant: "content",
     kicker: "Grafy",
     title: "DFS — przeszukiwanie w głąb",
@@ -874,7 +1032,7 @@ while (q.length) {
     },
   },
   {
-    id: 30,
+    id: 44,
     variant: "content",
     kicker: "Grafy",
     title: "Dijkstra",
@@ -897,7 +1055,7 @@ while (!pq.empty()) {
     },
   },
   {
-    id: 31,
+    id: 45,
     variant: "content",
     kicker: "Grafy",
     title: "Kruskal (MST)",
@@ -915,7 +1073,7 @@ for (const { u, v, w } of edges)
     },
   },
   {
-    id: 32,
+    id: 46,
     variant: "content",
     kicker: "Grafy",
     title: "Prim (MST)",
@@ -934,7 +1092,7 @@ for (let i = 0; i < V; i++) {
     },
   },
   {
-    id: 33,
+    id: 47,
     variant: "content",
     kicker: "Grafy",
     title: "Topological Sort",
@@ -952,7 +1110,7 @@ for (let i = 0; i < V; i++) {
     },
   },
   {
-    id: 34,
+    id: 48,
     variant: "content",
     kicker: "Drzewa",
     title: "Przechodzenie drzewa binarnego",
@@ -967,7 +1125,7 @@ function postorder(n) { if (!n) return; postorder(n.left); postorder(n.right); v
     },
   },
   {
-    id: 35,
+    id: 49,
     variant: "content",
     kicker: "Drzewa",
     title: "BST — wstawianie",
@@ -985,7 +1143,7 @@ function postorder(n) { if (!n) return; postorder(n.left); postorder(n.right); v
     },
   },
   {
-    id: 36,
+    id: 50,
     variant: "content",
     kicker: "Drzewa",
     title: "AVL",
@@ -1004,7 +1162,7 @@ function postorder(n) { if (!n) return; postorder(n.left); postorder(n.right); v
     },
   },
   {
-    id: 37,
+    id: 51,
     variant: "content",
     kicker: "Drzewa",
     title: "Red-Black Tree",
@@ -1026,7 +1184,7 @@ root.color = "black";`,
     },
   },
   {
-    id: 38,
+    id: 52,
     variant: "content",
     kicker: "Drzewa",
     title: "Trie — drzewo prefiksowe",
@@ -1047,7 +1205,7 @@ root.color = "black";`,
     },
   },
   {
-    id: 39,
+    id: 53,
     variant: "content",
     kicker: "Programowanie dynamiczne",
     title: "0/1 Knapsack",
@@ -1065,7 +1223,7 @@ for (let i = 1; i <= n; i++)
     },
   },
   {
-    id: 40,
+    id: 54,
     variant: "content",
     kicker: "Programowanie dynamiczne",
     title: "LCS — najdłuższy wspólny podciąg",
@@ -1083,7 +1241,7 @@ for (let i = 1; i <= n; i++)
     },
   },
   {
-    id: 41,
+    id: 55,
     variant: "content",
     kicker: "Pathfinding",
     title: "A* Pathfinding",
@@ -1104,7 +1262,7 @@ while (!open.empty()) {
     },
   },
   {
-    id: 42,
+    id: 56,
     variant: "content",
     kicker: "Pathfinding",
     title: "Flood Fill",
@@ -1126,7 +1284,7 @@ while (q.length) {
 
   // ── Zakończenie ──────────────────────────────────────────
   {
-    id: 46,
+    id: 57,
     variant: "closing",
     kicker: "Koniec",
     title: "Dziękujemy za uwagę",
@@ -1149,27 +1307,27 @@ PRESENTATION_SLIDES.forEach((slide, index) => {
 });
 
 const LIVE_ROUTES: Record<number, { route: string; categoryId: string }> = {
-  27: { route: "/algo/sorting/bubble-sort", categoryId: "sorting" },
-  28: { route: "/algo/sorting/merge-sort", categoryId: "sorting" },
-  29: { route: "/algo/sorting/quick-sort", categoryId: "sorting" },
-  30: { route: "/algo/sorting/heap-sort", categoryId: "sorting" },
-  31: { route: "/algo/searching/linear-search", categoryId: "searching" },
-  32: { route: "/algo/searching/binary-search", categoryId: "searching" },
-  33: { route: "/algo/graphs/bfs", categoryId: "graphs" },
-  34: { route: "/algo/graphs/dfs", categoryId: "graphs" },
-  35: { route: "/algo/graphs/dijkstra", categoryId: "graphs" },
-  36: { route: "/algo/graphs/kruskal", categoryId: "graphs" },
-  37: { route: "/algo/graphs/prim", categoryId: "graphs" },
-  38: { route: "/algo/graphs/topo-sort", categoryId: "graphs" },
-  39: { route: "/algo/trees/binary", categoryId: "trees" },
-  40: { route: "/algo/trees/bst", categoryId: "trees" },
-  41: { route: "/algo/trees/avl", categoryId: "trees" },
-  42: { route: "/algo/trees/rbt", categoryId: "trees" },
-  43: { route: "/algo/trees/trie", categoryId: "trees" },
-  44: { route: "/algo/dp/knapsack", categoryId: "dp" },
-  45: { route: "/algo/dp/lcs", categoryId: "dp" },
-  46: { route: "/algo/grid/a-star", categoryId: "grid" },
-  47: { route: "/algo/grid/flood-fill", categoryId: "grid" },
+  36: { route: "/algo/sorting/bubble-sort", categoryId: "sorting" },
+  37: { route: "/algo/sorting/merge-sort", categoryId: "sorting" },
+  38: { route: "/algo/sorting/quick-sort", categoryId: "sorting" },
+  39: { route: "/algo/sorting/heap-sort", categoryId: "sorting" },
+  40: { route: "/algo/searching/linear-search", categoryId: "searching" },
+  41: { route: "/algo/searching/binary-search", categoryId: "searching" },
+  42: { route: "/algo/graphs/bfs", categoryId: "graphs" },
+  43: { route: "/algo/graphs/dfs", categoryId: "graphs" },
+  44: { route: "/algo/graphs/dijkstra", categoryId: "graphs" },
+  45: { route: "/algo/graphs/kruskal", categoryId: "graphs" },
+  46: { route: "/algo/graphs/prim", categoryId: "graphs" },
+  47: { route: "/algo/graphs/topo-sort", categoryId: "graphs" },
+  48: { route: "/algo/trees/binary", categoryId: "trees" },
+  49: { route: "/algo/trees/bst", categoryId: "trees" },
+  50: { route: "/algo/trees/avl", categoryId: "trees" },
+  51: { route: "/algo/trees/rbt", categoryId: "trees" },
+  52: { route: "/algo/trees/trie", categoryId: "trees" },
+  53: { route: "/algo/dp/knapsack", categoryId: "dp" },
+  54: { route: "/algo/dp/lcs", categoryId: "dp" },
+  55: { route: "/algo/grid/a-star", categoryId: "grid" },
+  56: { route: "/algo/grid/flood-fill", categoryId: "grid" },
 };
 
 for (const slide of PRESENTATION_SLIDES) {
