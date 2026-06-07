@@ -12,7 +12,8 @@ export type TreeType =
   | "bst"
   | "avl"
   | "rbt"
-  | "trie";
+  | "trie"
+  | "heap-sort-tree";
 
 interface TreeStore {
   root: TreeNode | null;

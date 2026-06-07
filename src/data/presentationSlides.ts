@@ -428,6 +428,7 @@ const speed = useUIStore((s) => s.animationSpeed);`,
         ["RBTPlugin", "Drzewo czerwono-czarne: wstawianie z rekolorowaniem i rotacjami pilnującymi niezmienników (RBTNode)", "core/plugins/trees/RBTPlugin.ts"],
         ["TriePlugin", "Drzewo prefiksowe: wstawianie słów znak po znaku z węzłów TrieNode", "core/plugins/trees/TriePlugin.ts"],
         ["MaxHeapPlugin", "Kopiec maksymalny: wstawianie i sift-up/sift-down; emituje operacje porządkujące kopiec", "core/plugins/trees/MaxHeapPlugin.ts"],
+        ["HeapSortTreePlugin", "Sortowanie przez kopcowanie na drzewie: sift-up (budowa) + sift-down (sortowanie) z tablicą na żywo", "core/plugins/trees/HeapSortTreePlugin.ts"],
         ["UnionFindPlugin", "Zbiory rozłączne: operacje find/union z kompresją ścieżek i union by rank", "core/plugins/trees/UnionFindPlugin.ts"],
       ],
     },
@@ -1207,6 +1208,29 @@ root.color = "black";`,
   {
     id: 53,
     variant: "content",
+    kicker: "Drzewa",
+    title: "Sortowanie przez kopcowanie (drzewo)",
+    complexity: "O(n log n) · O(1)",
+    code: {
+      language: "typescript",
+      filePath: "src/core/plugins/trees/HeapSortTreePlugin.ts",
+      code: `// Faza 1: budowa kopca maksymalnego (bottom-up heapify)
+for (let i = Math.floor(n / 2) - 1; i >= 0; i--)
+  siftDown(heap, n, i);
+
+// Faza 2: wyodrębnianie — drzewo się kurczy
+for (let i = n - 1; i >= 1; i--) {
+  swap(heap, 0, i);          // max ląduje na pozycji i
+  removeNode("p" + i);       // węzeł znika z drzewa
+  siftDown(heap, i, 0);      // napraw kopiec rozmiaru i
+}`,
+      caption:
+        "Korzeń (max) jest wyciągany i usuwany z drzewa — wartości trafiają do posortowanej tablicy na żywo.",
+    },
+  },
+  {
+    id: 54,
+    variant: "content",
     kicker: "Programowanie dynamiczne",
     title: "0/1 Knapsack",
     complexity: "O(n·W) · O(n·W)",
@@ -1223,7 +1247,7 @@ for (let i = 1; i <= n; i++)
     },
   },
   {
-    id: 54,
+    id: 55,
     variant: "content",
     kicker: "Programowanie dynamiczne",
     title: "LCS — najdłuższy wspólny podciąg",
@@ -1241,7 +1265,7 @@ for (let i = 1; i <= n; i++)
     },
   },
   {
-    id: 55,
+    id: 56,
     variant: "content",
     kicker: "Pathfinding",
     title: "A* Pathfinding",
@@ -1262,7 +1286,7 @@ while (!open.empty()) {
     },
   },
   {
-    id: 56,
+    id: 57,
     variant: "content",
     kicker: "Pathfinding",
     title: "Flood Fill",
@@ -1284,7 +1308,7 @@ while (q.length) {
 
   // ── Zakończenie ──────────────────────────────────────────
   {
-    id: 57,
+    id: 58,
     variant: "closing",
     kicker: "Koniec",
     title: "Dziękujemy za uwagę",
@@ -1324,10 +1348,11 @@ const LIVE_ROUTES: Record<number, { route: string; categoryId: string }> = {
   50: { route: "/algo/trees/avl", categoryId: "trees" },
   51: { route: "/algo/trees/rbt", categoryId: "trees" },
   52: { route: "/algo/trees/trie", categoryId: "trees" },
-  53: { route: "/algo/dp/knapsack", categoryId: "dp" },
-  54: { route: "/algo/dp/lcs", categoryId: "dp" },
-  55: { route: "/algo/grid/a-star", categoryId: "grid" },
-  56: { route: "/algo/grid/flood-fill", categoryId: "grid" },
+  53: { route: "/algo/trees/heap-sort-tree", categoryId: "trees" },
+  54: { route: "/algo/dp/knapsack", categoryId: "dp" },
+  55: { route: "/algo/dp/lcs", categoryId: "dp" },
+  56: { route: "/algo/grid/a-star", categoryId: "grid" },
+  57: { route: "/algo/grid/flood-fill", categoryId: "grid" },
 };
 
 for (const slide of PRESENTATION_SLIDES) {

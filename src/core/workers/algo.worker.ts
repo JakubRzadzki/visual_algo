@@ -32,6 +32,7 @@ import { BinaryTreePlugin } from "../plugins/trees/BinaryTreePlugin";
 import { BSTPlugin } from "../plugins/trees/BSTPlugin";
 import { AVLTreePlugin } from "../plugins/trees/AVLTreePlugin";
 import { MaxHeapPlugin } from "../plugins/trees/MaxHeapPlugin";
+import { HeapSortTreePlugin } from "../plugins/trees/HeapSortTreePlugin";
 import { UnionFindPlugin } from "../plugins/trees/UnionFindPlugin";
 import { RBTPlugin } from "../plugins/trees/RBTPlugin";
 import { TriePlugin } from "../plugins/trees/TriePlugin";
@@ -66,6 +67,7 @@ const PLUGINS: Record<string, AlgorithmPlugin<any>> = {
   rbt: new RBTPlugin(),
   trie: new TriePlugin(),
   "max-heap": new MaxHeapPlugin(),
+  "heap-sort-tree": new HeapSortTreePlugin(),
   "union-find": new UnionFindPlugin(),
 
   knapsack: new KnapsackDPPlugin(),

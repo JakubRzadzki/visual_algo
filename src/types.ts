@@ -36,6 +36,9 @@ export type EventPayload =
       status?: string;
     }
   | { type: "GRAPH_NODE_MOVE"; nodeId: string; x: number; y: number }
+  | { type: "GRAPH_NODE_LABEL_UPDATE"; nodeId: string; label: string }
+  | { type: "GRAPH_NODE_SWAP"; aId: string; bId: string }
+  | { type: "GRAPH_NODE_REMOVE"; nodeId: string }
   | { type: "TREE_ROTATE"; pivotId: string; direction: "LEFT" | "RIGHT" }
   | {
       type: "MATRIX_CELL_UPDATE";

@@ -401,7 +401,7 @@ export const GRAPH_TEMPLATES: Record<string, GraphTemplate[]> = {
           e("e5", "n2", "n6", 1),
         ],
         startNodeId: "n0",
-        isDirected: true,
+        isDirected: false,
       },
     },
     {
@@ -428,7 +428,7 @@ export const GRAPH_TEMPLATES: Record<string, GraphTemplate[]> = {
           e("e7", "n3", "n6", 1),
         ],
         startNodeId: "n0",
-        isDirected: true,
+        isDirected: false,
       },
     },
     {
@@ -457,7 +457,7 @@ export const GRAPH_TEMPLATES: Record<string, GraphTemplate[]> = {
           e("e9", "n5", "n6", 1),
         ],
         startNodeId: "n0",
-        isDirected: true,
+        isDirected: false,
       },
     },
   ],

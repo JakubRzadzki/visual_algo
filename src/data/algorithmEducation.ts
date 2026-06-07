@@ -407,6 +407,27 @@ else: insert(right)`,
       "Wyobraź sobie wielkie wesele na 200 osób, gdzie na początku nikt nikogo nie zna i każdy siedzi sam. Z czasem ludzie zaczynają rozmawiać, zaprzyjaźniać się i łączyć w grupy znajomych. Chcesz sprawnie zarządzać tymi grupami.\n\nKażda grupa wybiera swojego nieformalnego lidera (Reprezentanta). Jeśli zapytasz kogokolwiek z grupy: „Kto u Was rządzi?”, ta osoba wskaże lidera.\n- Operacja FIND: Pytasz Marka i Kasię: „Kto u Was rządzi?”. Marek mówi: „Janek”. Kasia też mówi: „Janek”. Komputer natychmiast wie: „Marek i Kasia należą do tej samej paczki znajomych”.\n- Operacja UNION: Grupa Janka (3 osoby) zaczyna rozmawiać z grupą Piotra (10 osób). Postanawiają połączyć siły. Aby zachować porządek, mniejsza grupa Janka podchodzi do większej grupy Piotra i Janek ogłasza: „Od teraz Piotr jest naszym wspólnym szefem”. Grupy są połączone.\n\nA na czym polega „kompresja ścieżek”?\nKiedy pytasz kogoś z samego końca grupy o lidera, ta osoba musi pytać swojego kolegę, ten swojego kierownika, aż dojdzie do szefa. Aby nie marnować czasu w przyszłości, po ustaleniu, że szefem jest Piotr, ta osoba od razu zapisuje sobie bezpośredni numer do Piotra. Przy kolejnym pytaniu nie pyta już kolegów pośredników, tylko dzwoni prosto do szefa!\n\nDzięki temu Union-Find potrafi zarządzać milionami grup ludzi i w ułamku sekundy łączyć ich oraz odpowiadać na pytanie: „Czy ci dwaj są w tej samej grupie?”. To niesamowicie sprytna i prosta logika!",
     pseudocode: `procedure find(i): return root of i; procedure union(i, j): join roots`,
   },
+  "heap-sort-tree": {
+    theory:
+      "Heap Sort builds a max-heap from the array, then repeatedly swaps the root (the maximum) with the last heap element, shrinks the heap, and sifts the new root down to restore the heap property — producing a sorted array in O(n log n) time and O(1) extra space.",
+    theory_pl:
+      "Sortowanie przez kopcowanie (Heap Sort) to algorytm sortowania wykorzystujący strukturę kopca binarnego (max-heap). Tutaj obserwujemy go bezpośrednio na drzewie: węzeł o indeksie i to komórka tablicy i, a wartości faktycznie wędrują w górę i w dół drzewa.\n\n**Faza 1 — Budowa kopca (bottom-up heapify):**\nZaczynając od ostatniego węzła wewnętrznego (indeks floor(n/2)-1) i idąc w stronę korzenia, dla każdego węzła wykonujemy operację sift-down: porównujemy go z większym z dzieci i, jeśli dziecko jest większe, zamieniamy je i schodzimy niżej. Po tej fazie korzeń przechowuje wartość maksymalną.\n\n**Faza 2 — Wyodrębnianie (extract-max + sift-down):**\nKorzeń (maksimum) zamieniany jest z ostatnim aktywnym liściem, po czym ten węzeł zostaje **usunięty z drzewa** — drzewo realnie się kurczy, a wyciągnięta wartość trafia do posortowanej tablicy. Nowy korzeń jest następnie spychany w dół (sift-down) wewnątrz mniejszego kopca. Proces powtarzamy, aż w drzewie zostanie tylko korzeń (element najmniejszy).\n\nReprezentacja tablicowa kopca pozwala obliczać relacje rodzic–dziecko na indeksach: lewe dziecko = 2*i+1, prawe dziecko = 2*i+2, rodzic = floor((i-1)/2). Złożoność czasowa to O(n log n) we wszystkich przypadkach, a pamięciowa O(1), ponieważ sortowanie odbywa się w miejscu.",
+    history:
+      "Invented by J. W. J. Williams in 1964, who introduced the heap data structure specifically for this sorting algorithm.",
+    history_pl:
+      "Opracowany przez J. W. J. Williamsa w 1964 roku, który wprowadził strukturę kopca właśnie na potrzeby tego algorytmu sortowania.",
+    forDummies:
+      "Imagine a company where the boss always earns the most. To rank everyone, you repeatedly take the top boss, retire them to a 'sorted' list, promote the most deserving employee, and let them settle into their rightful level — until everyone is ranked.",
+    forDummies_pl:
+      "Wyobraź sobie firmę-piramidę, w której na szczycie zawsze stoi osoba o najwyższych kompetencjach.\n\nNajpierw budujesz tę hierarchię: każdy nowy pracownik wchodzi na dół i, jeśli jest lepszy od swojego przełożonego, awansuje (idzie w górę — sift-up), aż trafi na właściwy szczebel.\n\nGdy hierarchia jest gotowa, zaczynasz tworzyć ranking: bierzesz szefa ze szczytu (największą wartość) i odsyłasz go na koniec listy posortowanych. Na jego miejsce wskakuje pracownik z samego dołu, ale jest zbyt słaby — więc „zjeżdża w dół” (sift-down), zamieniając się z lepszym z podwładnych, aż znajdzie swoje miejsce. Powtarzasz to, aż cała lista będzie idealnie uporządkowana — co widać na żywo w tablicy pod drzewem!",
+    pseudocode: `procedure heapSort(arr):
+    for i = floor(n/2)-1 downto 0:   // bottom-up build
+        siftDown(arr, n, i)
+    for i = n-1 downto 1:
+        swap(arr[0], arr[i])         // extract max
+        removeNode(i)                // tree shrinks
+        siftDown(arr, i, 0)`,
+  },
 };
 
 /**

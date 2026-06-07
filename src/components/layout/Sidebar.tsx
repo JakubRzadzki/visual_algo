@@ -70,6 +70,10 @@ export default function Sidebar(): React.ReactElement {
         return <Layers size={18} strokeWidth={2} className="text-rose-400" />;
       case "trie":
         return <Type size={18} strokeWidth={2} className="text-violet-400" />;
+      case "heap-sort-tree":
+        return (
+          <TrendingUp size={18} strokeWidth={2} className="text-sky-400" />
+        );
     }
   };
 
@@ -265,6 +269,11 @@ export default function Sidebar(): React.ReactElement {
                 id: "trie",
                 name: "Trie Prefix Tree",
                 name_pl: "Drzewo Trie (Prefiksowe)",
+              },
+              {
+                id: "heap-sort-tree",
+                name: "Heap Sort (Tree)",
+                name_pl: "Sortowanie przez Kopcowanie",
               },
             ].map((tree) => (
               <motion.li

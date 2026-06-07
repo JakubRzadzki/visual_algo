@@ -29,6 +29,11 @@ export default function SearchingStage() {
           event.type === "SYSTEM_PLAYBACK_STATE" ||
           event.type === "TRACE_LOADED"
         ) {
+          // Keep the displayed array in sync with the freshly loaded trace so
+          // the boxes always match the events being animated.
+          if (event.type === "TRACE_LOADED" && event.metadata?.initialState) {
+            setArray([...event.metadata.initialState]);
+          }
           if ("currentStep" in event) {
             setStepCounter(event.currentStep);
           }
