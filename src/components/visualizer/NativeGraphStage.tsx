@@ -20,6 +20,7 @@ import { useParams } from "react-router-dom";
 import { globalEventBus } from "../../core/EventBus";
 import { globalEngine } from "../../core/AnimationEngine";
 import { useUIStore } from "../../store/uiStore";
+import { usePresentationStore } from "../../store/presentationStore";
 import { translateGraphDescription } from "../../sorting/utils/translationHelper";
 import type {
   GraphInput,
@@ -196,6 +197,9 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
   const params = useParams<{ algoId?: string; id?: string }>();
   const activeGraphAlgorithm = useUIStore((s) => s.activeGraphAlgorithm);
   const language = useUIStore((s) => s.language);
+  // In presentation mode the bottom control bar (note + ControlBar) overlaps the
+  // bottom of the stage, so the live sorted-array table is lifted clear of it.
+  const isPresenting = usePresentationStore((s) => s.isActive);
 
   const activeAlgo = resolveAlgoId(
     params.algoId ?? params.id,
@@ -1001,7 +1005,11 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
 
         {/* ── Live sorted-output array (heap-sort tree) ── */}
         {activeAlgo === "heap-sort-tree" && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1.5 glass-panel px-4 py-3 rounded-xl bg-slate-900/50 backdrop-blur-md border border-white/10">
+          <div
+            className={`absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1.5 glass-panel px-4 py-3 rounded-xl bg-slate-900/50 backdrop-blur-md border border-white/10 transition-all duration-300 ${
+              isPresenting ? "bottom-48" : "bottom-4"
+            }`}
+          >
             <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
               {language === "pl"
                 ? "Tablica posortowana (na żywo)"
