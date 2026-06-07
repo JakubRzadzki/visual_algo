@@ -665,11 +665,59 @@ export default function MonacoCodeEditor() {
       setIsRunning(false);
     };
 
+    /**
+     * Run a searching algorithm through the local worker. The Docker sandbox is
+     * often unavailable (e.g. during the presentation) and search demos must
+     * always end in a clear "found" animation, so we guarantee a sorted array
+     * plus a target that actually exists in it.
+     */
+    const runSearchingLocally = async () => {
+      const searchId = findAlgorithmByName(algoName)?.algorithm.id;
+      if (!searchId)
+        throw new Error(`Could not resolve searching algorithm: ${algoName}`);
+
+      const vd = useUIStore.getState().visualizationData as any;
+      // Binary search needs a sorted array; sorting is a no-op for the
+      // already-sorted demo arrays and keeps linear search unaffected.
+      const values = (
+        Array.isArray(vd?.values) && vd.values.length > 0
+          ? [...vd.values]
+          : [3, 9, 10, 27, 38, 43, 82]
+      ).sort((a: number, b: number) => a - b);
+      // Pick an element that is present (near the end) for a meaningful search.
+      const target = values[Math.max(0, values.length - 2)];
+
+      useUIStore.getState().setVisualizationData({ values } as any);
+      const trace = await globalWorkerPool.run(searchId, {
+        values,
+        target,
+      } as any);
+      globalEngine.loadTrace(trace);
+      globalEngine.setSpeed(1.0);
+      setIsAnimating(true);
+      globalEngine.play();
+      setIsRunning(false);
+    };
+
     if (activeMode === "tree") {
       try {
         await runTreeLocally();
       } catch (err: any) {
         showToast("Błąd silnika drzew", "error", err.message || "Unknown error");
+        setIsRunning(false);
+      }
+      return;
+    }
+
+    if (activeMode === "searching") {
+      try {
+        await runSearchingLocally();
+      } catch (err: any) {
+        showToast(
+          "Błąd wyszukiwania",
+          "error",
+          err.message || "Unknown error",
+        );
         setIsRunning(false);
       }
       return;
