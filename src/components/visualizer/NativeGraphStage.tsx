@@ -99,6 +99,19 @@ interface EdgeVis {
   markerKey: string;
 }
 
+/** A value-swap animation: two labels fly between fixed node positions. */
+interface SwapAnim {
+  id: string;
+  aId: string;
+  bId: string;
+  ax: number;
+  ay: number;
+  bx: number;
+  by: number;
+  la: string;
+  lb: string;
+}
+
 const mkNode = (): NodeVis => ({
   fill: C.nodeFill,
   stroke: C.nodeStroke,
@@ -171,6 +184,9 @@ const RELEVANT = new Set([
   "GRAPH_EDGE_ADD",
   "GRAPH_NODE_MOVE",
   "GRAPH_EDGE_REMOVE",
+  "GRAPH_NODE_LABEL_UPDATE",
+  "GRAPH_NODE_SWAP",
+  "GRAPH_NODE_REMOVE",
 ]);
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -197,6 +213,7 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
   const [popCnt, setPopCnt] = useState<Map<string, number>>(() => new Map());
   const [dynNodes, setDynNodes] = useState<Map<string, GraphNode>>(() => new Map());
   const [dynEdges, setDynEdges] = useState<Map<string, GraphEdge>>(() => new Map());
+  const [swaps, setSwaps] = useState<Map<string, SwapAnim>>(() => new Map());
 
   /* ── Algorithm sidebar state ── */
   const [algo, setAlgo] = useState({
@@ -219,6 +236,9 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
   const gRef = useRef(graph);
   const algoRef = useRef(activeAlgo);
   const timers = useRef<Map<string, number>>(new Map());
+  /** Synchronous mirror of current node labels (for swap-token snapshots). */
+  const labelsRef = useRef<Map<string, string>>(new Map());
+  const swapSeq = useRef(0);
 
   useEffect(() => {
     gRef.current = graph;
@@ -230,6 +250,9 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
     setEdgeVis(new Map());
     setPopCnt(new Map());
 
+    setSwaps(new Map());
+    const lbl = new Map<string, string>();
+
     const hn = new Set<string>();
     const he = new Set<string>();
     const dn = new Map<string, GraphNode>();
@@ -237,7 +260,9 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
     for (const n of gRef.current.nodes) {
       if (n.hidden) hn.add(n.id);
       dn.set(n.id, { ...n });
+      lbl.set(n.id, n.label);
     }
+    labelsRef.current = lbl;
     for (const e of gRef.current.edges) {
       if (e.hidden) he.add(e.id);
       de.set(e.id, { ...e });
@@ -373,6 +398,29 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
           // same
         } else if (ev.type === "GRAPH_NODE_MOVE") {
           // Can't perfectly undo move without history
+        } else if (ev.type === "GRAPH_NODE_SWAP") {
+          // Swap is its own inverse — exchange the two labels back.
+          const la = labelsRef.current.get(ev.aId);
+          const lb = labelsRef.current.get(ev.bId);
+          if (la !== undefined && lb !== undefined) {
+            labelsRef.current.set(ev.aId, lb);
+            labelsRef.current.set(ev.bId, la);
+            setDynNodes((p) => {
+              const m = new Map(p);
+              const na = m.get(ev.aId);
+              const nb = m.get(ev.bId);
+              if (na) m.set(ev.aId, { ...na, label: lb });
+              if (nb) m.set(ev.bId, { ...nb, label: la });
+              return m;
+            });
+          }
+        } else if (ev.type === "GRAPH_NODE_REMOVE") {
+          // Un-remove: bring the node back when scrubbing backwards.
+          setHiddenN((p) => {
+            const s = new Set(p);
+            s.delete(ev.nodeId);
+            return s;
+          });
         } else if (ev.type === "GRAPH_EDGE_REMOVE") {
           setHiddenE((p) => {
             const s = new Set(p);
@@ -515,6 +563,7 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
 
       // ── Forward: NODE/EDGE ADD / REMOVE / MOVE ─────────────────────────
       else if (ev.type === "GRAPH_NODE_ADD") {
+        if (ev.label !== undefined) labelsRef.current.set(ev.nodeId, ev.label);
         setDynNodes((p) => {
           const m = new Map(p);
           if (!m.has(ev.nodeId)) {
@@ -545,6 +594,69 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
           if (n) m.set(ev.nodeId, { ...n, x: ev.x, y: ev.y });
           return m;
         });
+      } else if (ev.type === "GRAPH_NODE_LABEL_UPDATE") {
+        // A value moved into this fixed position (heap sift-down / extraction).
+        labelsRef.current.set(ev.nodeId, ev.label);
+        setDynNodes((p) => {
+          const m = new Map(p);
+          const n = m.get(ev.nodeId);
+          if (n) m.set(ev.nodeId, { ...n, label: ev.label });
+          return m;
+        });
+      } else if (ev.type === "GRAPH_NODE_SWAP") {
+        // Animate two values flying between fixed node positions, then commit
+        // the exchanged labels once the flight settles.
+        const la = labelsRef.current.get(ev.aId);
+        const lb = labelsRef.current.get(ev.bId);
+        const na = gRef.current.nodes.find((n) => n.id === ev.aId);
+        const nb = gRef.current.nodes.find((n) => n.id === ev.bId);
+        if (la !== undefined && lb !== undefined && na && nb) {
+          labelsRef.current.set(ev.aId, lb);
+          labelsRef.current.set(ev.bId, la);
+
+          const swapId = `swap-${swapSeq.current++}`;
+          setSwaps((p) =>
+            new Map(p).set(swapId, {
+              id: swapId,
+              aId: ev.aId,
+              bId: ev.bId,
+              ax: na.x,
+              ay: na.y,
+              bx: nb.x,
+              by: nb.y,
+              la,
+              lb,
+            }),
+          );
+
+          // Commit the exchanged labels to the underlying nodes.
+          setDynNodes((p) => {
+            const m = new Map(p);
+            const da = m.get(ev.aId);
+            const db = m.get(ev.bId);
+            if (da) m.set(ev.aId, { ...da, label: lb });
+            if (db) m.set(ev.bId, { ...db, label: la });
+            return m;
+          });
+
+          // Remove the flying tokens once the animation completes.
+          const tid = window.setTimeout(() => {
+            setSwaps((p) => {
+              const m = new Map(p);
+              m.delete(swapId);
+              return m;
+            });
+            timers.current.delete(swapId);
+          }, 460);
+          timers.current.set(swapId, tid);
+        }
+      } else if (ev.type === "GRAPH_NODE_REMOVE") {
+        // The extracted node leaves the tree → the tree shrinks.
+        setHiddenN((p) => {
+          const s = new Set(p);
+          s.add(ev.nodeId);
+          return s;
+        });
       } else if (ev.type === "GRAPH_EDGE_REMOVE") {
         setHiddenE((p) => {
           const s = new Set(p);
@@ -564,6 +676,14 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
   // ═══════════════════════════════════════════════════════════════════════════
   // JSX
   // ═══════════════════════════════════════════════════════════════════════════
+  // Nodes whose value is mid-flight in a swap — their static label is hidden so
+  // only the travelling token is visible.
+  const animatingNodeIds = new Set<string>();
+  for (const s of swaps.values()) {
+    animatingNodeIds.add(s.aId);
+    animatingNodeIds.add(s.bId);
+  }
+
   return (
     <div className="w-full h-full flex select-none">
       {/* ─── SVG Canvas ──────────────────────────────────────────────── */}
@@ -806,14 +926,116 @@ export default function NativeGraphStage({ graph }: { graph: GraphInput }) {
                     fontWeight="bold"
                     style={{ pointerEvents: "none", userSelect: "none" }}
                   >
-                    {node.label}
+                    {animatingNodeIds.has(node.id) ? "" : node.label}
                   </text>
                 </motion.g>
               );
             })}
           </g>
 
+          {/* ── Swap-in-flight token layer (values travelling between nodes) ── */}
+          <g>
+            {Array.from(swaps.values()).map((s) => (
+              <g key={s.id}>
+                <motion.g
+                  initial={{ x: s.ax, y: s.ay }}
+                  animate={{ x: s.bx, y: s.by }}
+                  transition={{ duration: 0.45, ease: "easeInOut" }}
+                  style={{ transformOrigin: "0px 0px" }}
+                >
+                  <circle
+                    cx={0}
+                    cy={0}
+                    r={NODE_RADIUS}
+                    fill={C.yellow}
+                    stroke={C.yellowLight}
+                    strokeWidth={2.5}
+                    filter="url(#node-glow)"
+                  />
+                  <text
+                    x={0}
+                    y={5}
+                    textAnchor="middle"
+                    fill="#0f172a"
+                    fontSize={14}
+                    fontFamily="monospace"
+                    fontWeight="bold"
+                    style={{ pointerEvents: "none", userSelect: "none" }}
+                  >
+                    {s.la}
+                  </text>
+                </motion.g>
+                <motion.g
+                  initial={{ x: s.bx, y: s.by }}
+                  animate={{ x: s.ax, y: s.ay }}
+                  transition={{ duration: 0.45, ease: "easeInOut" }}
+                  style={{ transformOrigin: "0px 0px" }}
+                >
+                  <circle
+                    cx={0}
+                    cy={0}
+                    r={NODE_RADIUS}
+                    fill={C.yellow}
+                    stroke={C.yellowLight}
+                    strokeWidth={2.5}
+                    filter="url(#node-glow)"
+                  />
+                  <text
+                    x={0}
+                    y={5}
+                    textAnchor="middle"
+                    fill="#0f172a"
+                    fontSize={14}
+                    fontFamily="monospace"
+                    fontWeight="bold"
+                    style={{ pointerEvents: "none", userSelect: "none" }}
+                  >
+                    {s.lb}
+                  </text>
+                </motion.g>
+              </g>
+            ))}
+          </g>
+
         </svg>
+
+        {/* ── Live sorted-output array (heap-sort tree) ── */}
+        {activeAlgo === "heap-sort-tree" && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1.5 glass-panel px-4 py-3 rounded-xl bg-slate-900/50 backdrop-blur-md border border-white/10">
+            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+              {language === "pl"
+                ? "Tablica posortowana (na żywo)"
+                : "Sorted array (live)"}
+            </span>
+            <div className="flex items-end gap-1">
+              {graph.nodes.length > 0 &&
+                Array.from({ length: graph.nodes.length }).map((_, i) => {
+                  const id = `p${i}`;
+                  const node = dynNodes.get(id);
+                  // A cell is filled once its node has been extracted (status
+                  // "finished") — values arrive already in sorted order.
+                  const isSorted = nodeVis.get(id)?.status === "finished";
+
+                  return (
+                    <div key={id} className="flex flex-col items-center gap-0.5">
+                      <div
+                        className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-md border font-mono text-xs font-bold transition-all duration-200 ${
+                          isSorted
+                            ? "border-emerald-400/70 bg-emerald-500/25 text-emerald-200"
+                            : "border-dashed border-slate-700/50 bg-transparent text-slate-600"
+                        }`}
+                      >
+                        {isSorted ? node?.label ?? "" : ""}
+                      </div>
+                      <span className="text-[9px] text-slate-500 font-mono">
+                        {i}
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
 
         {/* ── Legend overlay ── */}
         <div className="absolute bottom-4 left-4 glass-panel px-4 py-3 rounded-xl text-[10px] sm:text-xs space-y-1 bg-slate-900/40 backdrop-blur-md border border-white/10 text-slate-400 z-20">

@@ -168,6 +168,7 @@ export default function MonacoCodeEditor() {
       if (activeTreeType === "avl") return "AVL Tree";
       if (activeTreeType === "rbt") return "Red-Black Tree";
       if (activeTreeType === "trie") return "Trie Prefix Tree";
+      if (activeTreeType === "heap-sort-tree") return "Heap Sort (Tree)";
     }
     return globalAlgo;
   };
@@ -300,6 +301,7 @@ export default function MonacoCodeEditor() {
       "Quick Sort": "quick-sort",
       "Bubble Sort": "bubble-sort",
       "Heap Sort": "heap-sort",
+      "Heap Sort (Tree)": "heap-sort",
       "Binary Search": "binary-search",
       "Linear Search": "linear-search",
       "Dijkstra's Path": "dijkstra",

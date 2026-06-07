@@ -274,6 +274,20 @@ export const ALGORITHM_CATALOG: CategoryEntry[] = [
         spaceComplexity: "O(AL)",
         available: true,
       },
+      {
+        id: "heap-sort-tree",
+        name: "Heap Sort (Tree)",
+        name_pl: "Heap Sort (drzewo)",
+        shortName: "HeapSort",
+        shortName_pl: "HeapSort",
+        description:
+          "Heap sort as a binary tree — build max-heap, then extract root and watch the tree shrink",
+        description_pl:
+          "Heap Sort jako drzewo — budowanie kopca, wyodrębnianie korzenia, drzewo się kurczy",
+        timeComplexity: "O(n log n)",
+        spaceComplexity: "O(1)",
+        available: true,
+      },
     ],
   },
   {
